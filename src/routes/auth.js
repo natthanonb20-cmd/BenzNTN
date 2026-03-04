@@ -1,0 +1,108 @@
+const router   = require('express').Router();
+const jwt      = require('jsonwebtoken');
+const bcrypt   = require('bcryptjs');
+const { PrismaClient } = require('@prisma/client');
+const { adminAuth }    = require('../middleware/auth');
+const prisma = new PrismaClient();
+
+/**
+ * POST /api/auth/login
+ * Body: { username, password }
+ * Returns: { token, role, propertyId, propertyName }
+ */
+router.post('/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ error: 'กรุณากรอกชื่อผู้ใช้และรหัสผ่าน' });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { username },
+      include: { property: { select: { id: true, name: true, isActive: true } } },
+    });
+
+    if (!user || !user.isActive) {
+      return res.status(401).json({ error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
+    }
+
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) {
+      return res.status(401).json({ error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
+    }
+
+    // ตรวจสอบ property ยังใช้งานได้อยู่ (เฉพาะ PROPERTY_ADMIN)
+    if (user.role === 'PROPERTY_ADMIN' && (!user.property || !user.property.isActive)) {
+      return res.status(403).json({ error: 'บัญชีหอพักถูกระงับ กรุณาติดต่อผู้ดูแลระบบ' });
+    }
+
+    const token = jwt.sign(
+      { userId: user.id, propertyId: user.propertyId, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '30d' },
+    );
+
+    res.json({
+      token,
+      role:         user.role,
+      propertyId:   user.propertyId,
+      propertyName: user.property?.name ?? null,
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'เกิดข้อผิดพลาด' });
+  }
+});
+
+/**
+ * POST /api/auth/logout
+ */
+router.post('/logout', (req, res) => res.json({ ok: true }));
+
+/**
+ * PUT /api/auth/password
+ * Body: { currentPassword, newPassword, newUsername? }
+ */
+router.put('/password', adminAuth, async (req, res) => {
+  try {
+    const { currentPassword, newPassword, newUsername } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'กรุณากรอกรหัสผ่านปัจจุบันและรหัสผ่านใหม่' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: req.user.userId } });
+    const valid = await bcrypt.compare(currentPassword, user.password);
+    if (!valid) return res.status(401).json({ error: 'รหัสผ่านปัจจุบันไม่ถูกต้อง' });
+
+    const hashed = await bcrypt.hash(newPassword, 12);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashed,
+        ...(newUsername ? { username: newUsername } : {}),
+      },
+    });
+
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+/**
+ * GET /api/auth/me — ดึงข้อมูล user ปัจจุบัน
+ */
+router.get('/me', adminAuth, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where:   { id: req.user.userId },
+      select:  { id: true, username: true, role: true, propertyId: true,
+                 property: { select: { id: true, name: true } } },
+    });
+    res.json(user);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+module.exports = router;

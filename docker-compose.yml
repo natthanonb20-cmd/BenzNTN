@@ -1,0 +1,58 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: hordee_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER:     ${DB_USER:-hordee}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-hordeepass}
+      POSTGRES_DB:       ${DB_NAME:-hordee}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-hordee}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: hordee_app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-hordee}:${DB_PASSWORD:-hordeepass}@postgres:5432/${DB_NAME:-hordee}
+      JWT_SECRET:   ${JWT_SECRET:?JWT_SECRET is required}
+      PORT:         3000
+      NODE_ENV:     production
+      BASE_URL:     ${BASE_URL:-http://localhost:3000}
+      # LINE tokens สำหรับ webhook signature (global fallback)
+      # LINE token ของแต่ละหอพักเก็บใน Property table แล้ว
+      LINE_CHANNEL_SECRET: ${LINE_CHANNEL_SECRET:-}
+    volumes:
+      - ./uploads:/app/uploads       # สลิป, สัญญา — แยกโฟลเดอร์ตาม propertyId ใน code
+    ports:
+      - "3000:3000"
+
+  nginx:
+    image: nginx:alpine
+    container_name: hordee_nginx
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+      - ./uploads:/var/www/uploads:ro
+
+volumes:
+  postgres_data:

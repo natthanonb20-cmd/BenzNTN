@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>หอดี — ผู้เช่า</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: 'Sarabun', sans-serif; }
+    .inp { width:100%; border:1px solid #d1d5db; border-radius:0.5rem; padding:0.5rem 0.75rem; font-size:0.875rem; outline:none; transition:border .15s; }
+    .inp:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.15); }
+    .lbl { display:block; font-size:0.8rem; color:#4b5563; margin-bottom:0.25rem; font-weight:500; }
+    .drop-zone { border:2px dashed #93c5fd; border-radius:0.75rem; background:#eff6ff; transition:background .15s,border-color .15s; cursor:pointer; }
+    .drop-zone.dragover { background:#dbeafe; border-color:#3b82f6; }
+    .img-thumb { position:relative; width:80px; height:80px; flex-shrink:0; }
+    .img-thumb img { width:100%; height:100%; object-fit:cover; border-radius:0.5rem; border:2px solid #e5e7eb; }
+    .img-thumb .del-btn { position:absolute; top:-7px; right:-7px; background:#ef4444; color:#fff; border-radius:9999px; width:20px; height:20px; font-size:12px; display:flex; align-items:center; justify-content:center; cursor:pointer; line-height:1; }
+    .file-chip { display:flex; align-items:center; gap:4px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:0.5rem; padding:4px 8px; font-size:0.75rem; color:#1d4ed8; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- Navbar -->
+  <nav class="bg-blue-800 text-white shadow-md">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2.5 select-none no-underline">
+        <div class="w-9 h-9 bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0">
+          <span class="text-blue-800 font-black text-lg leading-none">ห</span>
+        </div>
+        <div class="leading-tight">
+          <div class="font-bold text-lg tracking-wide text-white leading-none">หอ<span class="text-amber-300 font-extrabold">ดี</span></div>
+          <div class="text-blue-300 text-[11px] font-normal mt-0.5">ระบบจัดการหอพัก</div>
+        </div>
+      </a>
+      <div class="flex gap-4 text-sm font-medium items-center">
+        <a href="index.html"    class="hover:text-blue-200">Dashboard</a>
+        <a href="rooms.html"    class="hover:text-blue-200">ห้องพัก</a>
+        <a href="tenants.html"  class="hover:text-blue-200 border-b-2 border-white">ผู้เช่า</a>
+        <a href="queue.html"    class="hover:text-blue-200">คิวรอเช่า</a>
+        <a href="water.html"    class="hover:text-blue-200">น้ำดื่ม</a>
+        <a href="billing.html"  class="hover:text-blue-200">ออกบิล</a>
+        <a href="invoices.html" class="hover:text-blue-200">ใบแจ้งหนี้</a>
+        <a href="settings.html" class="hover:text-blue-200">ตั้งค่า</a>
+        <button onclick="logout()" class="hover:text-red-300 text-xs opacity-70 hover:opacity-100 transition ml-2">ออกจากระบบ</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-6xl mx-auto px-4 py-6">
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="text-2xl font-bold text-gray-800">ผู้เช่า</h1>
+      <button onclick="openTenantModal()" class="bg-blue-700 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-800 transition">+ เพิ่มผู้เช่า</button>
+    </div>
+
+    <!-- Search + Tabs -->
+    <div class="flex flex-col sm:flex-row gap-3 mb-4">
+      <input id="search-input" type="text" placeholder="ค้นหาชื่อ, ชื่อเล่น, เบอร์โทร..."
+        class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+        oninput="renderTable()" />
+      <div class="flex gap-1 bg-gray-100 rounded-lg p-1 text-sm">
+        <button id="tab-all"     onclick="setTab('all')"     class="tab-btn px-3 py-1.5 rounded-md font-medium transition">ทั้งหมด</button>
+        <button id="tab-current" onclick="setTab('current')" class="tab-btn px-3 py-1.5 rounded-md font-medium transition">ผู้เช่าปัจจุบัน</button>
+        <button id="tab-none"    onclick="setTab('none')"    class="tab-btn px-3 py-1.5 rounded-md font-medium transition">ไม่มีห้อง</button>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+          <tr>
+            <th class="px-4 py-3 text-left">ชื่อ</th>
+            <th class="px-4 py-3 text-left">เบอร์โทร</th>
+            <th class="px-4 py-3 text-left">ห้อง</th>
+            <th class="px-4 py-3 text-left">วันเข้าอยู่</th>
+            <th class="px-4 py-3 text-left">วันออก</th>
+            <th class="px-4 py-3 text-center">Line</th>
+            <th class="px-4 py-3 text-center">สัญญา</th>
+            <th class="px-4 py-3 text-center">จัดการ</th>
+          </tr>
+        </thead>
+        <tbody id="tbody" class="divide-y divide-gray-100">
+          <tr><td colspan="8" class="text-center py-8 text-gray-400">กำลังโหลด...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- ═══════════════ Tenant Modal ═══════════════ -->
+  <div id="tenant-modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
+      <h2 id="tenant-modal-title" class="text-lg font-bold text-gray-800">เพิ่มผู้เช่าใหม่</h2>
+      <div class="space-y-3">
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="lbl">ชื่อ-นามสกุล *</label><input id="m-name"     type="text" class="inp" /></div>
+          <div><label class="lbl">ชื่อเล่น</label>       <input id="m-nickname" type="text" class="inp" /></div>
+        </div>
+        <div><label class="lbl">เบอร์โทร</label>       <input id="m-phone" type="tel"  class="inp" /></div>
+        <div><label class="lbl">Line User ID</label>    <input id="m-line"  type="text" class="inp" placeholder="Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" /></div>
+        <div><label class="lbl">เลขบัตรประชาชน</label> <input id="m-nid"   type="text" class="inp" /></div>
+        <div><label class="lbl">หมายเหตุ</label>        <input id="m-note"  type="text" class="inp" /></div>
+      </div>
+      <input type="hidden" id="m-id" />
+      <div class="flex gap-2 pt-2">
+        <button onclick="saveTenant()" class="flex-1 bg-blue-700 text-white py-2 rounded-xl hover:bg-blue-800 transition text-sm font-semibold">บันทึก</button>
+        <button onclick="closeAllModals()" class="flex-1 bg-gray-100 text-gray-600 py-2 rounded-xl hover:bg-gray-200 transition text-sm">ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ Contract Modal ═══════════════ -->
+  <div id="contract-modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 space-y-5 max-h-[92vh] overflow-y-auto">
+
+      <div class="flex items-start justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-gray-800">สัญญาเช่า</h2>
+          <p id="c-tenant-label" class="text-sm text-blue-600 font-medium mt-0.5"></p>
+        </div>
+        <button onclick="closeAllModals()" class="text-gray-400 hover:text-gray-600 text-2xl leading-none mt-0.5">&times;</button>
+      </div>
+
+      <!-- Room + Deposit -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="col-span-2">
+          <label class="lbl">ห้องพัก *</label>
+          <select id="c-room" class="inp"></select>
+        </div>
+        <div>
+          <label class="lbl">ค่ามัดจำ (฿)</label>
+          <input id="c-deposit" type="number" step="0.01" placeholder="7000" class="inp" />
+        </div>
+        <div></div>
+      </div>
+
+      <!-- Dates -->
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="lbl">วันเข้าอยู่ *</label>
+          <input id="c-start" type="date" class="inp" />
+        </div>
+        <div>
+          <label class="lbl">วันออก <span class="text-gray-400 font-normal">(ว่าง = ไม่กำหนด)</span></label>
+          <input id="c-end" type="date" class="inp" />
+        </div>
+      </div>
+      <p id="c-duration" class="text-xs text-blue-600 font-medium -mt-3 min-h-[1rem]"></p>
+
+      <!-- ── Existing files ── -->
+      <div id="existing-section" class="hidden">
+        <label class="lbl mb-2">รูปสัญญาที่มีอยู่แล้ว</label>
+        <div id="existing-files" class="flex flex-wrap gap-2"></div>
+      </div>
+
+      <!-- ── New file upload ── -->
+      <div>
+        <label class="lbl mb-1">เพิ่มรูปสัญญา <span class="text-gray-400 font-normal">(JPG, PNG, WEBP, HEIC, PDF — ไม่เกิน 10 MB/ไฟล์)</span></label>
+        <div id="drop-zone" class="drop-zone p-5 text-center"
+          onclick="document.getElementById('file-input').click()"
+          ondragover="handleDragOver(event)"
+          ondragleave="handleDragLeave(event)"
+          ondrop="handleDrop(event)">
+          <div class="text-3xl mb-1">📎</div>
+          <p class="text-sm text-blue-600 font-medium">คลิกหรือลากไฟล์มาวางที่นี่</p>
+          <p class="text-xs text-gray-400 mt-0.5">แนบได้ไม่จำกัดจำนวน</p>
+          <input id="file-input" type="file" multiple accept="image/*,.pdf,.heic" class="hidden" onchange="handleFileSelect(event)" />
+        </div>
+        <!-- Pending file previews -->
+        <div id="pending-previews" class="flex flex-wrap gap-2 mt-3"></div>
+        <p id="pending-count" class="text-xs text-gray-400 mt-1 min-h-[1rem]"></p>
+      </div>
+
+      <!-- Terminate checkbox — shown only when editing existing contract -->
+      <div id="terminate-section" class="hidden border border-red-200 bg-red-50 rounded-xl p-3">
+        <label class="flex items-center gap-3 cursor-pointer select-none">
+          <input type="checkbox" id="c-terminate" class="w-4 h-4 accent-red-600" onchange="onTerminateChange()" />
+          <div>
+            <span class="text-sm font-semibold text-red-700">ยกเลิกสัญญา</span>
+            <p class="text-xs text-red-500 mt-0.5">สัญญาจะถูกปิด และห้องพักจะถูกปลดออกจากผู้เช่า</p>
+          </div>
+        </label>
+      </div>
+
+      <!-- Error -->
+      <div id="c-error" class="hidden text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2"></div>
+
+      <input type="hidden" id="c-tenant-id" />
+      <input type="hidden" id="c-contract-id" />
+
+      <div class="flex gap-2 pt-1">
+        <button onclick="saveContract()" id="btn-save-contract"
+          class="flex-1 bg-blue-700 text-white py-2.5 rounded-xl hover:bg-blue-800 transition text-sm font-semibold">
+          บันทึกสัญญา
+        </button>
+        <button onclick="closeAllModals()" class="flex-1 bg-gray-100 text-gray-600 py-2.5 rounded-xl hover:bg-gray-200 transition text-sm">ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image lightbox -->
+  <div id="lightbox" class="hidden fixed inset-0 bg-black/85 flex items-center justify-center z-[60] p-4"
+    onclick="document.getElementById('lightbox').classList.add('hidden')">
+    <img id="lightbox-img" src="" class="max-w-full max-h-full rounded-xl shadow-2xl" />
+  </div>
+
+  <script>
+    const TOKEN = localStorage.getItem('hordeeToken');
+    if (!TOKEN) { window.location.replace('login.html'); throw new Error('not logged in'); }
+    const headers = { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' };
+
+    let pendingFiles = [];
+    let allRooms    = [];
+    let allTenants  = [];
+    let activeTab   = 'all';
+
+    // ── Init ────────────────────────────────────────
+    (async function init() {
+      allRooms = await fetch('/api/rooms', { headers }).then(r => r.json());
+      populateRoomSelect();
+      await load();
+      setTab('current');
+    })();
+
+    function populateRoomSelect(currentRoomId) {
+      const sel = document.getElementById('c-room');
+      sel.innerHTML = '<option value="">— เลือกห้อง —</option>';
+      allRooms.forEach(room => {
+        const opt     = document.createElement('option');
+        opt.value     = room.id;
+        const occupied = room.contracts?.length > 0 && room.contracts[0].roomId !== currentRoomId;
+        opt.textContent = `ห้อง ${room.roomNumber}${occupied ? ' 🔴 มีผู้เช่า' : ''}`;
+        sel.appendChild(opt);
+      });
+    }
+
+    // ── Tab ───────────────────────────────────────────
+    function setTab(tab) {
+      activeTab = tab;
+      ['all','current','none'].forEach(t => {
+        const btn = document.getElementById(`tab-${t}`);
+        if (t === tab) {
+          btn.className = 'tab-btn px-3 py-1.5 rounded-md font-medium transition bg-white text-blue-700 shadow-sm';
+        } else {
+          btn.className = 'tab-btn px-3 py-1.5 rounded-md font-medium transition text-gray-500 hover:text-gray-700';
+        }
+      });
+      renderTable();
+    }
+
+    // ── Table ─────────────────────────────────────────
+    async function load() {
+      allTenants = await fetch('/api/tenants', { headers }).then(r => r.json());
+      renderTable();
+    }
+
+    function renderTable() {
+      const query  = (document.getElementById('search-input')?.value ?? '').toLowerCase().trim();
+      const tbody  = document.getElementById('tbody');
+
+      let filtered = allTenants.filter(t => {
+        const hasRoom = !!(t.contracts?.[0]?.room?.roomNumber);
+        if (activeTab === 'current' && !hasRoom) return false;
+        if (activeTab === 'none'    &&  hasRoom) return false;
+        if (query) {
+          const haystack = [t.name, t.nickname, t.phone].filter(Boolean).join(' ').toLowerCase();
+          if (!haystack.includes(query)) return false;
+        }
+        return true;
+      });
+
+      if (!filtered.length) {
+        const msg = query ? 'ไม่พบผู้เช่าที่ค้นหา' : activeTab === 'current' ? 'ไม่มีผู้เช่าปัจจุบัน' : 'ไม่มีข้อมูลผู้เช่า';
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-gray-400">${msg}</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(t => {
+        const c     = t.contracts?.[0];
+        const room  = c?.room?.roomNumber ?? '—';
+        const start = c?.startDate ? fmtDate(c.startDate) : '—';
+        const end   = c?.endDate   ? fmtDate(c.endDate)   : '<span class="text-gray-300">ไม่กำหนด</span>';
+        const imgs  = c?.contractFiles?.length ?? 0;
+        const lineTag = t.lineUserId
+          ? '<span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">เชื่อม</span>'
+          : '<span class="text-gray-300 text-xs">—</span>';
+        const filesTag = imgs
+          ? `<span class="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">${imgs} รูป</span>`
+          : '<span class="text-gray-300 text-xs">—</span>';
+        const nicknameHtml = t.nickname ? `<div class="text-xs text-gray-400">(${t.nickname})</div>` : '';
+        return `
+          <tr class="hover:bg-gray-50 transition">
+            <td class="px-4 py-3"><div class="font-medium">${t.name}</div>${nicknameHtml}</td>
+            <td class="px-4 py-3 text-gray-500">${t.phone ?? '—'}</td>
+            <td class="px-4 py-3 font-semibold text-blue-700">${room}</td>
+            <td class="px-4 py-3 text-xs text-gray-500">${start}</td>
+            <td class="px-4 py-3 text-xs">${end}</td>
+            <td class="px-4 py-3 text-center">${lineTag}</td>
+            <td class="px-4 py-3 text-center">${filesTag}</td>
+            <td class="px-4 py-3">
+              <div class="flex gap-1 justify-center flex-wrap">
+                <button onclick='openTenantModal(${JSON.stringify(t)})'
+                  class="px-2.5 py-1 bg-gray-100 text-gray-600 rounded text-xs hover:bg-gray-200">แก้ไข</button>
+                <button onclick='openContractModal("${t.id}","${t.name.replace(/"/g,"")}", ${JSON.stringify(c ?? null)})'
+                  class="px-2.5 py-1 bg-blue-100 text-blue-700 rounded text-xs hover:bg-blue-200">📋 สัญญา</button>
+                <button onclick='deleteTenant("${t.id}","${t.name.replace(/"/g,"")}")'
+                  class="px-2.5 py-1 bg-red-100 text-red-600 rounded text-xs hover:bg-red-200">ลบ</button>
+              </div>
+            </td>
+          </tr>`;
+      }).join('');
+    }
+
+    function fmtDate(iso) {
+      return new Date(iso).toLocaleDateString('th-TH', { day:'numeric', month:'short', year:'numeric' });
+    }
+
+    // ── Tenant modal ──────────────────────────────────
+    function openTenantModal(t) {
+      document.getElementById('tenant-modal-title').textContent = t ? 'แก้ไขข้อมูลผู้เช่า' : 'เพิ่มผู้เช่าใหม่';
+      document.getElementById('m-id').value       = t?.id         ?? '';
+      document.getElementById('m-name').value     = t?.name       ?? '';
+      document.getElementById('m-nickname').value = t?.nickname   ?? '';
+      document.getElementById('m-phone').value    = t?.phone      ?? '';
+      document.getElementById('m-line').value     = t?.lineUserId ?? '';
+      document.getElementById('m-nid').value      = t?.nationalId ?? '';
+      document.getElementById('m-note').value     = t?.note       ?? '';
+      document.getElementById('tenant-modal').classList.remove('hidden');
+    }
+
+    async function saveTenant() {
+      const id   = document.getElementById('m-id').value;
+      const name = document.getElementById('m-name').value.trim();
+      if (!name) { alert('กรุณากรอกชื่อผู้เช่า'); return; }
+      const body = {
+        name,
+        nickname:   document.getElementById('m-nickname').value.trim() || null,
+        phone:      document.getElementById('m-phone').value.trim()    || null,
+        lineUserId: document.getElementById('m-line').value.trim()     || null,
+        nationalId: document.getElementById('m-nid').value.trim()      || null,
+        note:       document.getElementById('m-note').value.trim()     || null,
+      };
+      const r = await fetch(id ? `/api/tenants/${id}` : '/api/tenants', {
+        method: id ? 'PUT' : 'POST', headers, body: JSON.stringify(body),
+      });
+      if (r.ok) { closeAllModals(); load(); }
+      else { const d = await r.json(); alert('❌ ' + (d.error || 'บันทึกไม่สำเร็จ')); }
+    }
+
+    async function deleteTenant(id, name) {
+      if (!confirm(`ลบผู้เช่า "${name}" ออกจากระบบ?\n\n(ลบได้เฉพาะผู้เช่าที่ไม่มีสัญญาเท่านั้น)`)) return;
+      const r = await fetch(`/api/tenants/${id}`, { method: 'DELETE', headers });
+      if (r.ok) { load(); }
+      else { const d = await r.json(); alert('❌ ' + (d.error || 'ลบไม่สำเร็จ')); }
+    }
+
+    // ── Contract modal ────────────────────────────────
+    function openContractModal(tenantId, tenantName, existingContract) {
+      pendingFiles = [];
+      renderPending();
+      document.getElementById('c-error').classList.add('hidden');
+      document.getElementById('c-tenant-id').value    = tenantId;
+      document.getElementById('c-contract-id').value  = existingContract?.id ?? '';
+      document.getElementById('c-tenant-label').textContent = tenantName;
+      document.getElementById('c-room').value    = existingContract?.roomId      ?? '';
+      document.getElementById('c-deposit').value = existingContract?.depositPaid ?? '';
+      document.getElementById('c-start').value   = existingContract?.startDate?.slice(0,10) ?? '';
+      document.getElementById('c-end').value     = existingContract?.endDate?.slice(0,10)   ?? '';
+      updateDuration();
+
+      // Existing files
+      const files = existingContract?.contractFiles ?? [];
+      const sec   = document.getElementById('existing-section');
+      const wrap  = document.getElementById('existing-files');
+      if (files.length) {
+        sec.classList.remove('hidden');
+        wrap.innerHTML = files.map((p, i) => {
+          const isImg = /\.(jpg|jpeg|png|webp|heic)$/i.test(p);
+          return isImg
+            ? `<div class="img-thumb cursor-pointer" onclick="viewImg('/${p}')">
+                <img src="/${p}" onerror="this.parentElement.style.display='none'" />
+                <span class="del-btn" title="ลบรูปนี้" onclick="removeExisting(this,'${p}')">✕</span>
+               </div>`
+            : `<div class="file-chip">📄 ไฟล์ ${i+1}
+                <button class="ml-1 text-red-400 hover:text-red-600" onclick="removeExisting(this,'${p}')">✕</button>
+               </div>`;
+        }).join('');
+      } else {
+        sec.classList.add('hidden');
+        wrap.innerHTML = '';
+      }
+
+      // Terminate section — only for existing contract
+      const termSec = document.getElementById('terminate-section');
+      const termChk = document.getElementById('c-terminate');
+      termChk.checked = false;
+      if (existingContract?.id) {
+        termSec.classList.remove('hidden');
+      } else {
+        termSec.classList.add('hidden');
+      }
+      onTerminateChange();
+
+      document.getElementById('contract-modal').classList.remove('hidden');
+    }
+
+    function removeExisting(btn, path) {
+      btn.closest('.img-thumb, .file-chip').remove();
+      // If no more existing files, hide section
+      if (!document.getElementById('existing-files').children.length) {
+        document.getElementById('existing-section').classList.add('hidden');
+      }
+    }
+
+    // Terminate checkbox toggle
+    function onTerminateChange() {
+      const terminate = document.getElementById('c-terminate').checked;
+      const roomSel   = document.getElementById('c-room');
+      const endInput  = document.getElementById('c-end');
+      const btn       = document.getElementById('btn-save-contract');
+      if (terminate) {
+        roomSel.disabled = true;
+        roomSel.classList.add('opacity-50');
+        if (!endInput.value) endInput.value = new Date().toISOString().slice(0, 10);
+        btn.textContent = 'ยืนยันยกเลิกสัญญา';
+        btn.className   = 'flex-1 bg-red-600 text-white py-2.5 rounded-xl hover:bg-red-700 transition text-sm font-semibold';
+      } else {
+        roomSel.disabled = false;
+        roomSel.classList.remove('opacity-50');
+        btn.textContent = 'บันทึกสัญญา';
+        btn.className   = 'flex-1 bg-blue-700 text-white py-2.5 rounded-xl hover:bg-blue-800 transition text-sm font-semibold';
+      }
+      updateDuration();
+    }
+
+    // Duration label
+    function updateDuration() {
+      const s = document.getElementById('c-start').value;
+      const e = document.getElementById('c-end').value;
+      const el = document.getElementById('c-duration');
+      if (s && e) {
+        const days = Math.round((new Date(e) - new Date(s)) / 86400000);
+        el.textContent = days > 0 ? `ระยะสัญญา ${days} วัน (≈ ${(days/30).toFixed(1)} เดือน)` : '';
+      } else {
+        el.textContent = s && !e ? 'ไม่กำหนดวันสิ้นสุด' : '';
+      }
+    }
+    document.getElementById('c-start').addEventListener('change', updateDuration);
+    document.getElementById('c-end').addEventListener('change',   updateDuration);
+
+    // ── File handling ─────────────────────────────────
+    function handleDragOver(e)  { e.preventDefault(); document.getElementById('drop-zone').classList.add('dragover'); }
+    function handleDragLeave()  { document.getElementById('drop-zone').classList.remove('dragover'); }
+    function handleDrop(e)      { e.preventDefault(); handleDragLeave(); addFiles([...e.dataTransfer.files]); }
+    function handleFileSelect(e){ addFiles([...e.target.files]); e.target.value = ''; }
+
+    function addFiles(newFiles) {
+      newFiles.forEach(f => {
+        if (!pendingFiles.find(p => p.name === f.name && p.size === f.size)) pendingFiles.push(f);
+      });
+      renderPending();
+    }
+
+    function removeFile(i) { pendingFiles.splice(i, 1); renderPending(); }
+
+    function renderPending() {
+      const wrap = document.getElementById('pending-previews');
+      const cnt  = document.getElementById('pending-count');
+      wrap.innerHTML = pendingFiles.map((f, i) => {
+        const isImg = f.type.startsWith('image/');
+        const src   = isImg ? URL.createObjectURL(f) : null;
+        return `<div class="img-thumb">
+          ${isImg
+            ? `<img src="${src}" class="cursor-pointer" onclick="viewImg('${src}')" />`
+            : `<div class="w-full h-full bg-gray-100 flex flex-col items-center justify-center rounded-lg border border-gray-200">
+                <span class="text-2xl">📄</span>
+                <span class="text-xs text-gray-500 mt-0.5 px-1 truncate w-full text-center">${f.name.slice(0,8)}</span>
+               </div>`}
+          <span class="del-btn" onclick="removeFile(${i})">✕</span>
+        </div>`;
+      }).join('');
+      cnt.textContent = pendingFiles.length ? `เลือกแล้ว ${pendingFiles.length} ไฟล์ (รอบันทึก)` : '';
+    }
+
+    // ── Save contract ──────────────────────────────────
+    async function saveContract() {
+      const tenantId   = document.getElementById('c-tenant-id').value;
+      const contractId = document.getElementById('c-contract-id').value;
+      const terminate  = document.getElementById('c-terminate').checked;
+      const errEl      = document.getElementById('c-error');
+      errEl.classList.add('hidden');
+
+      const btn = document.getElementById('btn-save-contract');
+      const origText = btn.textContent;
+      btn.textContent = '⏳ กำลังบันทึก...';
+      btn.disabled    = true;
+
+      try {
+        // ── ยกเลิกสัญญา ─────────────────────────────────
+        if (terminate && contractId) {
+          const endDate = document.getElementById('c-end').value || new Date().toISOString().slice(0, 10);
+          const r    = await fetch(`/api/tenants/${tenantId}/contracts/${contractId}`, {
+            method: 'PUT', headers,
+            body: JSON.stringify({ isActive: false, endDate }),
+          });
+          const data = await r.json();
+          if (!r.ok) throw new Error(data.error || 'ยกเลิกสัญญาไม่สำเร็จ');
+          closeAllModals();
+          load();
+          return;
+        }
+
+        const roomId    = document.getElementById('c-room').value;
+        const startDate = document.getElementById('c-start').value;
+        const endDate   = document.getElementById('c-end').value;
+        const deposit   = document.getElementById('c-deposit').value;
+
+        if (!roomId)    { showErr('กรุณาเลือกห้องพัก'); return; }
+        if (!startDate) { showErr('กรุณากรอกวันเข้าอยู่'); return; }
+
+        // 1. Upload new files
+        let newPaths = [];
+        if (pendingFiles.length) {
+          const form = new FormData();
+          pendingFiles.forEach(f => form.append('files', f));
+          const upRes = await fetch('/api/upload/contracts', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${TOKEN}` },
+            body: form,
+          });
+          const upData = await upRes.json();
+          if (!upRes.ok) throw new Error(upData.error || 'อัปโหลดรูปไม่สำเร็จ');
+          newPaths = upData.paths;
+        }
+
+        // 2. Collect remaining existing files (those not removed by user)
+        const existingImgs = [...document.querySelectorAll('#existing-files .img-thumb img')]
+          .map(img => img.getAttribute('src').replace(/^\//, ''));
+        const existingDocs = [...document.querySelectorAll('#existing-files .file-chip')]
+          .map(el => el.dataset?.path).filter(Boolean);
+        const keptFiles = [...existingImgs, ...existingDocs].filter(Boolean);
+
+        const contractFiles = [...keptFiles, ...newPaths];
+
+        // 3. Save contract
+        const payload = {
+          roomId, startDate,
+          endDate:       endDate    || null,
+          depositPaid:   deposit    ? parseFloat(deposit) : null,
+          contractFiles,
+        };
+
+        const url    = contractId
+          ? `/api/tenants/${tenantId}/contracts/${contractId}`
+          : `/api/tenants/${tenantId}/contracts`;
+        const method = contractId ? 'PUT' : 'POST';
+
+        const r    = await fetch(url, { method, headers, body: JSON.stringify(payload) });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || 'บันทึกไม่สำเร็จ');
+
+        closeAllModals();
+        load();
+      } catch (err) {
+        showErr(err.message);
+      } finally {
+        btn.textContent = origText;
+        btn.disabled    = false;
+      }
+    }
+
+    function showErr(msg) {
+      const el = document.getElementById('c-error');
+      el.textContent = '❌ ' + msg;
+      el.classList.remove('hidden');
+    }
+
+    // ── Utils ──────────────────────────────────────────
+    function closeAllModals() {
+      ['tenant-modal','contract-modal'].forEach(id => document.getElementById(id).classList.add('hidden'));
+      pendingFiles = [];
+      renderPending();
+    }
+
+    function viewImg(src) {
+      document.getElementById('lightbox-img').src = src;
+      document.getElementById('lightbox').classList.remove('hidden');
+    }
+
+    function logout() {
+      localStorage.removeItem('hordeeToken');
+      window.location.replace('login.html');
+    }
+
+  </script>
+
+  <!-- Image lightbox -->
+  <div id="lightbox" class="hidden fixed inset-0 bg-black/85 flex items-center justify-center z-[60] p-4"
+    onclick="this.classList.add('hidden')">
+    <img id="lightbox-img" src="" class="max-w-full max-h-full rounded-xl shadow-2xl" />
+  </div>
+
+</body>
+</html>

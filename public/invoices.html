@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>หอดี — ใบแจ้งหนี้</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>body { font-family: 'Sarabun', sans-serif; }</style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <nav class="bg-blue-800 text-white shadow-md">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2.5 select-none no-underline">
+        <div class="w-9 h-9 bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0">
+          <span class="text-blue-800 font-black text-lg leading-none">ห</span>
+        </div>
+        <div class="leading-tight">
+          <div class="font-bold text-lg tracking-wide text-white leading-none">หอ<span class="text-amber-300 font-extrabold">ดี</span></div>
+          <div class="text-blue-300 text-[11px] font-normal mt-0.5">ระบบจัดการหอพัก</div>
+        </div>
+      </a>
+      <div class="flex gap-4 text-sm font-medium">
+        <a href="index.html"    class="hover:text-blue-200">Dashboard</a>
+        <a href="rooms.html"    class="hover:text-blue-200">ห้องพัก</a>
+        <a href="tenants.html"  class="hover:text-blue-200">ผู้เช่า</a>
+        <a href="queue.html"    class="hover:text-blue-200">คิวรอเช่า</a>
+        <a href="water.html"    class="hover:text-blue-200">น้ำดื่ม</a>
+        <a href="billing.html"  class="hover:text-blue-200">ออกบิล</a>
+        <a href="invoices.html" class="hover:text-blue-200 border-b-2 border-white">ใบแจ้งหนี้</a>
+        <a href="settings.html" class="hover:text-blue-200">ตั้งค่า</a>
+      <button onclick="logout()" class="hover:text-red-300 text-xs opacity-70 hover:opacity-100 transition">ออกจากระบบ</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-6xl mx-auto px-4 py-6">
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="text-2xl font-bold text-gray-800">ใบแจ้งหนี้ทั้งหมด</h1>
+      <div class="flex gap-2">
+        <select id="filter-month" class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm">
+          <option value="">ทุกเดือน</option>
+          <option value="1">มกราคม</option><option value="2">กุมภาพันธ์</option>
+          <option value="3">มีนาคม</option><option value="4">เมษายน</option>
+          <option value="5">พฤษภาคม</option><option value="6">มิถุนายน</option>
+          <option value="7">กรกฎาคม</option><option value="8">สิงหาคม</option>
+          <option value="9">กันยายน</option><option value="10">ตุลาคม</option>
+          <option value="11">พฤศจิกายน</option><option value="12">ธันวาคม</option>
+        </select>
+        <input id="filter-year" type="number" placeholder="ปี (ค.ศ.)" min="2020" max="2099"
+          class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-28" />
+        <select id="filter-status" class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm">
+          <option value="">ทุกสถานะ</option>
+          <option value="PENDING">รอชำระ</option>
+          <option value="REVIEW">รอตรวจสลิป</option>
+          <option value="PAID">ชำระแล้ว</option>
+        </select>
+        <a href="billing.html" class="bg-blue-700 text-white px-4 py-1.5 rounded-lg text-sm hover:bg-blue-800 transition">+ ออกบิลใหม่</a>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+          <tr>
+            <th class="px-4 py-3 text-left">ห้อง</th>
+            <th class="px-4 py-3 text-left">ผู้เช่า</th>
+            <th class="px-4 py-3 text-left">งวด</th>
+            <th class="px-4 py-3 text-right">ยอด (฿)</th>
+            <th class="px-4 py-3 text-center">สถานะ</th>
+            <th class="px-4 py-3 text-center">หลักฐาน</th>
+            <th class="px-4 py-3 text-center">จัดการ</th>
+          </tr>
+        </thead>
+        <tbody id="tbody" class="divide-y divide-gray-100">
+          <tr><td colspan="7" class="text-center py-8 text-gray-400">กำลังโหลด...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- Slip Image Viewer Modal -->
+  <div id="slip-viewer-modal" class="hidden fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4" onclick="closeSlipViewer()">
+    <div class="relative max-w-2xl w-full" onclick="event.stopPropagation()">
+      <button onclick="closeSlipViewer()" class="absolute -top-10 right-0 text-white text-2xl font-bold hover:text-gray-300">✕</button>
+      <img id="slip-viewer-img" src="" class="w-full rounded-xl shadow-2xl max-h-[85vh] object-contain bg-white" />
+    </div>
+  </div>
+
+  <!-- Slip Approval Modal -->
+  <div id="slip-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md">
+      <div class="p-6 border-b">
+        <h3 class="text-lg font-bold text-gray-800">แนบสลิปการโอน</h3>
+        <p id="slip-inv-label" class="text-sm text-gray-500 mt-0.5"></p>
+      </div>
+      <div class="p-6 space-y-4">
+        <!-- Invoice Total -->
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
+          <p class="text-xs text-blue-500 uppercase tracking-wide mb-1">ยอดที่ต้องชำระ</p>
+          <p id="slip-total" class="text-3xl font-bold text-blue-700"></p>
+        </div>
+        <!-- File Upload -->
+        <div>
+          <label class="block text-sm text-gray-600 mb-2">เลือกรูปสลิป</label>
+          <input id="slip-file" type="file" accept="image/*"
+            class="block w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            onchange="previewSlip()" />
+          <div id="slip-preview-wrap" class="mt-3 hidden">
+            <img id="slip-preview" class="w-full rounded-lg border border-gray-200 max-h-48 object-contain" />
+          </div>
+        </div>
+      </div>
+      <div class="p-6 pt-0 flex gap-3">
+        <button onclick="closeSlipModal()" class="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm hover:bg-gray-50 transition">ยกเลิก</button>
+        <button onclick="submitSlip()" id="slip-submit-btn"
+          class="flex-1 bg-blue-700 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-800 transition disabled:opacity-50">
+          ยืนยันรับสลิป (→ รอตรวจ)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    const TOKEN = localStorage.getItem('hordeeToken');
+    if (!TOKEN) { window.location.replace('login.html'); throw new Error('not logged in'); }
+    const headers = { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' };
+
+    let _slipInvoiceId = null;
+
+    // Read URL params on load
+    (function applyUrlParams() {
+      const p = new URLSearchParams(location.search);
+      if (p.get('status'))  document.getElementById('filter-status').value = p.get('status');
+      if (p.get('month'))   document.getElementById('filter-month').value  = p.get('month');
+      if (p.get('year'))    document.getElementById('filter-year').value   = p.get('year');
+    })();
+
+    async function load() {
+      const status = document.getElementById('filter-status').value;
+      const month  = document.getElementById('filter-month').value;
+      const year   = document.getElementById('filter-year').value;
+      const qs = new URLSearchParams();
+      if (status) qs.set('status', status);
+      if (month)  qs.set('month',  month);
+      if (year)   qs.set('year',   year);
+      const data = await fetch(`/api/invoices${qs.toString() ? '?'+qs : ''}`, { headers }).then(r => r.json());
+      render(data);
+    }
+
+    function statusBadge(s) {
+      const map   = { PENDING:'bg-yellow-100 text-yellow-700', REVIEW:'bg-blue-100 text-blue-700', PAID:'bg-green-100 text-green-700' };
+      const label = { PENDING:'รอชำระ', REVIEW:'รอตรวจสลิป', PAID:'ชำระแล้ว' };
+      return `<span class="px-2 py-0.5 rounded-full text-xs font-medium ${map[s]}">${label[s]}</span>`;
+    }
+
+    function render(invoices) {
+      const tbody = document.getElementById('tbody');
+      if (!invoices.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">ไม่พบรายการ</td></tr>';
+        return;
+      }
+      tbody.innerHTML = invoices.map(inv => {
+        const room   = inv.contract?.room?.roomNumber ?? '—';
+        const tenant = inv.contract?.tenant?.name     ?? '—';
+        const month  = `${MONTHS[inv.month-1]} ${inv.year+543}`;
+        const total  = Number(inv.totalAmount).toLocaleString('th-TH', {minimumFractionDigits:2});
+        const slip   = inv.slipPath
+          ? `<button onclick="viewSlip('/${inv.slipPath}')" class="text-blue-500 hover:underline text-xs flex items-center gap-1 mx-auto">🖼 ดูสลิป</button>`
+          : '<span class="text-gray-300 text-xs">—</span>';
+
+        const actions = [];
+        if (inv.status === 'PENDING') {
+          actions.push(`<button onclick='openSlipModal(${JSON.stringify(inv)})' class="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded hover:bg-purple-200">แนบสลิป</button>`);
+          actions.push(`<button onclick="pushLine('${inv.id}')" class="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600">Line</button>`);
+        }
+        if (inv.status === 'REVIEW') {
+          actions.push(`<button onclick="setStatus('${inv.id}','PAID')" class="px-2 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600">ยืนยัน</button>`);
+        }
+        if (inv.status !== 'PAID') {
+          actions.push(`<button onclick="pushLine('${inv.id}')" class="px-2 py-1 bg-blue-100 text-blue-600 text-xs rounded hover:bg-blue-200" ${inv.status === 'PENDING' ? 'style="display:none"' : ''}>Line</button>`);
+        }
+        actions.push(`<button onclick="del('${inv.id}')" class="px-2 py-1 bg-red-100 text-red-500 text-xs rounded hover:bg-red-200">ลบ</button>`);
+
+        return `
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-3 font-semibold text-blue-700">${room}</td>
+            <td class="px-4 py-3">${tenant}</td>
+            <td class="px-4 py-3 text-gray-500">${month}</td>
+            <td class="px-4 py-3 text-right font-semibold">${total}</td>
+            <td class="px-4 py-3 text-center">${statusBadge(inv.status)}</td>
+            <td class="px-4 py-3 text-center">${slip}</td>
+            <td class="px-4 py-3 text-center">
+              <div class="flex gap-1 justify-center flex-wrap">
+                ${inv.status === 'PENDING' ? `<button onclick='openSlipModal(${JSON.stringify(inv)})' class="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded hover:bg-purple-200">แนบสลิป</button>` : ''}
+                ${inv.status === 'REVIEW'  ? `<button onclick="setStatus('${inv.id}','PAID')" class="px-2 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600">ยืนยัน</button>` : ''}
+                ${inv.status !== 'PAID'    ? `<button onclick="pushLine('${inv.id}')" class="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600">Line</button>` : ''}
+                <button onclick="del('${inv.id}')" class="px-2 py-1 bg-red-100 text-red-500 text-xs rounded hover:bg-red-200">ลบ</button>
+              </div>
+            </td>
+          </tr>`;
+      }).join('');
+    }
+
+    async function setStatus(id, status) {
+      if (!confirm(`เปลี่ยนสถานะเป็น "${status === 'PAID' ? 'ชำระแล้ว' : status}"?`)) return;
+      await fetch(`/api/invoices/${id}/status`, { method:'PUT', headers, body: JSON.stringify({status}) });
+      load();
+    }
+    async function pushLine(id) {
+      const r = await fetch(`/api/invoices/${id}/push-line`, { method:'POST', headers });
+      alert(r.ok ? '✅ ส่ง Line สำเร็จ' : '❌ ส่งไม่สำเร็จ');
+    }
+    async function del(id) {
+      if (!confirm('ลบใบแจ้งหนี้นี้?')) return;
+      await fetch(`/api/invoices/${id}`, { method:'DELETE', headers });
+      load();
+    }
+
+    // ---- Slip Image Viewer ----
+    function viewSlip(path) {
+      document.getElementById('slip-viewer-img').src = path;
+      document.getElementById('slip-viewer-modal').classList.remove('hidden');
+    }
+    function closeSlipViewer() {
+      document.getElementById('slip-viewer-modal').classList.add('hidden');
+      document.getElementById('slip-viewer-img').src = '';
+    }
+
+    // ---- Slip Modal ----
+    function openSlipModal(inv) {
+      _slipInvoiceId = inv.id;
+      const room   = inv.contract?.room?.roomNumber ?? '—';
+      const tenant = inv.contract?.tenant?.name     ?? '—';
+      const month  = `${MONTHS[inv.month-1]} ${inv.year+543}`;
+      document.getElementById('slip-inv-label').textContent = `ห้อง ${room} — ${tenant} (${month})`;
+      document.getElementById('slip-total').textContent = '฿' + Number(inv.totalAmount).toLocaleString('th-TH', {minimumFractionDigits:2});
+      document.getElementById('slip-file').value = '';
+      document.getElementById('slip-preview-wrap').classList.add('hidden');
+      document.getElementById('slip-modal').classList.remove('hidden');
+    }
+    function closeSlipModal() {
+      document.getElementById('slip-modal').classList.add('hidden');
+      _slipInvoiceId = null;
+    }
+    function previewSlip() {
+      const file = document.getElementById('slip-file').files[0];
+      if (!file) return;
+      const wrap = document.getElementById('slip-preview-wrap');
+      const img  = document.getElementById('slip-preview');
+      const reader = new FileReader();
+      reader.onload = e => { img.src = e.target.result; wrap.classList.remove('hidden'); };
+      reader.readAsDataURL(file);
+    }
+    async function submitSlip() {
+      const file = document.getElementById('slip-file').files[0];
+      if (!file) { alert('กรุณาเลือกรูปสลิปก่อน'); return; }
+      const btn = document.getElementById('slip-submit-btn');
+      btn.disabled = true; btn.textContent = '⏳ กำลังอัปโหลด...';
+      try {
+        const fd = new FormData();
+        fd.append('slip', file);
+        const r = await fetch(`/api/invoices/${_slipInvoiceId}/slip`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${TOKEN}` },
+          body: fd,
+        });
+        if (!r.ok) throw new Error((await r.json()).error || 'อัปโหลดไม่สำเร็จ');
+        closeSlipModal();
+        load();
+      } catch(e) {
+        alert('❌ ' + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'ยืนยันรับสลิป (→ รอตรวจ)';
+      }
+    }
+
+    document.getElementById('filter-status').addEventListener('change', load);
+    document.getElementById('filter-month').addEventListener('change', load);
+    document.getElementById('filter-year').addEventListener('change', load);
+    document.getElementById('slip-modal').addEventListener('click', function(e) {
+      if (e.target === this) closeSlipModal();
+    });
+    load();
+  </script>
+
+  <script>
+    function logout() {
+      localStorage.removeItem('hordeeToken');
+      window.location.replace('login.html');
+    }
+  </script>
+</body>
+</html>

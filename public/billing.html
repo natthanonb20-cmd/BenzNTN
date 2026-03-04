@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>หอดี — ออกบิล</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: 'Sarabun', sans-serif; }
+    .meter-input { display: none; }
+    .mode-meter .meter-input { display: grid; }
+    .mode-meter .fixed-input { display: none; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- Navbar -->
+  <nav class="bg-blue-800 text-white shadow-md">
+    <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2.5 select-none no-underline">
+        <div class="w-9 h-9 bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0">
+          <span class="text-blue-800 font-black text-lg leading-none">ห</span>
+        </div>
+        <div class="leading-tight">
+          <div class="font-bold text-lg tracking-wide text-white leading-none">หอ<span class="text-amber-300 font-extrabold">ดี</span></div>
+          <div class="text-blue-300 text-[11px] font-normal mt-0.5">ระบบจัดการหอพัก</div>
+        </div>
+      </a>
+      <div class="flex gap-4 text-sm font-medium">
+        <a href="index.html"    class="hover:text-blue-200">Dashboard</a>
+        <a href="rooms.html"    class="hover:text-blue-200">ห้องพัก</a>
+        <a href="tenants.html"  class="hover:text-blue-200">ผู้เช่า</a>
+        <a href="queue.html"    class="hover:text-blue-200">คิวรอเช่า</a>
+        <a href="water.html"    class="hover:text-blue-200">น้ำดื่ม</a>
+        <a href="billing.html"  class="hover:text-blue-200 border-b-2 border-white">ออกบิล</a>
+        <a href="invoices.html" class="hover:text-blue-200">ใบแจ้งหนี้</a>
+        <a href="settings.html" class="hover:text-blue-200">ตั้งค่า</a>
+      <button onclick="logout()" class="hover:text-red-300 text-xs opacity-70 hover:opacity-100 transition">ออกจากระบบ</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-3xl mx-auto px-4 py-6">
+    <h1 class="text-2xl font-bold text-gray-800 mb-1">ออกใบแจ้งหนี้</h1>
+    <p class="text-sm text-gray-500 mb-6">กรอกข้อมูลมิเตอร์และค่าใช้จ่าย แล้วบันทึกหรือส่ง Line ได้ทันที</p>
+
+    <form id="billing-form" class="space-y-5">
+
+      <!-- Contract & Period -->
+      <div class="bg-white rounded-xl shadow p-5 space-y-4">
+        <h2 class="font-semibold text-gray-700 text-base">1. เลือกห้องและงวด</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm text-gray-600 mb-1">ห้องพัก / ผู้เช่า</label>
+            <select id="sel-contract" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" required>
+              <option value="">— กรุณาเลือก —</option>
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-sm text-gray-600 mb-1">เดือน</label>
+              <select id="sel-month" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                <option value="1">มกราคม</option><option value="2">กุมภาพันธ์</option>
+                <option value="3">มีนาคม</option><option value="4">เมษายน</option>
+                <option value="5">พฤษภาคม</option><option value="6">มิถุนายน</option>
+                <option value="7">กรกฎาคม</option><option value="8">สิงหาคม</option>
+                <option value="9">กันยายน</option><option value="10">ตุลาคม</option>
+                <option value="11">พฤศจิกายน</option><option value="12">ธันวาคม</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm text-gray-600 mb-1">ปี (ค.ศ.)</label>
+              <input id="inp-year" type="number" value="2025" min="2020" max="2099"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm text-gray-600 mb-1">กำหนดชำระ (ไม่บังคับ)</label>
+          <input id="inp-due" type="date" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        </div>
+      </div>
+
+      <!-- Rent -->
+      <div class="bg-white rounded-xl shadow p-5 space-y-3">
+        <h2 class="font-semibold text-gray-700 text-base">2. ค่าเช่า</h2>
+        <div class="flex items-center gap-3">
+          <label class="block text-sm text-gray-600 w-24">ค่าเช่า (฿)</label>
+          <input id="inp-rent" type="number" step="0.01" placeholder="3500"
+            class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        </div>
+      </div>
+
+      <!-- Electric -->
+      <div class="bg-white rounded-xl shadow p-5 space-y-3" id="elec-section">
+        <div class="flex items-center justify-between">
+          <h2 class="font-semibold text-gray-700 text-base">3. ค่าไฟฟ้า</h2>
+          <div class="flex rounded-lg overflow-hidden border border-gray-300 text-xs font-medium">
+            <button type="button" onclick="setMode('elec','METER')" id="elec-btn-meter"
+              class="px-3 py-1.5 bg-blue-600 text-white transition">จดมิเตอร์</button>
+            <button type="button" onclick="setMode('elec','FIXED')" id="elec-btn-fixed"
+              class="px-3 py-1.5 bg-white text-gray-600 transition">ระบุยอด</button>
+          </div>
+        </div>
+
+        <!-- METER mode -->
+        <div id="elec-meter" class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">มิเตอร์เก่า</label>
+            <input type="number" id="elec-prev" step="0.01" placeholder="1200"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              oninput="calcElec()" />
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">มิเตอร์ใหม่</label>
+            <input type="number" id="elec-curr" step="0.01" placeholder="1350"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              oninput="calcElec()" />
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">ราคา/หน่วย (฿)</label>
+            <input type="number" id="elec-rate" step="0.01" placeholder="8"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              oninput="calcElec()" />
+          </div>
+        </div>
+
+        <!-- FIXED mode -->
+        <div id="elec-fixed" class="hidden">
+          <label class="block text-xs text-gray-500 mb-1">ยอดค่าไฟ (฿)</label>
+          <input type="number" id="elec-amount" step="0.01" placeholder="0"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            oninput="recalcTotal()" />
+        </div>
+
+        <!-- Preview -->
+        <div id="elec-preview" class="text-sm text-blue-700 font-medium"></div>
+      </div>
+
+      <!-- Water -->
+      <div class="bg-white rounded-xl shadow p-5 space-y-3" id="water-section">
+        <div class="flex items-center justify-between">
+          <h2 class="font-semibold text-gray-700 text-base">4. ค่าน้ำ</h2>
+          <div class="flex rounded-lg overflow-hidden border border-gray-300 text-xs font-medium">
+            <button type="button" onclick="setMode('water','METER')" id="water-btn-meter"
+              class="px-3 py-1.5 bg-blue-600 text-white transition">จดมิเตอร์</button>
+            <button type="button" onclick="setMode('water','FIXED')" id="water-btn-fixed"
+              class="px-3 py-1.5 bg-white text-gray-600 transition">ระบุยอด</button>
+          </div>
+        </div>
+
+        <!-- METER mode -->
+        <div id="water-meter" class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">มิเตอร์เก่า</label>
+            <input type="number" id="water-prev" step="0.01" placeholder="500"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              oninput="calcWater()" />
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">มิเตอร์ใหม่</label>
+            <input type="number" id="water-curr" step="0.01" placeholder="515"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              oninput="calcWater()" />
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">ราคา/หน่วย (฿)</label>
+            <input type="number" id="water-rate" step="0.01" placeholder="18"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              oninput="calcWater()" />
+          </div>
+        </div>
+
+        <!-- FIXED mode -->
+        <div id="water-fixed" class="hidden">
+          <label class="block text-xs text-gray-500 mb-1">ยอดค่าน้ำ (฿)</label>
+          <input type="number" id="water-amount" step="0.01" placeholder="0"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            oninput="recalcTotal()" />
+        </div>
+
+        <div id="water-preview" class="text-sm text-blue-700 font-medium"></div>
+      </div>
+
+      <!-- Extra Charges -->
+      <div class="bg-white rounded-xl shadow p-5 space-y-3">
+        <div class="flex items-center justify-between">
+          <h2 class="font-semibold text-gray-700 text-base">5. ค่าใช้จ่ายอื่นๆ</h2>
+          <button type="button" onclick="addExtra()"
+            class="text-xs px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg border border-blue-200 hover:bg-blue-100 transition">
+            + เพิ่มรายการ
+          </button>
+        </div>
+        <div id="extra-rows" class="space-y-2"></div>
+      </div>
+
+      <!-- Water Bottle Sales (linked to invoice) -->
+      <div class="bg-white rounded-xl shadow p-5 space-y-3">
+        <h2 class="font-semibold text-gray-700 text-base">6. ค่าน้ำดื่มค้างชำระ</h2>
+        <p class="text-xs text-gray-400">เลือกรายการน้ำดื่มที่ต้องการรวมในใบแจ้งหนี้นี้ (ยอดจะถูกเพิ่มในยอดรวมอัตโนมัติ)</p>
+        <div id="water-bottle-list">
+          <p class="text-sm text-gray-400 italic">กรุณาเลือกห้องพักก่อน</p>
+        </div>
+        <div id="water-bottle-sub" class="text-sm text-blue-700 font-medium"></div>
+      </div>
+
+      <!-- Summary -->
+      <div class="bg-blue-800 text-white rounded-xl shadow p-5">
+        <div class="flex justify-between items-center">
+          <span class="text-lg font-semibold">ยอดรวมทั้งหมด</span>
+          <span id="total-display" class="text-3xl font-bold">฿0.00</span>
+        </div>
+        <p class="text-blue-300 text-sm mt-1">คำนวณจากรายการทั้งหมดด้านบน</p>
+      </div>
+
+      <!-- Note -->
+      <div class="bg-white rounded-xl shadow p-5">
+        <label class="block text-sm text-gray-600 mb-1">หมายเหตุ (ไม่บังคับ)</label>
+        <textarea id="inp-note" rows="2" placeholder="เช่น: ค้างชำระเดือนก่อน กรุณาชำระภายในวันที่..."
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"></textarea>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex gap-3 pb-8">
+        <button type="submit" id="btn-save"
+          class="flex-1 bg-blue-700 hover:bg-blue-800 text-white font-semibold py-3 rounded-xl transition text-sm">
+          💾 บันทึกใบแจ้งหนี้
+        </button>
+        <button type="button" id="btn-save-send" onclick="submitForm(true)"
+          class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl transition text-sm">
+          📲 บันทึก + ส่ง Line
+        </button>
+      </div>
+    </form>
+  </main>
+
+  <script>
+    const TOKEN = localStorage.getItem('hordeeToken');
+    if (!TOKEN) { window.location.replace('login.html'); throw new Error('not logged in'); }
+    const headers = { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' };
+
+    const modes = { elec: 'METER', water: 'METER' };
+    let extraCount = 0;
+    let defaultRates = { electricRate: 8, waterRate: 18, monthlyRent: 0 };
+    let _waterSaleIds = [];
+
+    // ---- Init ----
+    (async function init() {
+      // Set current month/year
+      const now = new Date();
+      document.getElementById('sel-month').value = now.getMonth() + 1;
+      document.getElementById('inp-year').value  = now.getFullYear();
+
+      // Load contracts
+      const rooms = await fetch('/api/rooms', { headers }).then(r => r.json());
+      const sel   = document.getElementById('sel-contract');
+      rooms.forEach(room => {
+        const contract = room.contracts?.[0];
+        if (!contract) return;
+        const opt = document.createElement('option');
+        opt.value       = contract.id;
+        const nick = contract.tenant?.nickname ? ` (${contract.tenant.nickname})` : '';
+        opt.textContent = `ห้อง ${room.roomNumber} — ${contract.tenant?.name ?? ''}${nick}`;
+        opt.dataset.rent          = room.monthlyRent;
+        opt.dataset.electricRate  = room.customElectricRate ?? '';
+        opt.dataset.waterRate     = room.customWaterRate    ?? '';
+        opt.dataset.tenantId      = contract.tenantId ?? '';
+        sel.appendChild(opt);
+      });
+
+      // Load default settings
+      const settings = await fetch('/api/settings', { headers }).then(r => r.json());
+      if (settings.electricRate) defaultRates.electricRate = parseFloat(settings.electricRate);
+      if (settings.waterRate)    defaultRates.waterRate    = parseFloat(settings.waterRate);
+
+      sel.addEventListener('change', onContractChange);
+    })();
+
+    async function onContractChange() {
+      const opt = this.options[this.selectedIndex];
+      if (!opt.value) {
+        _waterSaleIds = [];
+        document.getElementById('water-bottle-list').innerHTML = '<p class="text-sm text-gray-400 italic">กรุณาเลือกห้องพักก่อน</p>';
+        document.getElementById('water-bottle-sub').textContent = '';
+        recalcTotal();
+        return;
+      }
+
+      const rent  = parseFloat(opt.dataset.rent || 0);
+      const eRate = opt.dataset.electricRate ? parseFloat(opt.dataset.electricRate) : defaultRates.electricRate;
+      const wRate = opt.dataset.waterRate    ? parseFloat(opt.dataset.waterRate)    : defaultRates.waterRate;
+
+      document.getElementById('inp-rent').value   = rent;
+      document.getElementById('elec-rate').value  = eRate;
+      document.getElementById('water-rate').value = wRate;
+      calcElec(); calcWater(); recalcTotal();
+      await loadUnpaidWater(opt.dataset.tenantId);
+    }
+
+    async function loadUnpaidWater(tenantId) {
+      const el = document.getElementById('water-bottle-list');
+      _waterSaleIds = [];
+      if (!tenantId) {
+        el.innerHTML = '<p class="text-sm text-gray-400 italic">กรุณาเลือกห้องพักก่อน</p>';
+        document.getElementById('water-bottle-sub').textContent = '';
+        recalcTotal(); return;
+      }
+      el.innerHTML = '<p class="text-sm text-gray-400">กำลังโหลด...</p>';
+      try {
+        const resp  = await fetch(`/api/water/unpaid/${tenantId}`, { headers }).then(r => r.json());
+        const sales = Array.isArray(resp) ? resp : (resp.sales ?? []);
+        if (!sales.length) {
+          el.innerHTML = '<p class="text-sm text-gray-400 italic">ไม่มีค่าน้ำดื่มค้างชำระ</p>';
+          document.getElementById('water-bottle-sub').textContent = '';
+          recalcTotal(); return;
+        }
+        el.innerHTML = sales.map(s => {
+          const d = new Date(s.saleDate).toLocaleDateString('th-TH', { day:'2-digit', month:'short' });
+          const packs = [
+            s.smallPacks ? `${s.smallPacks} แพ็คเล็ก` : '',
+            s.largePacks ? `${s.largePacks} แพ็คใหญ่` : '',
+          ].filter(Boolean).join(' + ');
+          return `<label class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+            <input type="checkbox" class="water-sale-chk w-4 h-4 accent-blue-600"
+              value="${s.id}" data-amount="${s.totalAmount}" onchange="onWaterCheck()" />
+            <div class="flex-1 min-w-0 text-sm">
+              <span class="text-gray-700">${d}</span>
+              ${packs ? `<span class="text-gray-400 text-xs ml-2">(${packs})</span>` : ''}
+              ${s.note ? `<span class="text-gray-400 text-xs ml-1">— ${s.note}</span>` : ''}
+            </div>
+            <span class="text-blue-700 font-semibold text-sm shrink-0">฿${Number(s.totalAmount).toLocaleString('th-TH',{minimumFractionDigits:2})}</span>
+          </label>`;
+        }).join('');
+        onWaterCheck();
+      } catch(e) {
+        el.innerHTML = '<p class="text-sm text-red-400">โหลดข้อมูลไม่สำเร็จ</p>';
+      }
+    }
+
+    function onWaterCheck() {
+      const checks = [...document.querySelectorAll('.water-sale-chk:checked')];
+      _waterSaleIds = checks.map(c => c.value);
+      const sub = checks.reduce((s, c) => s + parseFloat(c.dataset.amount || 0), 0);
+      document.getElementById('water-bottle-sub').textContent = _waterSaleIds.length
+        ? `เลือก ${_waterSaleIds.length} รายการ รวม ฿${sub.toLocaleString('th-TH',{minimumFractionDigits:2})}`
+        : '';
+      recalcTotal();
+    }
+
+    // ---- Mode toggle ----
+    function setMode(type, mode) {
+      modes[type] = mode;
+      const isMeter = mode === 'METER';
+      document.getElementById(`${type}-meter`).classList.toggle('hidden', !isMeter);
+      document.getElementById(`${type}-fixed`).classList.toggle('hidden',  isMeter);
+      document.getElementById(`${type}-btn-meter`).className = `px-3 py-1.5 transition text-xs font-medium ${isMeter  ? 'bg-blue-600 text-white' : 'bg-white text-gray-600'}`;
+      document.getElementById(`${type}-btn-fixed`).className = `px-3 py-1.5 transition text-xs font-medium ${!isMeter ? 'bg-blue-600 text-white' : 'bg-white text-gray-600'}`;
+      if (type === 'elec') calcElec(); else calcWater();
+    }
+
+    // ---- Meter calc ----
+    function calcElec() {
+      if (modes.elec !== 'METER') { recalcTotal(); return; }
+      const prev = parseFloat(document.getElementById('elec-prev').value || 0);
+      const curr = parseFloat(document.getElementById('elec-curr').value || 0);
+      const rate = parseFloat(document.getElementById('elec-rate').value || 0);
+      const units  = Math.max(0, curr - prev);
+      const amount = (units * rate).toFixed(2);
+      document.getElementById('elec-preview').textContent =
+        units ? `${units} หน่วย × ฿${rate} = ฿${Number(amount).toLocaleString('th-TH', {minimumFractionDigits:2})}` : '';
+      recalcTotal();
+    }
+
+    function calcWater() {
+      if (modes.water !== 'METER') { recalcTotal(); return; }
+      const prev = parseFloat(document.getElementById('water-prev').value || 0);
+      const curr = parseFloat(document.getElementById('water-curr').value || 0);
+      const rate = parseFloat(document.getElementById('water-rate').value || 0);
+      const units  = Math.max(0, curr - prev);
+      const amount = (units * rate).toFixed(2);
+      document.getElementById('water-preview').textContent =
+        units ? `${units} หน่วย × ฿${rate} = ฿${Number(amount).toLocaleString('th-TH', {minimumFractionDigits:2})}` : '';
+      recalcTotal();
+    }
+
+    // ---- Extra rows ----
+    function addExtra() {
+      extraCount++;
+      const id  = `extra-${extraCount}`;
+      const row = document.createElement('div');
+      row.id    = id;
+      row.className = 'flex gap-2 items-center';
+      row.innerHTML = `
+        <input type="text"   placeholder="รายการ เช่น ค่าล้างแอร์"
+          class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+          data-extra-label="${extraCount}" oninput="recalcTotal()" />
+        <input type="number" step="0.01" placeholder="0.00" min="0"
+          class="w-28 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+          data-extra-amount="${extraCount}" oninput="recalcTotal()" />
+        <button type="button" onclick="document.getElementById('${id}').remove(); recalcTotal()"
+          class="text-red-400 hover:text-red-600 text-lg leading-none">✕</button>`;
+      document.getElementById('extra-rows').appendChild(row);
+    }
+
+    // ---- Total ----
+    function recalcTotal() {
+      let total = parseFloat(document.getElementById('inp-rent').value || 0);
+
+      if (modes.elec === 'METER') {
+        const p = parseFloat(document.getElementById('elec-prev').value || 0);
+        const c = parseFloat(document.getElementById('elec-curr').value || 0);
+        const r = parseFloat(document.getElementById('elec-rate').value || 0);
+        total += Math.max(0, c - p) * r;
+      } else {
+        total += parseFloat(document.getElementById('elec-amount').value || 0);
+      }
+
+      if (modes.water === 'METER') {
+        const p = parseFloat(document.getElementById('water-prev').value || 0);
+        const c = parseFloat(document.getElementById('water-curr').value || 0);
+        const r = parseFloat(document.getElementById('water-rate').value || 0);
+        total += Math.max(0, c - p) * r;
+      } else {
+        total += parseFloat(document.getElementById('water-amount').value || 0);
+      }
+
+      document.querySelectorAll('[data-extra-amount]').forEach(el => {
+        total += parseFloat(el.value || 0);
+      });
+
+      // Water bottle sales
+      total += [...document.querySelectorAll('.water-sale-chk:checked')]
+        .reduce((s, c) => s + parseFloat(c.dataset.amount || 0), 0);
+
+      document.getElementById('total-display').textContent =
+        '฿' + total.toLocaleString('th-TH', { minimumFractionDigits: 2 });
+    }
+
+    // ---- Build payload ----
+    function buildPayload() {
+      const items = [];
+      let sortOrder = 0;
+
+      // Rent
+      const rent = parseFloat(document.getElementById('inp-rent').value || 0);
+      if (rent > 0) {
+        items.push({ label: 'ค่าเช่าห้อง', billingType: 'FIXED', amount: rent, sortOrder: sortOrder++ });
+      }
+
+      // Electric
+      if (modes.elec === 'METER') {
+        const prev = parseFloat(document.getElementById('elec-prev').value || 0);
+        const curr = parseFloat(document.getElementById('elec-curr').value || 0);
+        const rate = parseFloat(document.getElementById('elec-rate').value || 0);
+        const amount = Math.max(0, curr - prev) * rate;
+        if (rate > 0) {
+          items.push({ label: 'ค่าไฟฟ้า', billingType: 'METER',
+            previousMeter: prev, currentMeter: curr, unitRate: rate,
+            amount: parseFloat(amount.toFixed(2)), sortOrder: sortOrder++ });
+        }
+      } else {
+        const amount = parseFloat(document.getElementById('elec-amount').value || 0);
+        if (amount > 0) items.push({ label: 'ค่าไฟฟ้า', billingType: 'FIXED', amount, sortOrder: sortOrder++ });
+      }
+
+      // Water
+      if (modes.water === 'METER') {
+        const prev = parseFloat(document.getElementById('water-prev').value || 0);
+        const curr = parseFloat(document.getElementById('water-curr').value || 0);
+        const rate = parseFloat(document.getElementById('water-rate').value || 0);
+        const amount = Math.max(0, curr - prev) * rate;
+        if (rate > 0) {
+          items.push({ label: 'ค่าน้ำ', billingType: 'METER',
+            previousMeter: prev, currentMeter: curr, unitRate: rate,
+            amount: parseFloat(amount.toFixed(2)), sortOrder: sortOrder++ });
+        }
+      } else {
+        const amount = parseFloat(document.getElementById('water-amount').value || 0);
+        if (amount > 0) items.push({ label: 'ค่าน้ำ', billingType: 'FIXED', amount, sortOrder: sortOrder++ });
+      }
+
+      // Extras
+      document.querySelectorAll('[data-extra-amount]').forEach(el => {
+        const n    = el.dataset.extraAmount;
+        const lbl  = document.querySelector(`[data-extra-label="${n}"]`)?.value?.trim();
+        const amt  = parseFloat(el.value || 0);
+        if (lbl && amt > 0) {
+          items.push({ label: lbl, billingType: 'FIXED', amount: amt, sortOrder: sortOrder++ });
+        }
+      });
+
+      // Water bottle sales
+      const wbTotal = [...document.querySelectorAll('.water-sale-chk:checked')]
+        .reduce((s, c) => s + parseFloat(c.dataset.amount || 0), 0);
+      if (_waterSaleIds.length && wbTotal > 0) {
+        items.push({ label: 'ค่าน้ำดื่ม', billingType: 'FIXED', amount: parseFloat(wbTotal.toFixed(2)), sortOrder: sortOrder++ });
+      }
+
+      return {
+        contractId:   document.getElementById('sel-contract').value,
+        month:        parseInt(document.getElementById('sel-month').value),
+        year:         parseInt(document.getElementById('inp-year').value),
+        dueDate:      document.getElementById('inp-due').value || null,
+        note:         document.getElementById('inp-note').value || null,
+        items,
+        waterSaleIds: _waterSaleIds,
+      };
+    }
+
+    // ---- Submit ----
+    document.getElementById('billing-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await submitForm(false);
+    });
+
+    async function submitForm(sendLine) {
+      const payload = buildPayload();
+      if (!payload.contractId) { alert('กรุณาเลือกห้องพัก/ผู้เช่า'); return; }
+      if (!payload.items.length) { alert('กรุณากรอกรายการค่าใช้จ่ายอย่างน้อย 1 รายการ'); return; }
+
+      const btnSave = document.getElementById('btn-save');
+      const btnSend = document.getElementById('btn-save-send');
+      btnSave.disabled = btnSend.disabled = true;
+      btnSave.textContent = btnSend.textContent = '⏳ กำลังบันทึก...';
+
+      try {
+        const res  = await fetch('/api/invoices', { method: 'POST', headers, body: JSON.stringify(payload) });
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.error || 'บันทึกไม่สำเร็จ');
+
+        if (sendLine) {
+          const r2 = await fetch(`/api/invoices/${data.id}/push-line`, { method: 'POST', headers });
+          if (!r2.ok) alert('⚠️ บันทึกสำเร็จแต่ส่ง Line ไม่ได้ (ตรวจสอบ Line User ID ของผู้เช่า)');
+          else        alert('✅ บันทึกและส่ง Line สำเร็จ!');
+        } else {
+          alert('✅ บันทึกใบแจ้งหนี้สำเร็จ!');
+        }
+
+        window.location.href = 'index.html';
+      } catch (err) {
+        alert(`❌ ${err.message}`);
+      } finally {
+        btnSave.disabled = btnSend.disabled = false;
+        btnSave.textContent = '💾 บันทึกใบแจ้งหนี้';
+        btnSend.textContent = '📲 บันทึก + ส่ง Line';
+      }
+    }
+
+    // Recalc on rent change
+    document.getElementById('inp-rent').addEventListener('input', recalcTotal);
+  </script>
+
+  <script>
+    function logout() {
+      localStorage.removeItem('hordeeToken');
+      window.location.replace('login.html');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>หอดี — คิวผู้สนใจ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>body { font-family: 'Sarabun', sans-serif; }</style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- Navbar -->
+  <nav class="bg-blue-800 text-white shadow-md">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2.5 select-none no-underline">
+        <div class="w-9 h-9 bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0">
+          <span class="text-blue-800 font-black text-lg leading-none">ห</span>
+        </div>
+        <div class="leading-tight">
+          <div class="font-bold text-lg tracking-wide text-white leading-none">หอ<span class="text-amber-300 font-extrabold">ดี</span></div>
+          <div class="text-blue-300 text-[11px] font-normal mt-0.5">ระบบจัดการหอพัก</div>
+        </div>
+      </a>
+      <div class="flex gap-4 text-sm font-medium items-center">
+        <a href="index.html"    class="hover:text-blue-200">Dashboard</a>
+        <a href="rooms.html"    class="hover:text-blue-200">ห้องพัก</a>
+        <a href="tenants.html"  class="hover:text-blue-200">ผู้เช่า</a>
+        <a href="queue.html"    class="hover:text-blue-200 border-b-2 border-white pb-0.5">คิวรอเช่า</a>
+        <a href="water.html"    class="hover:text-blue-200">น้ำดื่ม</a>
+        <a href="billing.html"  class="hover:text-blue-200">ออกบิล</a>
+        <a href="invoices.html" class="hover:text-blue-200">ใบแจ้งหนี้</a>
+        <a href="settings.html" class="hover:text-blue-200">ตั้งค่า</a>
+        <button onclick="logout()" class="hover:text-red-300 text-xs opacity-70 hover:opacity-100 transition ml-2">ออกจากระบบ</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-5xl mx-auto px-4 py-6">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-5">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">คิวผู้สนใจเช่าห้อง</h1>
+        <p id="summary-text" class="text-sm text-gray-500 mt-0.5">กำลังโหลด...</p>
+      </div>
+      <button onclick="openModal()" class="bg-blue-700 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-800 transition">
+        + เพิ่มคิวใหม่
+      </button>
+    </div>
+
+    <!-- Filter tabs -->
+    <div class="flex gap-2 mb-4">
+      <button onclick="setFilter('WAITING')"   id="tab-WAITING"   class="tab-btn active-tab">รอเช่า</button>
+      <button onclick="setFilter('CONVERTED')" id="tab-CONVERTED" class="tab-btn">เพิ่มเป็นผู้เช่าแล้ว</button>
+      <button onclick="setFilter('CANCELLED')" id="tab-CANCELLED" class="tab-btn">ยกเลิก</button>
+      <button onclick="setFilter('')"          id="tab-"          class="tab-btn">ทั้งหมด</button>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white rounded-xl shadow overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+          <tr>
+            <th class="px-4 py-3 text-center w-14">คิว</th>
+            <th class="px-4 py-3 text-left">ชื่อ</th>
+            <th class="px-4 py-3 text-left">เบอร์โทร</th>
+            <th class="px-4 py-3 text-center">Line</th>
+            <th class="px-4 py-3 text-left">หมายเหตุ</th>
+            <th class="px-4 py-3 text-center">วันที่ลง</th>
+            <th class="px-4 py-3 text-center">สถานะ</th>
+            <th class="px-4 py-3 text-center">จัดการ</th>
+          </tr>
+        </thead>
+        <tbody id="queue-tbody" class="divide-y divide-gray-100">
+          <tr><td colspan="8" class="text-center py-8 text-gray-400">กำลังโหลด...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- ═══════════ Modal ═══════════ -->
+  <div id="queue-modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
+      <h2 id="modal-title" class="text-lg font-bold text-gray-800">เพิ่มคิวใหม่</h2>
+      <div class="space-y-3">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">ชื่อ *</label>
+            <input id="q-name" type="text" class="inp" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">ชื่อเล่น</label>
+            <input id="q-nickname" type="text" class="inp" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">เบอร์โทร</label>
+          <input id="q-phone" type="tel" class="inp" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">Line User ID</label>
+          <input id="q-line" type="text" class="inp" placeholder="Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">หมายเหตุ</label>
+          <input id="q-note" type="text" class="inp" placeholder="เช่น ต้องการห้องชั้น 2, งบ 5000" />
+        </div>
+        <div id="q-status-wrap" class="hidden">
+          <label class="block text-sm font-medium text-gray-600 mb-1">สถานะ</label>
+          <select id="q-status" class="inp">
+            <option value="WAITING">รอเช่า</option>
+            <option value="CANCELLED">ยกเลิก</option>
+          </select>
+        </div>
+      </div>
+      <input type="hidden" id="q-id" />
+      <div class="flex gap-2 pt-1">
+        <button onclick="saveQueue()" class="flex-1 bg-blue-700 text-white py-2 rounded-xl hover:bg-blue-800 transition text-sm font-semibold">บันทึก</button>
+        <button onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-600 py-2 rounded-xl hover:bg-gray-200 transition text-sm">ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ Convert Confirm Modal ═══════════ -->
+  <div id="convert-modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4 text-center">
+      <div class="text-4xl">✅</div>
+      <h2 class="text-lg font-bold text-gray-800">เพิ่มเป็นผู้เช่า</h2>
+      <p id="convert-msg" class="text-sm text-gray-600"></p>
+      <p class="text-xs text-blue-600 bg-blue-50 rounded-lg p-3">ระบบจะสร้างผู้เช่าใหม่จากข้อมูลคิวนี้<br>คุณสามารถกรอกข้อมูลเพิ่มเติมและสร้างสัญญาได้ที่หน้าผู้เช่า</p>
+      <div class="flex gap-2 pt-1">
+        <button id="btn-confirm-convert" class="flex-1 bg-green-600 text-white py-2 rounded-xl hover:bg-green-700 transition text-sm font-semibold">ยืนยัน</button>
+        <button onclick="document.getElementById('convert-modal').classList.add('hidden')" class="flex-1 bg-gray-100 text-gray-600 py-2 rounded-xl hover:bg-gray-200 transition text-sm">ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .inp { width:100%; border:1px solid #d1d5db; border-radius:0.5rem; padding:0.5rem 0.75rem; font-size:0.875rem; outline:none; transition:border .15s; }
+    .inp:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.15); }
+    .tab-btn { padding:0.375rem 1rem; border-radius:0.5rem; font-size:0.8rem; font-weight:500; color:#4b5563; background:#f3f4f6; transition:all .15s; }
+    .tab-btn:hover { background:#e5e7eb; }
+    .active-tab { background:#1d4ed8 !important; color:#fff !important; }
+  </style>
+
+  <script>
+    const TOKEN = localStorage.getItem('hordeeToken');
+    if (!TOKEN) { window.location.replace('login.html'); throw new Error('not logged in'); }
+    const headers = { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' };
+
+    let currentFilter = 'WAITING';
+
+    async function load() {
+      const [queue, stats] = await Promise.all([
+        fetch(`/api/queue${currentFilter ? '?status=' + currentFilter : ''}`, { headers }).then(r => r.json()),
+        fetch('/api/queue/stats', { headers }).then(r => r.json()),
+      ]);
+
+      // Summary
+      document.getElementById('summary-text').textContent =
+        `รอเช่าอยู่ ${stats.waiting} คน`;
+
+      const tbody = document.getElementById('queue-tbody');
+      if (!queue.length) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-gray-400">ไม่มีรายการ</td></tr>`;
+        return;
+      }
+
+      const statusLabel = { WAITING: 'รอเช่า', CONVERTED: 'เพิ่มแล้ว', CANCELLED: 'ยกเลิก' };
+      const statusClass = {
+        WAITING:   'bg-yellow-100 text-yellow-700',
+        CONVERTED: 'bg-green-100 text-green-700',
+        CANCELLED: 'bg-gray-100 text-gray-500',
+      };
+
+      tbody.innerHTML = queue.map(q => {
+        const nicknameHtml = q.nickname ? `<div class="text-xs text-gray-400">(${q.nickname})</div>` : '';
+        const lineTag = q.lineUserId
+          ? '<span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">มี</span>'
+          : '<span class="text-gray-300 text-xs">—</span>';
+        const date = new Date(q.createdAt).toLocaleDateString('th-TH', { day:'numeric', month:'short', year:'numeric' });
+        const badge = `<span class="px-2 py-0.5 rounded-full text-xs font-medium ${statusClass[q.status]}">${statusLabel[q.status]}</span>`;
+        const actions = q.status === 'WAITING'
+          ? `<button onclick='editQueue(${JSON.stringify(q)})' class="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs hover:bg-gray-200">แก้ไข</button>
+             <button onclick='confirmConvert("${q.id}","${q.name.replace(/"/g,'')}")' class="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600">+ ผู้เช่า</button>
+             <button onclick='cancelQueue("${q.id}")' class="px-2 py-1 bg-red-100 text-red-600 rounded text-xs hover:bg-red-200">ยกเลิก</button>`
+          : `<button onclick='editQueue(${JSON.stringify(q)})' class="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs hover:bg-gray-200">แก้ไข</button>
+             <button onclick='deleteQueue("${q.id}")' class="px-2 py-1 bg-red-100 text-red-600 rounded text-xs hover:bg-red-200">ลบ</button>`;
+        return `
+          <tr class="hover:bg-gray-50 transition">
+            <td class="px-4 py-3 text-center font-bold text-blue-600">#${q.queueNumber}</td>
+            <td class="px-4 py-3"><div class="font-medium">${q.name}</div>${nicknameHtml}</td>
+            <td class="px-4 py-3 text-gray-500">${q.phone ?? '—'}</td>
+            <td class="px-4 py-3 text-center">${lineTag}</td>
+            <td class="px-4 py-3 text-gray-500 text-xs max-w-[160px] truncate">${q.note ?? '—'}</td>
+            <td class="px-4 py-3 text-center text-xs text-gray-500">${date}</td>
+            <td class="px-4 py-3 text-center">${badge}</td>
+            <td class="px-4 py-3">
+              <div class="flex gap-1 justify-center flex-wrap">${actions}</div>
+            </td>
+          </tr>`;
+      }).join('');
+    }
+
+    function setFilter(f) {
+      currentFilter = f;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active-tab'));
+      document.getElementById('tab-' + f).classList.add('active-tab');
+      load();
+    }
+
+    // ── Modal ──────────────────────────────────────────
+    function openModal(q) {
+      document.getElementById('modal-title').textContent = q ? 'แก้ไขคิว' : 'เพิ่มคิวใหม่';
+      document.getElementById('q-id').value       = q?.id       ?? '';
+      document.getElementById('q-name').value     = q?.name     ?? '';
+      document.getElementById('q-nickname').value = q?.nickname ?? '';
+      document.getElementById('q-phone').value    = q?.phone    ?? '';
+      document.getElementById('q-line').value     = q?.lineUserId ?? '';
+      document.getElementById('q-note').value     = q?.note     ?? '';
+      const statusWrap = document.getElementById('q-status-wrap');
+      if (q) {
+        statusWrap.classList.remove('hidden');
+        document.getElementById('q-status').value = q.status ?? 'WAITING';
+      } else {
+        statusWrap.classList.add('hidden');
+      }
+      document.getElementById('queue-modal').classList.remove('hidden');
+    }
+
+    function editQueue(q) { openModal(q); }
+    function closeModal() { document.getElementById('queue-modal').classList.add('hidden'); }
+
+    async function saveQueue() {
+      const id   = document.getElementById('q-id').value;
+      const name = document.getElementById('q-name').value.trim();
+      if (!name) { alert('กรุณากรอกชื่อ'); return; }
+      const body = {
+        name,
+        nickname:  document.getElementById('q-nickname').value.trim() || null,
+        phone:     document.getElementById('q-phone').value.trim()    || null,
+        lineUserId: document.getElementById('q-line').value.trim()    || null,
+        note:      document.getElementById('q-note').value.trim()     || null,
+        ...(id ? { status: document.getElementById('q-status').value } : {}),
+      };
+      const r = await fetch(id ? `/api/queue/${id}` : '/api/queue', {
+        method: id ? 'PUT' : 'POST', headers, body: JSON.stringify(body),
+      });
+      if (r.ok) { closeModal(); load(); }
+      else { const d = await r.json(); alert('❌ ' + (d.error || 'บันทึกไม่สำเร็จ')); }
+    }
+
+    async function cancelQueue(id) {
+      const r = await fetch(`/api/queue/${id}`, {
+        method: 'PUT', headers, body: JSON.stringify({ status: 'CANCELLED' }),
+      });
+      if (r.ok) load();
+    }
+
+    async function deleteQueue(id) {
+      if (!confirm('ลบรายการนี้ออกจากระบบ?')) return;
+      const r = await fetch(`/api/queue/${id}`, { method: 'DELETE', headers });
+      if (r.ok) load();
+    }
+
+    // ── Convert to tenant ─────────────────────────────
+    function confirmConvert(id, name) {
+      document.getElementById('convert-msg').textContent = `เพิ่ม "${name}" เป็นผู้เช่าในระบบ?`;
+      document.getElementById('btn-confirm-convert').onclick = () => doConvert(id);
+      document.getElementById('convert-modal').classList.remove('hidden');
+    }
+
+    async function doConvert(id) {
+      document.getElementById('convert-modal').classList.add('hidden');
+      const r = await fetch(`/api/queue/${id}/convert`, { method: 'POST', headers });
+      if (r.ok) {
+        const d = await r.json();
+        load();
+        if (confirm(`✅ เพิ่มผู้เช่าสำเร็จ!\nไปที่หน้าผู้เช่าเพื่อสร้างสัญญาเลยไหม?`)) {
+          window.location.href = 'tenants.html';
+        }
+      } else {
+        const d = await r.json();
+        alert('❌ ' + (d.error || 'เกิดข้อผิดพลาด'));
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('hordeeToken');
+      window.location.replace('login.html');
+    }
+
+    load();
+  </script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "hordee-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3001
+    },
+    {
+      "name": "hordee-start",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["start"],
+      "port": 3001
+    },
+    {
+      "name": "prisma-studio",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "db:studio"],
+      "port": 5555
+    }
+  ]
+}

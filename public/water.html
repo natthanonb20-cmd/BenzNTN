@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>หอดี — น้ำดื่ม</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>body { font-family: 'Sarabun', sans-serif; }</style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- Navbar -->
+  <nav class="bg-blue-800 text-white shadow-md">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2.5 select-none no-underline">
+        <div class="w-9 h-9 bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0">
+          <span class="text-blue-800 font-black text-lg leading-none">ห</span>
+        </div>
+        <div class="leading-tight">
+          <div class="font-bold text-lg tracking-wide text-white leading-none">หอ<span class="text-amber-300 font-extrabold">ดี</span></div>
+          <div class="text-blue-300 text-[11px] font-normal mt-0.5">ระบบจัดการหอพัก</div>
+        </div>
+      </a>
+      <div class="flex gap-4 text-sm font-medium items-center">
+        <a href="index.html"    class="hover:text-blue-200">Dashboard</a>
+        <a href="rooms.html"    class="hover:text-blue-200">ห้องพัก</a>
+        <a href="tenants.html"  class="hover:text-blue-200">ผู้เช่า</a>
+        <a href="queue.html"    class="hover:text-blue-200">คิวรอเช่า</a>
+        <a href="water.html"    class="hover:text-blue-200 border-b-2 border-white pb-0.5">น้ำดื่ม</a>
+        <a href="billing.html"  class="hover:text-blue-200">ออกบิล</a>
+        <a href="invoices.html" class="hover:text-blue-200">ใบแจ้งหนี้</a>
+        <a href="settings.html" class="hover:text-blue-200">ตั้งค่า</a>
+        <button onclick="logout()" class="hover:text-red-300 text-xs opacity-70 hover:opacity-100 transition ml-2">ออกจากระบบ</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-5xl mx-auto px-4 py-6 space-y-5">
+
+    <!-- Header + stats -->
+    <div class="flex items-start justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">น้ำดื่ม</h1>
+        <p class="text-sm text-gray-500 mt-0.5" id="stat-text">กำลังโหลด...</p>
+      </div>
+      <button onclick="openModal()" class="bg-blue-700 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-800 transition">+ บันทึกการขาย</button>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="bg-white rounded-xl shadow p-4">
+        <p class="text-xs text-gray-400 uppercase tracking-wide">รายได้วันนี้</p>
+        <p id="card-today" class="text-2xl font-bold text-blue-600 mt-1">฿—</p>
+      </div>
+      <div class="bg-white rounded-xl shadow p-4">
+        <p class="text-xs text-gray-400 uppercase tracking-wide" id="lbl-card-small">แพ็คเล็กวันนี้</p>
+        <p id="card-small" class="text-2xl font-bold text-cyan-600 mt-1">—</p>
+        <p id="lbl-card-small-price" class="text-xs text-gray-400 mt-0.5"></p>
+      </div>
+      <div class="bg-white rounded-xl shadow p-4">
+        <p class="text-xs text-gray-400 uppercase tracking-wide" id="lbl-card-large">แพ็คใหญ่วันนี้</p>
+        <p id="card-large" class="text-2xl font-bold text-indigo-600 mt-1">—</p>
+        <p id="lbl-card-large-price" class="text-xs text-gray-400 mt-0.5"></p>
+      </div>
+      <div class="bg-white rounded-xl shadow p-4">
+        <p class="text-xs text-gray-400 uppercase tracking-wide">ค้างชำระรวม</p>
+        <p id="card-unpaid" class="text-2xl font-bold text-orange-500 mt-1">฿—</p>
+      </div>
+    </div>
+
+    <!-- Date filter -->
+    <div class="flex items-center gap-3 flex-wrap">
+      <label class="text-sm font-medium text-gray-600">วันที่:</label>
+      <input id="filter-date" type="date" class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm" />
+      <button onclick="setToday()" class="text-xs text-blue-600 hover:underline">วันนี้</button>
+      <button onclick="clearDate()" class="text-xs text-gray-400 hover:text-gray-600 hover:underline">ทั้งหมด</button>
+      <label class="text-sm font-medium text-gray-600 ml-4">สถานะ:</label>
+      <select id="filter-paid" class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm">
+        <option value="">ทั้งหมด</option>
+        <option value="false">ค้างชำระ</option>
+        <option value="true">ชำระแล้ว</option>
+      </select>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white rounded-xl shadow overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+          <tr>
+            <th class="px-4 py-3 text-left">วันที่</th>
+            <th class="px-4 py-3 text-left">ผู้เช่า</th>
+            <th class="px-4 py-3 text-center" id="th-small">แพ็คเล็ก</th>
+            <th class="px-4 py-3 text-center" id="th-large">แพ็คใหญ่</th>
+            <th class="px-4 py-3 text-right">ยอด (฿)</th>
+            <th class="px-4 py-3 text-center">สถานะ</th>
+            <th class="px-4 py-3 text-left">หมายเหตุ</th>
+            <th class="px-4 py-3 text-center">จัดการ</th>
+          </tr>
+        </thead>
+        <tbody id="water-tbody" class="divide-y divide-gray-100">
+          <tr><td colspan="8" class="text-center py-8 text-gray-400">กำลังโหลด...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+
+  <!-- ═══════ Modal ═══════ -->
+  <div id="water-modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
+      <h2 id="modal-title" class="text-lg font-bold text-gray-800">บันทึกการขายน้ำดื่ม</h2>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">ผู้เช่า *</label>
+          <select id="w-tenant" class="inp"></select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">วันที่</label>
+          <input id="w-date" type="date" class="inp" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1" id="lbl-small">แพ็คเล็ก (฿—)</label>
+            <input id="w-small" type="number" min="0" value="0" class="inp" oninput="calcTotal()" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1" id="lbl-large">แพ็คใหญ่ (฿—)</label>
+            <input id="w-large" type="number" min="0" value="0" class="inp" oninput="calcTotal()" />
+          </div>
+        </div>
+        <div class="bg-blue-50 rounded-xl px-4 py-3 flex items-center justify-between">
+          <span class="text-sm font-medium text-gray-600">ยอดรวม</span>
+          <span id="w-total-display" class="text-xl font-bold text-blue-700">฿0.00</span>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">หมายเหตุ</label>
+          <input id="w-note" type="text" class="inp" placeholder="เช่น ถังน้ำ 20L" />
+        </div>
+        <div class="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
+          <input id="w-paid" type="checkbox" class="w-4 h-4 accent-blue-600" />
+          <label for="w-paid" class="text-sm font-medium text-gray-700 cursor-pointer">ชำระเงินสดทันที</label>
+          <span class="text-xs text-gray-400">(ไม่ติ๊ก = ค้างชำระไปรวมกับบิลค่าเช่า)</span>
+        </div>
+      </div>
+
+      <input type="hidden" id="w-id" />
+      <div class="flex gap-2 pt-1">
+        <button onclick="saveWater()" class="flex-1 bg-blue-700 text-white py-2 rounded-xl hover:bg-blue-800 transition text-sm font-semibold">บันทึก</button>
+        <button onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-600 py-2 rounded-xl hover:bg-gray-200 transition text-sm">ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .inp { width:100%; border:1px solid #d1d5db; border-radius:0.5rem; padding:0.5rem 0.75rem; font-size:0.875rem; outline:none; transition:border .15s; }
+    .inp:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.15); }
+  </style>
+
+  <script>
+    const TOKEN = localStorage.getItem('hordeeToken');
+    if (!TOKEN) { window.location.replace('login.html'); throw new Error('not logged in'); }
+    const headers = { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' };
+
+    let prices = { smallPrice: 15, largePrice: 25, smallLabel: 'แพ็คเล็ก', largeLabel: 'แพ็คใหญ่' };
+    let allTenants = [];
+
+    // ── Init ───────────────────────────────────────────
+    (async function init() {
+      const today = new Date().toISOString().slice(0, 10);
+      document.getElementById('filter-date').value = today;
+
+      [prices, allTenants] = await Promise.all([
+        fetch('/api/water/prices', { headers }).then(r => r.json()),
+        fetch('/api/tenants',      { headers }).then(r => r.json()),
+      ]);
+
+      // Update labels
+      document.getElementById('th-small').textContent           = prices.smallLabel;
+      document.getElementById('th-large').textContent           = prices.largeLabel;
+      document.getElementById('lbl-card-small').textContent     = prices.smallLabel + ' วันนี้';
+      document.getElementById('lbl-card-large').textContent     = prices.largeLabel + ' วันนี้';
+      document.getElementById('lbl-card-small-price').textContent = '฿' + prices.smallPrice + '/แพ็ค';
+      document.getElementById('lbl-card-large-price').textContent = '฿' + prices.largePrice + '/แพ็ค';
+
+      // Populate tenant dropdown
+      const sel = document.getElementById('w-tenant');
+      sel.innerHTML = '<option value="">— เลือกผู้เช่า —</option>';
+      allTenants.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = t.name + (t.nickname ? ` (${t.nickname})` : '');
+        sel.appendChild(opt);
+      });
+
+      loadTable();
+      loadStats();
+
+      // Filter listeners
+      document.getElementById('filter-date').addEventListener('change', () => { loadTable(); loadStats(); });
+      document.getElementById('filter-paid').addEventListener('change', loadTable);
+    })();
+
+    // ── Stats ──────────────────────────────────────────
+    async function loadStats() {
+      const date = document.getElementById('filter-date').value;
+      const s = await fetch(`/api/water/stats${date ? '?date=' + date : ''}`, { headers }).then(r => r.json());
+      document.getElementById('card-today').textContent  = '฿' + s.todayRevenue.toLocaleString('th-TH', { minimumFractionDigits: 2 });
+      document.getElementById('card-small').textContent  = s.todaySmallPacks + ' แพ็ค';
+      document.getElementById('card-large').textContent  = s.todayLargePacks + ' แพ็ค';
+      document.getElementById('card-unpaid').textContent = '฿' + s.unpaidTotal.toLocaleString('th-TH', { minimumFractionDigits: 2 });
+      document.getElementById('stat-text').textContent   = `วันนี้ขาย ${s.todaySalesCount} รายการ (เล็ก ${s.todaySmallPacks} / ใหญ่ ${s.todayLargePacks}) | ค้างชำระ ฿${s.unpaidTotal.toLocaleString('th-TH')}`;
+    }
+
+    // ── Table ──────────────────────────────────────────
+    async function loadTable() {
+      const date   = document.getElementById('filter-date').value;
+      const isPaid = document.getElementById('filter-paid').value;
+      let url = '/api/water?';
+      if (date)   url += `date=${date}&`;
+      if (isPaid !== '') url += `isPaid=${isPaid}&`;
+
+      const sales = await fetch(url, { headers }).then(r => r.json());
+      const tbody = document.getElementById('water-tbody');
+
+      if (!sales.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">ไม่มีรายการ</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = sales.map(s => {
+        const dateStr = new Date(s.saleDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+        const tenant  = s.tenant ? s.tenant.name + (s.tenant.nickname ? ` (${s.tenant.nickname})` : '') : '—';
+        const total   = Number(s.totalAmount).toLocaleString('th-TH', { minimumFractionDigits: 2 });
+        const statusBadge = s.isPaid
+          ? '<span class="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs">ชำระแล้ว</span>'
+          : (s.invoiceId
+              ? '<span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-600 text-xs">รวมบิลแล้ว</span>'
+              : '<span class="px-2 py-0.5 rounded-full bg-orange-100 text-orange-600 text-xs">ค้างชำระ</span>');
+        const payBtn = !s.isPaid && !s.invoiceId
+          ? `<button onclick="quickPay('${s.id}')" class="px-2 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600">รับเงิน</button>`
+          : '';
+        return `
+          <tr class="hover:bg-gray-50 transition">
+            <td class="px-4 py-3 text-xs text-gray-500">${dateStr}</td>
+            <td class="px-4 py-3 font-medium">${tenant}</td>
+            <td class="px-4 py-3 text-center">${s.smallPacks || '—'}</td>
+            <td class="px-4 py-3 text-center">${s.largePacks || '—'}</td>
+            <td class="px-4 py-3 text-right font-semibold">฿${total}</td>
+            <td class="px-4 py-3 text-center">${statusBadge}</td>
+            <td class="px-4 py-3 text-xs text-gray-400">${s.note ?? '—'}</td>
+            <td class="px-4 py-3">
+              <div class="flex gap-1 justify-center">
+                ${payBtn}
+                <button onclick='editSale(${JSON.stringify(s)})' class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded hover:bg-gray-200">แก้ไข</button>
+                <button onclick="delSale('${s.id}')" class="px-2 py-1 bg-red-100 text-red-600 text-xs rounded hover:bg-red-200">ลบ</button>
+              </div>
+            </td>
+          </tr>`;
+      }).join('');
+    }
+
+    // ── Modal ──────────────────────────────────────────
+    function openModal(s) {
+      document.getElementById('modal-title').textContent = s ? 'แก้ไขรายการน้ำดื่ม' : 'บันทึกการขายน้ำดื่ม';
+      document.getElementById('w-id').value     = s?.id      ?? '';
+      document.getElementById('w-tenant').value = s?.tenantId ?? '';
+      document.getElementById('w-date').value   = s?.saleDate ? s.saleDate.slice(0, 10) : new Date().toISOString().slice(0, 10);
+      document.getElementById('w-small').value  = s?.smallPacks ?? 0;
+      document.getElementById('w-large').value  = s?.largePacks ?? 0;
+      document.getElementById('w-note').value   = s?.note ?? '';
+      document.getElementById('w-paid').checked = s?.isPaid ?? false;
+
+      document.getElementById('lbl-small').textContent = `${prices.smallLabel} (฿${prices.smallPrice})`;
+      document.getElementById('lbl-large').textContent = `${prices.largeLabel} (฿${prices.largePrice})`;
+      calcTotal();
+      document.getElementById('water-modal').classList.remove('hidden');
+    }
+    function editSale(s) { openModal(s); }
+    function closeModal() { document.getElementById('water-modal').classList.add('hidden'); }
+
+    function calcTotal() {
+      const s = Number(document.getElementById('w-small').value ?? 0);
+      const l = Number(document.getElementById('w-large').value ?? 0);
+      const t = (s * prices.smallPrice) + (l * prices.largePrice);
+      document.getElementById('w-total-display').textContent = '฿' + t.toLocaleString('th-TH', { minimumFractionDigits: 2 });
+    }
+
+    async function saveWater() {
+      const id       = document.getElementById('w-id').value;
+      const tenantId = document.getElementById('w-tenant').value;
+      if (!tenantId) { alert('กรุณาเลือกผู้เช่า'); return; }
+      const body = {
+        tenantId,
+        saleDate:   document.getElementById('w-date').value,
+        smallPacks: Number(document.getElementById('w-small').value),
+        largePacks: Number(document.getElementById('w-large').value),
+        note:       document.getElementById('w-note').value.trim() || null,
+        isPaid:     document.getElementById('w-paid').checked,
+      };
+      const r = await fetch(id ? `/api/water/${id}` : '/api/water', {
+        method: id ? 'PUT' : 'POST', headers, body: JSON.stringify(body),
+      });
+      if (r.ok) { closeModal(); loadTable(); loadStats(); }
+      else { const d = await r.json(); alert('❌ ' + (d.error || 'บันทึกไม่สำเร็จ')); }
+    }
+
+    async function quickPay(id) {
+      const r = await fetch(`/api/water/${id}/pay`, { method: 'PUT', headers });
+      if (r.ok) { loadTable(); loadStats(); }
+    }
+
+    async function delSale(id) {
+      if (!confirm('ลบรายการนี้?')) return;
+      const r = await fetch(`/api/water/${id}`, { method: 'DELETE', headers });
+      if (r.ok) { loadTable(); loadStats(); }
+    }
+
+    // ── Date shortcuts ─────────────────────────────────
+    function setToday() {
+      document.getElementById('filter-date').value = new Date().toISOString().slice(0, 10);
+      loadTable(); loadStats();
+    }
+    function clearDate() {
+      document.getElementById('filter-date').value = '';
+      loadTable(); loadStats();
+    }
+
+    function logout() {
+      localStorage.removeItem('hordeeToken');
+      window.location.replace('login.html');
+    }
+  </script>
+</body>
+</html>

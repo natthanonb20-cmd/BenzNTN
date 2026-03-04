@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>หอดี — ตั้งค่า</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>body { font-family: 'Sarabun', sans-serif; }</style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- Navbar -->
+  <nav class="bg-blue-800 text-white shadow-md">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2.5 select-none no-underline">
+        <div class="w-9 h-9 bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0">
+          <span class="text-blue-800 font-black text-lg leading-none">ห</span>
+        </div>
+        <div class="leading-tight">
+          <div class="font-bold text-lg tracking-wide text-white leading-none">หอ<span class="text-amber-300 font-extrabold">ดี</span></div>
+          <div class="text-blue-300 text-[11px] font-normal mt-0.5">ระบบจัดการหอพัก</div>
+        </div>
+      </a>
+      <div class="flex gap-4 text-sm font-medium">
+        <a href="index.html"    class="hover:text-blue-200">Dashboard</a>
+        <a href="rooms.html"    class="hover:text-blue-200">ห้องพัก</a>
+        <a href="tenants.html"  class="hover:text-blue-200">ผู้เช่า</a>
+        <a href="queue.html"    class="hover:text-blue-200">คิวรอเช่า</a>
+        <a href="water.html"    class="hover:text-blue-200">น้ำดื่ม</a>
+        <a href="billing.html"  class="hover:text-blue-200">ออกบิล</a>
+        <a href="invoices.html" class="hover:text-blue-200">ใบแจ้งหนี้</a>
+        <a href="settings.html" class="hover:text-blue-200 border-b-2 border-white pb-0.5">ตั้งค่า</a>
+        <button onclick="logout()" class="hover:text-red-300 text-xs opacity-70 hover:opacity-100 transition">ออกจากระบบ</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-3xl mx-auto px-4 py-8 space-y-6">
+
+    <h1 class="text-xl font-bold text-gray-800">ตั้งค่าระบบ</h1>
+
+    <!-- ข้อมูลหอพัก -->
+    <section class="bg-white rounded-xl shadow p-6">
+      <h2 class="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
+        <span class="text-xl">🏠</span> ข้อมูลหอพัก
+      </h2>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">ชื่อหอพัก</label>
+          <input id="dormName" type="text" class="input-field" placeholder="หอดี" />
+        </div>
+      </div>
+      <div class="mt-4 flex justify-end">
+        <button onclick="saveGroup('dorm')" class="btn-primary">บันทึก</button>
+      </div>
+    </section>
+
+    <!-- LINE OA -->
+    <section class="bg-white rounded-xl shadow p-6">
+      <h2 class="text-base font-semibold text-gray-700 mb-1 flex items-center gap-2">
+        <span class="text-xl">💬</span> เชื่อมต่อ LINE OA
+      </h2>
+      <p class="text-xs text-gray-400 mb-4">ดูค่าได้จาก LINE Developers Console → Messaging API</p>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">Channel Secret</label>
+          <input id="lineChannelSecret" type="text" class="input-field font-mono text-xs"
+            placeholder="32-character secret from LINE Developers" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">Channel Access Token</label>
+          <div class="relative">
+            <input id="lineChannelAccessToken" type="password" class="input-field font-mono text-xs pr-10"
+              placeholder="Long-lived token from LINE Developers" />
+            <button type="button" onclick="toggleVis('lineChannelAccessToken')"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">👁</button>
+          </div>
+        </div>
+      </div>
+      <div class="mt-4 flex items-center justify-between">
+        <button onclick="testLine()" class="btn-outline">ทดสอบการเชื่อมต่อ</button>
+        <button onclick="saveGroup('line')" class="btn-primary">บันทึก</button>
+      </div>
+      <p id="line-test-result" class="mt-2 text-sm hidden"></p>
+    </section>
+
+    <!-- อัตราค่าสาธารณูปโภค -->
+    <section class="bg-white rounded-xl shadow p-6">
+      <h2 class="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
+        <span class="text-xl">⚡</span> อัตราค่าสาธารณูปโภค (ค่าเริ่มต้น)
+      </h2>
+      <p class="text-xs text-gray-400 mb-4">ห้องที่ไม่ได้ตั้งค่าเฉพาะจะใช้อัตรานี้</p>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">ค่าไฟ (บาท/หน่วย)</label>
+          <input id="electricRate" type="number" step="0.01" min="0" class="input-field" placeholder="8" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">ค่าน้ำ (บาท/หน่วย)</label>
+          <input id="waterRate" type="number" step="0.01" min="0" class="input-field" placeholder="18" />
+        </div>
+      </div>
+      <div class="mt-4 flex justify-end">
+        <button onclick="saveGroup('rates')" class="btn-primary">บันทึก</button>
+      </div>
+    </section>
+
+    <!-- น้ำดื่ม -->
+    <section class="bg-white rounded-xl shadow p-6">
+      <h2 class="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
+        <span class="text-xl">💧</span> บริการน้ำดื่ม
+      </h2>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">ชื่อ SKU แพ็คเล็ก</label>
+          <input id="waterSmallLabel" type="text" class="input-field" placeholder="แพ็คเล็ก" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">ราคา (บาท/แพ็ค)</label>
+          <input id="waterSmallPrice" type="number" step="0.5" min="0" class="input-field" placeholder="15" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">ชื่อ SKU แพ็คใหญ่</label>
+          <input id="waterLargeLabel" type="text" class="input-field" placeholder="แพ็คใหญ่" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">ราคา (บาท/แพ็ค)</label>
+          <input id="waterLargePrice" type="number" step="0.5" min="0" class="input-field" placeholder="25" />
+        </div>
+      </div>
+      <div class="mt-4 flex justify-end">
+        <button onclick="saveGroup('water')" class="btn-primary">บันทึก</button>
+      </div>
+    </section>
+
+    <!-- เปลี่ยนรหัสผ่าน -->
+    <section class="bg-white rounded-xl shadow p-6">
+      <h2 class="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
+        <span class="text-xl">🔐</span> เปลี่ยนข้อมูลผู้ดูแลระบบ
+      </h2>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">ชื่อผู้ใช้ใหม่ <span class="text-gray-400 font-normal">(เว้นว่างถ้าไม่เปลี่ยน)</span></label>
+          <input id="newUsername" type="text" class="input-field" placeholder="admin" autocomplete="off" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">รหัสผ่านปัจจุบัน</label>
+          <input id="currentPassword" type="password" class="input-field" autocomplete="current-password" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">รหัสผ่านใหม่</label>
+          <input id="newPassword" type="password" class="input-field" autocomplete="new-password" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">ยืนยันรหัสผ่านใหม่</label>
+          <input id="confirmPassword" type="password" class="input-field" autocomplete="new-password" />
+        </div>
+      </div>
+      <p id="pw-error" class="mt-2 text-sm text-red-500 hidden"></p>
+      <div class="mt-4 flex justify-end">
+        <button onclick="changePassword()" class="btn-primary">เปลี่ยนรหัสผ่าน</button>
+      </div>
+    </section>
+
+  </main>
+
+  <style>
+    .input-field {
+      @apply w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition;
+    }
+    .btn-primary {
+      @apply px-5 py-2 bg-blue-700 hover:bg-blue-800 text-white text-sm font-medium rounded-xl transition;
+    }
+    .btn-outline {
+      @apply px-5 py-2 border border-blue-600 text-blue-700 hover:bg-blue-50 text-sm font-medium rounded-xl transition;
+    }
+  </style>
+
+  <script>
+    const TOKEN = localStorage.getItem('hordeeToken');
+    if (!TOKEN) { window.location.replace('login.html'); throw new Error('not logged in'); }
+    const headers = { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' };
+
+    // ---- Load all settings on page load ----
+    async function loadSettings() {
+      const data = await fetch('/api/settings', { headers }).then(r => r.json());
+      if (data.dormName)               document.getElementById('dormName').value = data.dormName;
+      if (data.lineChannelSecret)      document.getElementById('lineChannelSecret').value = data.lineChannelSecret;
+      if (data.lineChannelAccessToken) document.getElementById('lineChannelAccessToken').value = data.lineChannelAccessToken;
+      if (data.electricRate)    document.getElementById('electricRate').value    = data.electricRate;
+      if (data.waterRate)       document.getElementById('waterRate').value       = data.waterRate;
+      if (data.waterSmallLabel) document.getElementById('waterSmallLabel').value = data.waterSmallLabel;
+      if (data.waterSmallPrice) document.getElementById('waterSmallPrice').value = data.waterSmallPrice;
+      if (data.waterLargeLabel) document.getElementById('waterLargeLabel').value = data.waterLargeLabel;
+      if (data.waterLargePrice) document.getElementById('waterLargePrice').value = data.waterLargePrice;
+    }
+
+    // ---- Save helpers ----
+    async function saveSetting(key, value) {
+      return fetch(`/api/settings/${key}`, {
+        method: 'PUT', headers,
+        body: JSON.stringify({ value: String(value) }),
+      });
+    }
+
+    function toast(msg, ok = true) {
+      const el = document.createElement('div');
+      el.textContent = msg;
+      el.className = `fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl shadow-lg text-sm font-medium text-white transition
+        ${ok ? 'bg-green-600' : 'bg-red-500'}`;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 3000);
+    }
+
+    async function saveGroup(group) {
+      try {
+        if (group === 'dorm') {
+          await saveSetting('dormName', document.getElementById('dormName').value.trim());
+        } else if (group === 'line') {
+          const secret = document.getElementById('lineChannelSecret').value.trim();
+          const token  = document.getElementById('lineChannelAccessToken').value.trim();
+          if (secret) await saveSetting('lineChannelSecret', secret);
+          if (token)  await saveSetting('lineChannelAccessToken', token);
+        } else if (group === 'rates') {
+          await saveSetting('electricRate', document.getElementById('electricRate').value);
+          await saveSetting('waterRate',    document.getElementById('waterRate').value);
+        } else if (group === 'water') {
+          await saveSetting('waterSmallLabel', document.getElementById('waterSmallLabel').value.trim() || 'แพ็คเล็ก');
+          await saveSetting('waterSmallPrice', document.getElementById('waterSmallPrice').value);
+          await saveSetting('waterLargeLabel', document.getElementById('waterLargeLabel').value.trim() || 'แพ็คใหญ่');
+          await saveSetting('waterLargePrice', document.getElementById('waterLargePrice').value);
+        }
+        toast('✅ บันทึกสำเร็จ');
+      } catch {
+        toast('❌ บันทึกไม่สำเร็จ', false);
+      }
+    }
+
+    // ---- Test LINE connection ----
+    async function testLine() {
+      const resultEl = document.getElementById('line-test-result');
+      resultEl.className = 'mt-2 text-sm text-gray-500';
+      resultEl.textContent = 'กำลังทดสอบ...';
+      resultEl.classList.remove('hidden');
+
+      // Save current values first, then hit a test endpoint
+      const secret = document.getElementById('lineChannelSecret').value.trim();
+      const token  = document.getElementById('lineChannelAccessToken').value.trim();
+      if (!token) {
+        resultEl.className = 'mt-2 text-sm text-red-500';
+        resultEl.textContent = '❌ กรุณากรอก Channel Access Token ก่อน';
+        return;
+      }
+
+      try {
+        const r = await fetch('/api/settings/line-test', { method: 'POST', headers,
+          body: JSON.stringify({ lineChannelAccessToken: token, lineChannelSecret: secret }) });
+        const d = await r.json();
+        if (r.ok) {
+          resultEl.className = 'mt-2 text-sm text-green-600';
+          resultEl.textContent = `✅ เชื่อมต่อสำเร็จ — Bot: ${d.displayName}`;
+        } else {
+          resultEl.className = 'mt-2 text-sm text-red-500';
+          resultEl.textContent = `❌ ${d.error || 'Token ไม่ถูกต้อง'}`;
+        }
+      } catch {
+        resultEl.className = 'mt-2 text-sm text-red-500';
+        resultEl.textContent = '❌ ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้';
+      }
+    }
+
+    // ---- Change password ----
+    async function changePassword() {
+      const errEl   = document.getElementById('pw-error');
+      const current = document.getElementById('currentPassword').value;
+      const newPw   = document.getElementById('newPassword').value;
+      const confirm = document.getElementById('confirmPassword').value;
+      const newUser = document.getElementById('newUsername').value.trim();
+
+      errEl.classList.add('hidden');
+
+      if (!current || !newPw) {
+        errEl.textContent = 'กรุณากรอกรหัสผ่านปัจจุบันและรหัสผ่านใหม่';
+        errEl.classList.remove('hidden'); return;
+      }
+      if (newPw !== confirm) {
+        errEl.textContent = 'รหัสผ่านใหม่ไม่ตรงกัน';
+        errEl.classList.remove('hidden'); return;
+      }
+      if (newPw.length < 6) {
+        errEl.textContent = 'รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัวอักษร';
+        errEl.classList.remove('hidden'); return;
+      }
+
+      const r = await fetch('/api/auth/password', {
+        method: 'PUT', headers,
+        body: JSON.stringify({ currentPassword: current, newPassword: newPw,
+          ...(newUser ? { newUsername: newUser } : {}) }),
+      });
+      const d = await r.json();
+      if (r.ok) {
+        toast('✅ เปลี่ยนรหัสผ่านสำเร็จ กรุณา Login ใหม่');
+        document.getElementById('currentPassword').value = '';
+        document.getElementById('newPassword').value     = '';
+        document.getElementById('confirmPassword').value = '';
+        setTimeout(() => {
+          localStorage.removeItem('hordeeToken');
+          window.location.replace('login.html');
+        }, 2000);
+      } else {
+        errEl.textContent = d.error || 'เกิดข้อผิดพลาด';
+        errEl.classList.remove('hidden');
+      }
+    }
+
+    function toggleVis(id) {
+      const el = document.getElementById(id);
+      el.type = el.type === 'password' ? 'text' : 'password';
+    }
+
+    function logout() {
+      localStorage.removeItem('hordeeToken');
+      window.location.replace('login.html');
+    }
+
+    loadSettings();
+  </script>
+</body>
+</html>

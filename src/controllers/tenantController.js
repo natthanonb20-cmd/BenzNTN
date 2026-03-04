@@ -1,0 +1,101 @@
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+exports.list = async (req, res, next) => {
+  try {
+    const tenants = await prisma.tenant.findMany({
+      where:   { propertyId: req.propertyId },
+      include: { contracts: { where: { isActive: true }, include: { room: true } } },
+      orderBy: { name: 'asc' },
+    });
+    res.json(tenants);
+  } catch (e) { next(e); }
+};
+
+exports.get = async (req, res, next) => {
+  try {
+    const tenant = await prisma.tenant.findUniqueOrThrow({
+      where: { id: req.params.id },
+      include: { contracts: { include: { room: true, invoices: { orderBy: { createdAt: 'desc' }, take: 6 } } } },
+    });
+    res.json(tenant);
+  } catch (e) { next(e); }
+};
+
+exports.create = async (req, res, next) => {
+  try {
+    const { name, nickname, phone, lineUserId, nationalId, note } = req.body;
+    const tenant = await prisma.tenant.create({
+      data: { propertyId: req.propertyId, name, nickname, phone, lineUserId, nationalId, note },
+    });
+    res.status(201).json(tenant);
+  } catch (e) { next(e); }
+};
+
+exports.update = async (req, res, next) => {
+  try {
+    const { name, nickname, phone, lineUserId, nationalId, note } = req.body;
+    const tenant = await prisma.tenant.update({
+      where: { id: req.params.id },
+      data: { name, nickname, phone, lineUserId, nationalId, note },
+    });
+    res.json(tenant);
+  } catch (e) { next(e); }
+};
+
+exports.remove = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const contracts = await prisma.contract.count({ where: { tenantId: id } });
+    if (contracts > 0) {
+      return res.status(409).json({ error: 'ไม่สามารถลบผู้เช่าที่มีสัญญาอยู่ได้\nกรุณายกเลิกสัญญาทั้งหมดก่อน' });
+    }
+    await prisma.tenant.delete({ where: { id } });
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+};
+
+exports.createContract = async (req, res, next) => {
+  try {
+    const { roomId, startDate, endDate, depositPaid, contractFiles } = req.body;
+    if (!roomId || !startDate) {
+      return res.status(400).json({ error: 'roomId และ startDate จำเป็นต้องระบุ' });
+    }
+    // Deactivate existing active contract for this room
+    await prisma.contract.updateMany({
+      where: { roomId, isActive: true },
+      data:  { isActive: false },
+    });
+    const contract = await prisma.contract.create({
+      data: {
+        tenantId:      req.params.id,
+        roomId,
+        startDate:     new Date(startDate),
+        endDate:       endDate ? new Date(endDate) : null,
+        depositPaid:   depositPaid ?? null,
+        contractFiles: Array.isArray(contractFiles) ? contractFiles : [],
+        isActive:      true,
+      },
+      include: { room: true, tenant: true },
+    });
+    res.status(201).json(contract);
+  } catch (e) { next(e); }
+};
+
+exports.updateContract = async (req, res, next) => {
+  try {
+    const { startDate, endDate, depositPaid, contractFiles, isActive } = req.body;
+    const contract = await prisma.contract.update({
+      where: { id: req.params.contractId },
+      data: {
+        startDate:     startDate     ? new Date(startDate) : undefined,
+        endDate:       endDate !== undefined ? (endDate ? new Date(endDate) : null) : undefined,
+        depositPaid:   depositPaid   !== undefined ? depositPaid   : undefined,
+        contractFiles: contractFiles !== undefined ? contractFiles : undefined,
+        isActive:      isActive      !== undefined ? isActive      : undefined,
+      },
+      include: { room: true, tenant: true },
+    });
+    res.json(contract);
+  } catch (e) { next(e); }
+};

@@ -1,0 +1,294 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// -------------------------------------------------------
+// Property — หอพักแต่ละราย (Multi-tenant root)
+// -------------------------------------------------------
+model Property {
+  id          String   @id @default(cuid())
+  name        String                          // ชื่อหอพัก
+  ownerName   String?                         // ชื่อเจ้าของ
+  phone       String?
+  address     String?
+  isActive    Boolean  @default(true)
+  lineChannelAccessToken String?              // LINE OA ของแต่ละหอ
+  lineChannelSecret      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users         User[]
+  subscription  Subscription?
+  rooms         Room[]
+  tenants       Tenant[]
+  waitingQueues WaitingQueue[]
+  waterSales    WaterSale[]
+  settings      PropertySetting[]
+}
+
+// -------------------------------------------------------
+// User — บัญชีผู้ใช้งาน (เจ้าของหอ + Master Admin)
+// -------------------------------------------------------
+model User {
+  id         String   @id @default(cuid())
+  propertyId String?                          // null = MASTER_ADMIN
+  username   String   @unique
+  password   String                           // bcrypt hash
+  role       UserRole @default(PROPERTY_ADMIN)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  property Property? @relation(fields: [propertyId], references: [id])
+
+  @@index([propertyId])
+}
+
+// -------------------------------------------------------
+// Subscription — แพ็กเกจการใช้งาน
+// -------------------------------------------------------
+model Subscription {
+  id         String           @id @default(cuid())
+  propertyId String           @unique
+  plan       SubscriptionPlan @default(FREE_TRIAL)
+  roomLimit  Int              @default(10)    // จำนวนห้องสูงสุด
+  startDate  DateTime         @default(now())
+  expiresAt  DateTime?                        // null = ไม่มีวันหมด (Enterprise)
+  isActive   Boolean          @default(true)
+  note       String?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  property Property @relation(fields: [propertyId], references: [id])
+}
+
+// -------------------------------------------------------
+// PropertySetting — ค่าตั้งต้นรายหอ (rate ไฟ/น้ำ ฯลฯ)
+// -------------------------------------------------------
+model PropertySetting {
+  id         String   @id @default(cuid())
+  propertyId String
+  key        String
+  value      String
+  updatedAt  DateTime @updatedAt
+
+  property Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([propertyId, key])
+  @@index([propertyId])
+}
+
+// -------------------------------------------------------
+// Setting — ค่า Global ของ Master Admin (fallback)
+// -------------------------------------------------------
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+// -------------------------------------------------------
+// Room — ห้องพัก (ผูกกับ Property)
+// -------------------------------------------------------
+model Room {
+  id                 String   @id @default(cuid())
+  propertyId         String
+  roomNumber         String
+  floor              Int?
+  monthlyRent        Decimal  @db.Decimal(10, 2)
+  customElectricRate Decimal? @db.Decimal(10, 2)
+  customWaterRate    Decimal? @db.Decimal(10, 2)
+  description        String?
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  property  Property   @relation(fields: [propertyId], references: [id])
+  contracts Contract[]
+
+  @@unique([propertyId, roomNumber])
+  @@index([propertyId])
+}
+
+// -------------------------------------------------------
+// Tenant — ผู้เช่า (ผูกกับ Property)
+// -------------------------------------------------------
+model Tenant {
+  id         String   @id @default(cuid())
+  propertyId String
+  name       String
+  nickname   String?
+  phone      String?
+  lineUserId String?                          // LINE User ID (unique per property)
+  nationalId String?
+  note       String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  property   Property    @relation(fields: [propertyId], references: [id])
+  contracts  Contract[]
+  waterSales WaterSale[]
+
+  @@index([propertyId])
+  @@unique([propertyId, lineUserId])          // LINE ID unique per property
+}
+
+// -------------------------------------------------------
+// WaterSale — ยอดขายน้ำดื่ม (ผูกกับ Property)
+// -------------------------------------------------------
+model WaterSale {
+  id          String    @id @default(cuid())
+  propertyId  String
+  tenantId    String
+  saleDate    DateTime  @default(now())
+  smallPacks  Int       @default(0)
+  largePacks  Int       @default(0)
+  totalAmount Decimal   @db.Decimal(10, 2)
+  isPaid      Boolean   @default(false)
+  paidAt      DateTime?
+  invoiceId   String?
+  note        String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  property Property  @relation(fields: [propertyId], references: [id])
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  invoice  Invoice?  @relation(fields: [invoiceId], references: [id])
+
+  @@index([propertyId])
+  @@index([tenantId])
+  @@index([saleDate])
+  @@index([isPaid])
+}
+
+// -------------------------------------------------------
+// WaitingQueue — คิวผู้สนใจเช่า (ผูกกับ Property)
+// -------------------------------------------------------
+model WaitingQueue {
+  id          String      @id @default(cuid())
+  propertyId  String
+  queueNumber Int
+  name        String
+  nickname    String?
+  phone       String?
+  lineUserId  String?
+  note        String?
+  status      QueueStatus @default(WAITING)
+  convertedId String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  property Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([propertyId, queueNumber])
+  @@index([propertyId])
+}
+
+// -------------------------------------------------------
+// Contract — สัญญาเช่า
+// -------------------------------------------------------
+model Contract {
+  id            String    @id @default(cuid())
+  roomId        String
+  tenantId      String
+  startDate     DateTime
+  endDate       DateTime?
+  depositPaid   Decimal?  @db.Decimal(10, 2)
+  contractFiles String[]
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  room     Room      @relation(fields: [roomId], references: [id])
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  invoices Invoice[]
+
+  @@index([roomId])
+  @@index([tenantId])
+}
+
+// -------------------------------------------------------
+// Invoice — ใบแจ้งหนี้
+// -------------------------------------------------------
+model Invoice {
+  id          String        @id @default(cuid())
+  contractId  String
+  month       Int
+  year        Int
+  totalAmount Decimal       @db.Decimal(10, 2)
+  status      InvoiceStatus @default(PENDING)
+  dueDate     DateTime?
+  slipPath    String?
+  paidAt      DateTime?
+  note        String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  contract   Contract      @relation(fields: [contractId], references: [id])
+  items      InvoiceItem[]
+  waterSales WaterSale[]
+
+  @@unique([contractId, month, year])
+  @@index([contractId])
+  @@index([status])
+}
+
+// -------------------------------------------------------
+// InvoiceItem — รายการย่อยในใบแจ้งหนี้
+// -------------------------------------------------------
+model InvoiceItem {
+  id            String      @id @default(cuid())
+  invoiceId     String
+  label         String
+  billingType   BillingType
+  amount        Decimal     @db.Decimal(10, 2)
+  unitRate      Decimal?    @db.Decimal(10, 4)
+  previousMeter Decimal?    @db.Decimal(10, 2)
+  currentMeter  Decimal?    @db.Decimal(10, 2)
+  unitUsed      Decimal?    @db.Decimal(10, 2)
+  sortOrder     Int         @default(0)
+  createdAt     DateTime    @default(now())
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+}
+
+// -------------------------------------------------------
+// Enums
+// -------------------------------------------------------
+enum UserRole {
+  MASTER_ADMIN
+  PROPERTY_ADMIN
+}
+
+enum SubscriptionPlan {
+  FREE_TRIAL   // ทดลองใช้ 1 เดือน — 10 ห้อง
+  STARTER      // S — สูงสุด 20 ห้อง — 199/เดือน
+  STANDARD     // M — สูงสุด 50 ห้อง — 399/เดือน
+  PROFESSIONAL // L — สูงสุด 100 ห้อง — 699/เดือน
+  ENTERPRISE   // 100+ ห้อง — ราคาพิเศษ
+}
+
+enum InvoiceStatus {
+  PENDING
+  REVIEW
+  PAID
+}
+
+enum BillingType {
+  METER
+  FIXED
+}
+
+enum QueueStatus {
+  WAITING
+  CONVERTED
+  CANCELLED
+}

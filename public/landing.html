@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>หอดี — ระบบจัดการหอพักอัจฉริยะ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: 'Sarabun', sans-serif; }
+    .gradient-hero { background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 50%, #0ea5e9 100%); }
+    .card-hover { transition: transform 0.2s, box-shadow 0.2s; }
+    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.12); }
+    .popular-glow { box-shadow: 0 0 0 3px #3b82f6, 0 20px 40px rgba(59,130,246,0.25); }
+  </style>
+</head>
+<body class="bg-white text-gray-800">
+
+  <!-- Navbar -->
+  <nav class="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur border-b border-gray-100 shadow-sm">
+    <div class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 bg-blue-700 rounded-xl flex items-center justify-center shadow">
+          <span class="text-white font-black text-lg leading-none">ห</span>
+        </div>
+        <div class="leading-tight">
+          <div class="font-bold text-lg tracking-wide text-blue-800 leading-none">หอ<span class="text-amber-500 font-extrabold">ดี</span></div>
+          <div class="text-blue-400 text-[10px] font-normal mt-0.5">Dormitory Management</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-6">
+        <a href="#features" class="text-sm text-gray-600 hover:text-blue-700 font-medium hidden md:block">ฟีเจอร์</a>
+        <a href="#pricing"  class="text-sm text-gray-600 hover:text-blue-700 font-medium hidden md:block">ราคา</a>
+        <a href="#contact"  class="text-sm text-gray-600 hover:text-blue-700 font-medium hidden md:block">ติดต่อ</a>
+        <a href="login.html" class="bg-blue-700 hover:bg-blue-800 text-white text-sm font-semibold px-4 py-2 rounded-lg transition">เข้าสู่ระบบ</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="gradient-hero pt-28 pb-20 px-6 text-white text-center">
+    <div class="max-w-4xl mx-auto">
+      <div class="inline-flex items-center gap-2 bg-white/15 backdrop-blur rounded-full px-4 py-1.5 text-sm font-medium mb-6">
+        <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+        ทดลองใช้งานฟรี 30 วัน — ไม่ต้องใช้บัตรเครดิต
+      </div>
+      <h1 class="text-4xl md:text-6xl font-extrabold mb-5 leading-tight">
+        จัดการหอพัก<br/><span class="text-amber-300">ได้ง่ายขึ้น ด้วยหอดี</span>
+      </h1>
+      <p class="text-blue-100 text-lg md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed">
+        ระบบออกบิล ส่งแจ้งหนี้ผ่าน LINE รับสลิปโอนเงิน ติดตามค่าไฟ-น้ำ
+        และจัดการผู้เช่าครบวงจร — บนแพลตฟอร์มเดียว
+      </p>
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <a href="#contact" class="bg-amber-400 hover:bg-amber-300 text-gray-900 font-bold px-8 py-3.5 rounded-xl text-base shadow-lg transition">
+          สนใจใช้งาน — ติดต่อเรา
+        </a>
+        <a href="#pricing" class="bg-white/15 hover:bg-white/25 border border-white/30 text-white font-semibold px-8 py-3.5 rounded-xl text-base transition">
+          ดูแพ็กเกจราคา
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Bar -->
+  <section class="bg-blue-800 text-white py-8">
+    <div class="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+      <div><div class="text-3xl font-extrabold text-amber-300">500+</div><div class="text-blue-200 text-sm mt-1">ห้องที่ใช้งานจริง</div></div>
+      <div><div class="text-3xl font-extrabold text-amber-300">50+</div><div class="text-blue-200 text-sm mt-1">หอพักที่ไว้วางใจ</div></div>
+      <div><div class="text-3xl font-extrabold text-amber-300">99.9%</div><div class="text-blue-200 text-sm mt-1">Uptime</div></div>
+      <div><div class="text-3xl font-extrabold text-amber-300">LINE</div><div class="text-blue-200 text-sm mt-1">รองรับแจ้งหนี้ LINE OA</div></div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="features" class="py-20 px-6 bg-gray-50">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-14">
+        <h2 class="text-3xl md:text-4xl font-extrabold text-gray-800 mb-3">ฟีเจอร์ครบ ใช้งานได้จริง</h2>
+        <p class="text-gray-500 text-lg">ออกแบบมาเพื่อเจ้าของหอพักโดยเฉพาะ</p>
+      </div>
+      <div class="grid md:grid-cols-3 gap-6">
+        <!-- Feature cards -->
+        <div class="card-hover bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-2xl mb-4">📋</div>
+          <h3 class="font-bold text-lg mb-2">ออกบิลอัตโนมัติ</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">จดมิเตอร์ไฟ-น้ำ คำนวณยอดและออกใบแจ้งหนี้ได้ทันที รองรับทั้งค่าคงที่และจดมิเตอร์</p>
+        </div>
+        <div class="card-hover bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center text-2xl mb-4">💬</div>
+          <h3 class="font-bold text-lg mb-2">แจ้งหนี้ผ่าน LINE OA</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">ส่ง Flex Message รายละเอียดบิลให้ผู้เช่าผ่าน LINE ได้ทันที พร้อมรับสลิปผ่าน Webhook</p>
+        </div>
+        <div class="card-hover bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center text-2xl mb-4">🧾</div>
+          <h3 class="font-bold text-lg mb-2">รับสลิปยืนยันชำระ</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">ผู้เช่าส่งสลิปผ่าน LINE Webhook ระบบบันทึกให้อัตโนมัติ เจ้าของกด "ยืนยัน" ได้เลย</p>
+        </div>
+        <div class="card-hover bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-2xl mb-4">💧</div>
+          <h3 class="font-bold text-lg mb-2">จัดการค่าน้ำดื่ม</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">บันทึกยอดขายน้ำดื่ม แยกแพ็คเล็ก-ใหญ่ ค้างชำระรวมในบิลได้ทันที</p>
+        </div>
+        <div class="card-hover bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center text-2xl mb-4">📊</div>
+          <h3 class="font-bold text-lg mb-2">Dashboard รายได้</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">ดูสถิติรายได้รวม บิลค้างชำระ ห้องว่าง-ห้องมีคน ได้จาก Dashboard หน้าเดียว</p>
+        </div>
+        <div class="card-hover bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div class="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center text-2xl mb-4">🔐</div>
+          <h3 class="font-bold text-lg mb-2">ข้อมูลปลอดภัย แยกรายหอ</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">ระบบ Multi-tenant แยกข้อมูลแต่ละหอออกจากกันอย่างเด็ดขาด ไม่มีทางเห็นข้อมูลข้ามหอ</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section id="pricing" class="py-20 px-6 bg-white">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-14">
+        <h2 class="text-3xl md:text-4xl font-extrabold text-gray-800 mb-3">ราคาที่เข้าถึงได้</h2>
+        <p class="text-gray-500 text-lg">เลือกแพ็กเกจที่เหมาะกับขนาดหอพักของคุณ</p>
+      </div>
+
+      <div class="grid md:grid-cols-5 gap-5 items-start">
+
+        <!-- Free Trial -->
+        <div class="card-hover bg-gray-50 border border-gray-200 rounded-2xl p-6 flex flex-col">
+          <div class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">ทดลองใช้</div>
+          <div class="text-2xl font-extrabold text-gray-800 mb-1">ฟรี</div>
+          <div class="text-xs text-gray-400 mb-5">30 วัน</div>
+          <ul class="space-y-2 text-sm text-gray-600 mb-6 flex-1">
+            <li class="flex gap-2"><span class="text-green-500">✓</span> ไม่เกิน 10 ห้อง</li>
+            <li class="flex gap-2"><span class="text-green-500">✓</span> ออกบิล + LINE</li>
+            <li class="flex gap-2"><span class="text-green-500">✓</span> ฟีเจอร์ครบ</li>
+            <li class="flex gap-2"><span class="text-gray-300">✗</span> ไม่มี Support</li>
+          </ul>
+          <a href="#contact" class="block text-center bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2.5 rounded-xl text-sm transition">เริ่มใช้ฟรี</a>
+        </div>
+
+        <!-- S Starter -->
+        <div class="card-hover bg-white border border-gray-200 rounded-2xl p-6 flex flex-col">
+          <div class="text-xs font-bold uppercase tracking-widest text-blue-500 mb-2">Starter · S</div>
+          <div class="flex items-end gap-1 mb-1">
+            <div class="text-2xl font-extrabold text-gray-800">199</div>
+            <div class="text-sm text-gray-400 mb-1">฿/เดือน</div>
+          </div>
+          <div class="text-xs text-gray-400 mb-5">สูงสุด 20 ห้อง</div>
+          <ul class="space-y-2 text-sm text-gray-600 mb-6 flex-1">
+            <li class="flex gap-2"><span class="text-green-500">✓</span> 1–20 ห้อง</li>
+            <li class="flex gap-2"><span class="text-green-500">✓</span> ออกบิล + LINE OA</li>
+            <li class="flex gap-2"><span class="text-green-500">✓</span> น้ำดื่ม + คิว</li>
+            <li class="flex gap-2"><span class="text-green-500">✓</span> Email Support</li>
+          </ul>
+          <a href="#contact" class="block text-center bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold py-2.5 rounded-xl text-sm transition">สนใจแพ็กเกจนี้</a>
+        </div>
+
+        <!-- M Standard — Popular -->
+        <div class="card-hover popular-glow bg-blue-700 text-white rounded-2xl p-6 flex flex-col relative">
+          <div class="absolute -top-3 left-1/2 -translate-x-1/2">
+            <span class="bg-amber-400 text-gray-900 text-xs font-bold px-3 py-1 rounded-full shadow">ยอดนิยม</span>
+          </div>
+          <div class="text-xs font-bold uppercase tracking-widest text-blue-200 mb-2">Standard · M</div>
+          <div class="flex items-end gap-1 mb-1">
+            <div class="text-2xl font-extrabold">399</div>
+            <div class="text-sm text-blue-300 mb-1">฿/เดือน</div>
+          </div>
+          <div class="text-xs text-blue-300 mb-5">สูงสุด 50 ห้อง</div>
+          <ul class="space-y-2 text-sm text-blue-100 mb-6 flex-1">
+            <li class="flex gap-2"><span class="text-amber-300">✓</span> 21–50 ห้อง</li>
+            <li class="flex gap-2"><span class="text-amber-300">✓</span> ทุกฟีเจอร์ใน S</li>
+            <li class="flex gap-2"><span class="text-amber-300">✓</span> Dashboard รายงาน</li>
+            <li class="flex gap-2"><span class="text-amber-300">✓</span> Priority Support</li>
+          </ul>
+          <a href="#contact" class="block text-center bg-amber-400 hover:bg-amber-300 text-gray-900 font-bold py-2.5 rounded-xl text-sm transition">สนใจแพ็กเกจนี้</a>
+        </div>
+
+        <!-- L Professional -->
+        <div class="card-hover bg-white border border-gray-200 rounded-2xl p-6 flex flex-col">
+          <div class="text-xs font-bold uppercase tracking-widest text-purple-500 mb-2">Professional · L</div>
+          <div class="flex items-end gap-1 mb-1">
+            <div class="text-2xl font-extrabold text-gray-800">699</div>
+            <div class="text-sm text-gray-400 mb-1">฿/เดือน</div>
+          </div>
+          <div class="text-xs text-gray-400 mb-5">สูงสุด 100 ห้อง</div>
+          <ul class="space-y-2 text-sm text-gray-600 mb-6 flex-1">
+            <li class="flex gap-2"><span class="text-green-500">✓</span> 51–100 ห้อง</li>
+            <li class="flex gap-2"><span class="text-green-500">✓</span> ทุกฟีเจอร์ใน M</li>
+            <li class="flex gap-2"><span class="text-green-500">✓</span> Multi-Admin</li>
+            <li class="flex gap-2"><span class="text-green-500">✓</span> SLA Support</li>
+          </ul>
+          <a href="#contact" class="block text-center bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold py-2.5 rounded-xl text-sm transition">สนใจแพ็กเกจนี้</a>
+        </div>
+
+        <!-- Enterprise -->
+        <div class="card-hover bg-gray-900 text-white rounded-2xl p-6 flex flex-col">
+          <div class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Enterprise</div>
+          <div class="text-2xl font-extrabold mb-1">Custom</div>
+          <div class="text-xs text-gray-400 mb-5">100+ ห้อง</div>
+          <ul class="space-y-2 text-sm text-gray-300 mb-6 flex-1">
+            <li class="flex gap-2"><span class="text-amber-400">✓</span> ไม่จำกัดห้อง</li>
+            <li class="flex gap-2"><span class="text-amber-400">✓</span> ทุกฟีเจอร์ใน L</li>
+            <li class="flex gap-2"><span class="text-amber-400">✓</span> On-premise / VPS</li>
+            <li class="flex gap-2"><span class="text-amber-400">✓</span> Dedicated Support</li>
+          </ul>
+          <a href="#contact" class="block text-center bg-amber-400 hover:bg-amber-300 text-gray-900 font-bold py-2.5 rounded-xl text-sm transition">ติดต่อราคาพิเศษ</a>
+        </div>
+
+      </div>
+
+      <p class="text-center text-gray-400 text-sm mt-8">* ราคาทั้งหมดยังไม่รวม VAT · ชำระรายเดือน ยกเลิกได้ทุกเวลา</p>
+    </div>
+  </section>
+
+  <!-- CTA / Contact -->
+  <section id="contact" class="py-20 px-6 gradient-hero text-white">
+    <div class="max-w-2xl mx-auto text-center">
+      <h2 class="text-3xl md:text-4xl font-extrabold mb-4">พร้อมเริ่มใช้งานแล้วหรือยัง?</h2>
+      <p class="text-blue-100 text-lg mb-10">ทีมงานพร้อมให้คำปรึกษาและเปิดบัญชีให้คุณภายใน 24 ชั่วโมง</p>
+      <div class="bg-white/10 backdrop-blur rounded-2xl p-8 border border-white/20 text-left space-y-4">
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm text-blue-200 mb-1">ชื่อ-นามสกุล *</label>
+            <input id="c-name" type="text" placeholder="คุณสมชาย ใจดี"
+              class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-blue-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
+          </div>
+          <div>
+            <label class="block text-sm text-blue-200 mb-1">ชื่อหอพัก *</label>
+            <input id="c-dorm" type="text" placeholder="หอดีพลัส"
+              class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-blue-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
+          </div>
+        </div>
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm text-blue-200 mb-1">เบอร์โทรศัพท์ *</label>
+            <input id="c-phone" type="tel" placeholder="0812345678"
+              class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-blue-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
+          </div>
+          <div>
+            <label class="block text-sm text-blue-200 mb-1">จำนวนห้องทั้งหมด</label>
+            <input id="c-rooms" type="number" placeholder="30"
+              class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-blue-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm text-blue-200 mb-1">แพ็กเกจที่สนใจ</label>
+          <select id="c-plan"
+            class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-400">
+            <option value="FREE_TRIAL">ทดลองใช้ฟรี (30 วัน)</option>
+            <option value="STARTER">Starter S — 199฿/เดือน (≤20 ห้อง)</option>
+            <option value="STANDARD" selected>Standard M — 399฿/เดือน (≤50 ห้อง)</option>
+            <option value="PROFESSIONAL">Professional L — 699฿/เดือน (≤100 ห้อง)</option>
+            <option value="ENTERPRISE">Enterprise — ราคาพิเศษ</option>
+          </select>
+        </div>
+        <button onclick="submitContact()"
+          class="w-full bg-amber-400 hover:bg-amber-300 text-gray-900 font-bold py-3 rounded-xl text-base transition shadow-lg">
+          ส่งข้อมูลสนใจ
+        </button>
+        <p id="c-msg" class="text-center text-sm text-green-300 hidden">✅ ส่งข้อมูลเรียบร้อยแล้ว ทีมงานจะติดต่อกลับภายใน 24 ชั่วโมง</p>
+      </div>
+      <div class="mt-8 flex items-center justify-center gap-6 text-blue-200 text-sm">
+        <span>📱 LINE: @hordee</span>
+        <span>·</span>
+        <span>📧 hello@hordee.app</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-gray-900 text-gray-400 py-8 px-6 text-center text-sm">
+    <div class="flex items-center justify-center gap-2 mb-2">
+      <div class="w-7 h-7 bg-blue-700 rounded-lg flex items-center justify-center">
+        <span class="text-white font-black text-sm leading-none">ห</span>
+      </div>
+      <span class="font-bold text-white">หอ<span class="text-amber-400">ดี</span></span>
+    </div>
+    <p class="mt-1">© 2025 Hordee — ระบบจัดการหอพักอัจฉริยะ</p>
+  </footer>
+
+  <script>
+    function submitContact() {
+      const name  = document.getElementById('c-name').value.trim();
+      const dorm  = document.getElementById('c-dorm').value.trim();
+      const phone = document.getElementById('c-phone').value.trim();
+      if (!name || !dorm || !phone) {
+        alert('กรุณากรอกข้อมูลที่จำเป็น (ชื่อ, หอพัก, เบอร์โทร)');
+        return;
+      }
+      // TODO: POST to /api/contact or LINE Notify
+      document.getElementById('c-msg').classList.remove('hidden');
+    }
+
+    // Smooth scroll
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        document.querySelector(a.getAttribute('href'))?.scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+  </script>
+</body>
+</html>
