@@ -37,7 +37,12 @@ router.post('/login', async (req, res) => {
         return res.status(403).json({ error: 'บัญชีของคุณยังรออนุมัติจากผู้ดูแลระบบ', code: 'PENDING_APPROVAL' });
       }
       if (!user.property || !user.property.isActive) {
-        return res.status(403).json({ error: 'บัญชีหอพักถูกระงับ กรุณาติดต่อผู้ดูแลระบบ', code: 'SUSPENDED' });
+        return res.status(403).json({ error: 'บัญชีหอพักถูกระงับ กรุณาติดต่อ Line: rotbenzzz เพื่อใช้งานต่อ', code: 'SUSPENDED' });
+      }
+      // ตรวจสอบ subscription หมดอายุ
+      const sub = await prisma.subscription.findUnique({ where: { propertyId: user.propertyId } });
+      if (sub?.expiresAt && sub.expiresAt < new Date()) {
+        return res.status(403).json({ error: 'ครบกำหนดทดลองใช้งานแล้ว กรุณาติดต่อ Line: rotbenzzz เพื่อใช้งานต่อ', code: 'TRIAL_EXPIRED' });
       }
     }
 
@@ -148,7 +153,7 @@ router.post('/register', async (req, res) => {
           address:                address?.trim()    || null,
           lineChannelAccessToken: lineChannelAccessToken?.trim() || null,
           lineChannelSecret:      lineChannelSecret?.trim()      || null,
-          isActive:               false, // รอ Master Admin อนุมัติก่อน
+          isActive:               true, // อนุมัติอัตโนมัติ ทดลองใช้ 7 วัน
         },
       });
 
@@ -158,13 +163,13 @@ router.post('/register', async (req, res) => {
           username:   username.trim(),
           password:   hashed,
           role:       'PROPERTY_ADMIN',
-          isActive:   false, // ล็อกจนกว่า admin จะอนุมัติ
+          isActive:   true, // อนุมัติอัตโนมัติ
         },
       });
 
-      // FREE_TRIAL 30 วัน
+      // FREE_TRIAL 7 วัน
       const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 30);
+      expiresAt.setDate(expiresAt.getDate() + 7);
       await tx.subscription.create({
         data: {
           propertyId: prop.id,
