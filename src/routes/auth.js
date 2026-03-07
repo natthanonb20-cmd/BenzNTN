@@ -153,7 +153,7 @@ router.post('/register', async (req, res) => {
           address:                address?.trim()    || null,
           lineChannelAccessToken: lineChannelAccessToken?.trim() || null,
           lineChannelSecret:      lineChannelSecret?.trim()      || null,
-          isActive:               true, // อนุมัติอัตโนมัติ ทดลองใช้ 7 วัน
+          isActive:               true, // อนุมัติอัตโนมัติ ทดลองใช้ 30 วัน
         },
       });
 
@@ -167,9 +167,9 @@ router.post('/register', async (req, res) => {
         },
       });
 
-      // FREE_TRIAL 7 วัน
+      // FREE_TRIAL 30 วัน
       const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 7);
+      expiresAt.setDate(expiresAt.getDate() + 30);
       await tx.subscription.create({
         data: {
           propertyId: prop.id,
