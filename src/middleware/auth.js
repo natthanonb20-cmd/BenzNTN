@@ -26,8 +26,16 @@ function adminAuth(req, res, next) {
  */
 function propertyAuth(req, res, next) {
   adminAuth(req, res, async () => {
-    // MASTER_ADMIN ผ่านได้เลย
-    if (req.user.role === 'MASTER_ADMIN') return next();
+    // MASTER_ADMIN → ดึง property แรกแล้ว set propertyId อัตโนมัติ
+    if (req.user.role === 'MASTER_ADMIN') {
+      if (!req.propertyId) {
+        try {
+          const firstProp = await prisma.property.findFirst({ select: { id: true } });
+          if (firstProp) req.propertyId = firstProp.id;
+        } catch {}
+      }
+      return next();
+    }
 
     if (req.propertyId) return next();
 
