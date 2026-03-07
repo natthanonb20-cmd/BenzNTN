@@ -7,6 +7,11 @@ router.use(masterAdminAuth);
 // Stats
 router.get('/stats', ctrl.stats);
 
+// Pending registrations
+router.get('/pending',                       ctrl.listPending);
+router.post('/properties/:id/approve',       ctrl.approveProperty);
+router.post('/properties/:id/reject',        ctrl.rejectProperty);
+
 // Properties
 router.get('/properties',        ctrl.listProperties);
 router.post('/properties',       ctrl.createProperty);

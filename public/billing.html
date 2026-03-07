@@ -20,10 +20,10 @@
     <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
       <a href="index.html" class="flex items-center gap-2.5 select-none no-underline">
         <div class="w-9 h-9 bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0">
-          <span class="text-blue-800 font-black text-lg leading-none">ห</span>
+          <svg class="w-5 h-5 text-blue-800" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M4.5 2.25a.75.75 0 000 1.5v16.5h-.75a.75.75 0 000 1.5h16.5a.75.75 0 000-1.5h-.75V3.75a.75.75 0 000-1.5h-15zM9 6a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5H9zm-.75 3.75A.75.75 0 019 9h1.5a.75.75 0 010 1.5H9a.75.75 0 01-.75-.75zM9 12a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5H9zm3.75-5.25A.75.75 0 0113.5 6H15a.75.75 0 010 1.5h-1.5a.75.75 0 01-.75-.75zM13.5 9a.75.75 0 000 1.5H15A.75.75 0 0015 9h-1.5zm-.75 3.75a.75.75 0 01.75-.75H15a.75.75 0 010 1.5h-1.5a.75.75 0 01-.75-.75zM9 19.5v-2.25a.75.75 0 01.75-.75h4.5a.75.75 0 01.75.75V19.5H9z" clip-rule="evenodd" /></svg>
         </div>
         <div class="leading-tight">
-          <div class="font-bold text-lg tracking-wide text-white leading-none">หอ<span class="text-amber-300 font-extrabold">ดี</span></div>
+          <div id="nav-property-name" class="font-bold text-lg tracking-wide text-white leading-none">ระบบหอพัก</div>
           <div class="text-blue-300 text-[11px] font-normal mt-0.5">ระบบจัดการหอพัก</div>
         </div>
       </a>
@@ -100,14 +100,14 @@
           <h2 class="font-semibold text-gray-700 text-base">3. ค่าไฟฟ้า</h2>
           <div class="flex rounded-lg overflow-hidden border border-gray-300 text-xs font-medium">
             <button type="button" onclick="setMode('elec','METER')" id="elec-btn-meter"
-              class="px-3 py-1.5 bg-blue-600 text-white transition">จดมิเตอร์</button>
+              class="px-3 py-1.5 bg-white text-gray-600 transition">จดมิเตอร์</button>
             <button type="button" onclick="setMode('elec','FIXED')" id="elec-btn-fixed"
-              class="px-3 py-1.5 bg-white text-gray-600 transition">ระบุยอด</button>
+              class="px-3 py-1.5 bg-blue-600 text-white transition">ระบุยอด</button>
           </div>
         </div>
 
         <!-- METER mode -->
-        <div id="elec-meter" class="grid grid-cols-3 gap-3">
+        <div id="elec-meter" class="hidden grid grid-cols-3 gap-3">
           <div>
             <label class="block text-xs text-gray-500 mb-1">มิเตอร์เก่า</label>
             <input type="number" id="elec-prev" step="0.01" placeholder="1200"
@@ -129,7 +129,7 @@
         </div>
 
         <!-- FIXED mode -->
-        <div id="elec-fixed" class="hidden">
+        <div id="elec-fixed" class="">
           <label class="block text-xs text-gray-500 mb-1">ยอดค่าไฟ (฿)</label>
           <input type="number" id="elec-amount" step="0.01" placeholder="0"
             class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -146,14 +146,14 @@
           <h2 class="font-semibold text-gray-700 text-base">4. ค่าน้ำ</h2>
           <div class="flex rounded-lg overflow-hidden border border-gray-300 text-xs font-medium">
             <button type="button" onclick="setMode('water','METER')" id="water-btn-meter"
-              class="px-3 py-1.5 bg-blue-600 text-white transition">จดมิเตอร์</button>
+              class="px-3 py-1.5 bg-white text-gray-600 transition">จดมิเตอร์</button>
             <button type="button" onclick="setMode('water','FIXED')" id="water-btn-fixed"
-              class="px-3 py-1.5 bg-white text-gray-600 transition">ระบุยอด</button>
+              class="px-3 py-1.5 bg-blue-600 text-white transition">ระบุยอด</button>
           </div>
         </div>
 
         <!-- METER mode -->
-        <div id="water-meter" class="grid grid-cols-3 gap-3">
+        <div id="water-meter" class="hidden grid grid-cols-3 gap-3">
           <div>
             <label class="block text-xs text-gray-500 mb-1">มิเตอร์เก่า</label>
             <input type="number" id="water-prev" step="0.01" placeholder="500"
@@ -175,7 +175,7 @@
         </div>
 
         <!-- FIXED mode -->
-        <div id="water-fixed" class="hidden">
+        <div id="water-fixed" class="">
           <label class="block text-xs text-gray-500 mb-1">ยอดค่าน้ำ (฿)</label>
           <input type="number" id="water-amount" step="0.01" placeholder="0"
             class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -242,10 +242,26 @@
     if (!TOKEN) { window.location.replace('login.html'); throw new Error('not logged in'); }
     const headers = { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' };
 
-    const modes = { elec: 'METER', water: 'METER' };
+    const modes = { elec: 'FIXED', water: 'FIXED' };
     let extraCount = 0;
     let defaultRates = { electricRate: 8, waterRate: 18, monthlyRent: 0 };
     let _waterSaleIds = [];
+
+    // Load property name in navbar
+    (async () => {
+      const t = localStorage.getItem('hordeeToken');
+      if (!t) return;
+      try {
+        const r = await fetch('/api/settings', { headers: { Authorization: 'Bearer ' + t } });
+        if (r.ok) {
+          const s = await r.json();
+          if (s.dormName) {
+            const el = document.getElementById('nav-property-name');
+            if (el) el.textContent = s.dormName;
+          }
+        }
+      } catch {}
+    })();
 
     // ---- Init ----
     (async function init() {
@@ -275,6 +291,9 @@
       const settings = await fetch('/api/settings', { headers }).then(r => r.json());
       if (settings.electricRate) defaultRates.electricRate = parseFloat(settings.electricRate);
       if (settings.waterRate)    defaultRates.waterRate    = parseFloat(settings.waterRate);
+      // Pre-fill rate fields (ใช้เมื่อสลับเป็น จดมิเตอร์)
+      document.getElementById('elec-rate').value  = defaultRates.electricRate;
+      document.getElementById('water-rate').value = defaultRates.waterRate;
 
       sel.addEventListener('change', onContractChange);
     })();

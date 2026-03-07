@@ -18,11 +18,11 @@
     <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
       <a href="index.html" class="flex items-center gap-2.5 select-none no-underline">
         <div class="w-9 h-9 bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0">
-          <span class="text-blue-800 font-black text-lg leading-none">ห</span>
+          <svg class="w-5 h-5 text-blue-800" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M4.5 2.25a.75.75 0 000 1.5v16.5h-.75a.75.75 0 000 1.5h16.5a.75.75 0 000-1.5h-.75V3.75a.75.75 0 000-1.5h-15zM9 6a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5H9zm-.75 3.75A.75.75 0 019 9h1.5a.75.75 0 010 1.5H9a.75.75 0 01-.75-.75zM9 12a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5H9zm3.75-5.25A.75.75 0 0113.5 6H15a.75.75 0 010 1.5h-1.5a.75.75 0 01-.75-.75zM13.5 9a.75.75 0 000 1.5H15A.75.75 0 0015 9h-1.5zm-.75 3.75a.75.75 0 01.75-.75H15a.75.75 0 010 1.5h-1.5a.75.75 0 01-.75-.75zM9 19.5v-2.25a.75.75 0 01.75-.75h4.5a.75.75 0 01.75.75V19.5H9z" clip-rule="evenodd" /></svg>
         </div>
         <div class="leading-tight">
-          <div class="font-bold text-lg tracking-wide text-white leading-none">หอ<span class="text-amber-300 font-extrabold">ดี</span></div>
-          <div class="text-blue-300 text-[11px] font-normal mt-0.5">ระบบจัดการหอพัก</div>
+          <div id="nav-property-name" class="font-bold text-lg tracking-wide text-white leading-none">ระบบหอพัก</div>
+          <div class="text-blue-300 text-[11px] font-normal mt-0.5">ระบบบริหารจัดการหอพัก</div>
         </div>
       </a>
       <div class="flex gap-4 text-sm font-medium">
@@ -34,6 +34,7 @@
         <a href="billing.html" class="hover:text-blue-200">ออกบิล</a>
         <a href="invoices.html" class="hover:text-blue-200">ใบแจ้งหนี้</a>
         <a href="settings.html" class="hover:text-blue-200">ตั้งค่า</a>
+        <a id="nav-admin-link" href="admin.html" class="hidden bg-amber-400 text-blue-900 font-bold px-3 py-0.5 rounded-lg hover:bg-amber-300 transition text-xs">⚙️ Admin</a>
       <button onclick="logout()" class="hover:text-red-300 text-xs opacity-70 hover:opacity-100 transition">ออกจากระบบ</button>
       </div>
     </div>
@@ -249,21 +250,23 @@
       // Invoice summary for current month
       const monthInvoices = invoices.filter(i => i.month === thisMonth && i.year === thisYear);
       const paid   = monthInvoices.filter(i => i.status === 'PAID');
-      const unpaid = monthInvoices.filter(i => i.status !== 'PAID');
       const sumAmt = arr => arr.reduce((s, i) => s + Number(i.totalAmount), 0);
+
+      // ค้างชำระ = ทุกใบที่ยัง PENDING หรือ REVIEW (ไม่จำกัดเดือน)
+      const allUnpaid = invoices.filter(i => ['PENDING', 'REVIEW'].includes(i.status));
 
       document.getElementById('summary-month-label').textContent = `${MONTHS[thisMonth-1]} ${thisYear+543}`;
       document.getElementById('inv-total-count').textContent  = `${monthInvoices.length} ห้อง`;
       document.getElementById('inv-total-amt').textContent    = fmt(sumAmt(monthInvoices));
       document.getElementById('inv-paid-count').textContent   = `${paid.length} ห้อง`;
       document.getElementById('inv-paid-amt').textContent     = fmt(sumAmt(paid));
-      document.getElementById('inv-unpaid-count').textContent = `${unpaid.length} ห้อง`;
-      document.getElementById('inv-unpaid-amt').textContent   = fmt(sumAmt(unpaid));
+      document.getElementById('inv-unpaid-count').textContent = `${allUnpaid.length} ห้อง`;
+      document.getElementById('inv-unpaid-amt').textContent   = fmt(sumAmt(allUnpaid));
 
       // Link for unpaid includes both PENDING and REVIEW
       document.getElementById('inv-total-card').href  = `invoices.html?month=${thisMonth}&year=${thisYear}`;
       document.getElementById('inv-paid-card').href   = `invoices.html?status=PAID&month=${thisMonth}&year=${thisYear}`;
-      document.getElementById('inv-unpaid-card').href = `invoices.html?month=${thisMonth}&year=${thisYear}`;
+      document.getElementById('inv-unpaid-card').href = `invoices.html`;
 
       // Show PENDING + REVIEW + PAID (current month) invoices
       const active = invoices.filter(i =>
@@ -293,7 +296,7 @@
           : '<span class="px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 text-xs font-medium">รอชำระ</span>';
 
         const slipBtn = inv.slipPath
-          ? `<button onclick="viewSlip('/${inv.slipPath}')" class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded hover:bg-gray-200">🖼 สลิป</button>`
+          ? `<button onclick="viewSlip('/${inv.slipPath}')" class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded hover:bg-gray-200">🧧 สลิป</button>`
           : '';
 
         return `
@@ -337,7 +340,34 @@
       alert(r.ok ? '✅ ส่ง Line สำเร็จ' : '❌ ส่งไม่สำเร็จ กรุณาตรวจสอบ Line User ID');
     }
 
-    loadDashboard();
+    // Load property name in navbar
+    (async () => {
+      const t = localStorage.getItem('hordeeToken');
+      if (!t) return;
+      try {
+        const r = await fetch('/api/settings', { headers: { Authorization: 'Bearer ' + t } });
+        if (r.ok) {
+          const s = await r.json();
+          if (s.dormName) {
+            const el = document.getElementById('nav-property-name');
+            if (el) el.textContent = s.dormName;
+          }
+        }
+      } catch {}
+    })();
+
+    // แสดงปุ่ม Admin Panel ถ้าเป็น MASTER_ADMIN
+    (async () => {
+      try {
+        const me = await fetch('/api/auth/me', { headers: { Authorization: 'Bearer ' + TOKEN } }).then(r => r.json());
+        if (me.role === 'MASTER_ADMIN') {
+          document.getElementById('nav-admin-link').classList.remove('hidden');
+        }
+      } catch {
+        window.location.replace('login.html'); return;
+      }
+      loadDashboard();
+    })();
   </script>
 
   <script>

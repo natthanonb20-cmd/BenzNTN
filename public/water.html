@@ -15,10 +15,10 @@
     <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
       <a href="index.html" class="flex items-center gap-2.5 select-none no-underline">
         <div class="w-9 h-9 bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0">
-          <span class="text-blue-800 font-black text-lg leading-none">ห</span>
+          <svg class="w-5 h-5 text-blue-800" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M4.5 2.25a.75.75 0 000 1.5v16.5h-.75a.75.75 0 000 1.5h16.5a.75.75 0 000-1.5h-.75V3.75a.75.75 0 000-1.5h-15zM9 6a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5H9zm-.75 3.75A.75.75 0 019 9h1.5a.75.75 0 010 1.5H9a.75.75 0 01-.75-.75zM9 12a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5H9zm3.75-5.25A.75.75 0 0113.5 6H15a.75.75 0 010 1.5h-1.5a.75.75 0 01-.75-.75zM13.5 9a.75.75 0 000 1.5H15A.75.75 0 0015 9h-1.5zm-.75 3.75a.75.75 0 01.75-.75H15a.75.75 0 010 1.5h-1.5a.75.75 0 01-.75-.75zM9 19.5v-2.25a.75.75 0 01.75-.75h4.5a.75.75 0 01.75.75V19.5H9z" clip-rule="evenodd" /></svg>
         </div>
         <div class="leading-tight">
-          <div class="font-bold text-lg tracking-wide text-white leading-none">หอ<span class="text-amber-300 font-extrabold">ดี</span></div>
+          <div id="nav-property-name" class="font-bold text-lg tracking-wide text-white leading-none">ระบบหอพัก</div>
           <div class="text-blue-300 text-[11px] font-normal mt-0.5">ระบบจัดการหอพัก</div>
         </div>
       </a>
@@ -165,6 +165,22 @@
 
     let prices = { smallPrice: 15, largePrice: 25, smallLabel: 'แพ็คเล็ก', largeLabel: 'แพ็คใหญ่' };
     let allTenants = [];
+
+    // Load property name in navbar
+    (async () => {
+      const t = localStorage.getItem('hordeeToken');
+      if (!t) return;
+      try {
+        const r = await fetch('/api/settings', { headers: { Authorization: 'Bearer ' + t } });
+        if (r.ok) {
+          const s = await r.json();
+          if (s.dormName) {
+            const el = document.getElementById('nav-property-name');
+            if (el) el.textContent = s.dormName;
+          }
+        }
+      } catch {}
+    })();
 
     // ── Init ───────────────────────────────────────────
     (async function init() {

@@ -13,17 +13,17 @@
     <div class="text-center mb-8">
       <div class="flex items-center justify-center mb-4">
         <div class="w-16 h-16 bg-blue-800 rounded-2xl flex items-center justify-center shadow-lg">
-          <span class="text-white font-black text-3xl leading-none">ห</span>
+          <svg class="w-10 h-10 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M4.5 2.25a.75.75 0 000 1.5v16.5h-.75a.75.75 0 000 1.5h16.5a.75.75 0 000-1.5h-.75V3.75a.75.75 0 000-1.5h-15zM9 6a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5H9zm-.75 3.75A.75.75 0 019 9h1.5a.75.75 0 010 1.5H9a.75.75 0 01-.75-.75zM9 12a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5H9zm3.75-5.25A.75.75 0 0113.5 6H15a.75.75 0 010 1.5h-1.5a.75.75 0 01-.75-.75zM13.5 9a.75.75 0 000 1.5H15A.75.75 0 0015 9h-1.5zm-.75 3.75a.75.75 0 01.75-.75H15a.75.75 0 010 1.5h-1.5a.75.75 0 01-.75-.75zM9 19.5v-2.25a.75.75 0 01.75-.75h4.5a.75.75 0 01.75.75V19.5H9z" clip-rule="evenodd" /></svg>
         </div>
       </div>
-      <h1 class="text-3xl font-bold text-gray-800">หอ<span class="text-amber-500 font-extrabold">ดี</span></h1>
-      <p class="text-sm text-gray-400 mt-1">ระบบจัดการหอพัก</p>
+      <h1 class="text-2xl font-bold text-gray-800">ระบบจัดการหอพัก</h1>
+      <p class="text-sm text-gray-400 mt-1">ระบบบริหารจัดการหอพัก</p>
     </div>
 
     <form id="login-form" class="space-y-4">
       <div>
         <label class="block text-sm font-medium text-gray-600 mb-1">ชื่อผู้ใช้</label>
-        <input id="inp-username" type="text" placeholder="admin" autocomplete="username"
+        <input id="inp-username" type="text" placeholder="Username" autocomplete="username"
           class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition" />
       </div>
       <div>
@@ -47,12 +47,26 @@
         เข้าสู่ระบบ
       </button>
     </form>
+
+    <p class="text-center text-xs text-gray-400 mt-6">
+      ยังไม่มีบัญชี?
+      <a href="register.html" class="text-blue-600 hover:underline font-medium">สมัครใช้งานฟรี</a>
+    </p>
   </div>
 
   <script>
-    // Already logged in → redirect to dashboard
+    // Already logged in → redirect based on role
     if (localStorage.getItem('hordeeToken')) {
-      window.location.replace('index.html');
+      (async () => {
+        try {
+          const me = await fetch('/api/auth/me', {
+            headers: { Authorization: 'Bearer ' + localStorage.getItem('hordeeToken') }
+          }).then(r => r.json());
+          window.location.replace('index.html');
+        } catch {
+          window.location.replace('index.html');
+        }
+      })();
     }
 
     function togglePassword() {
@@ -84,7 +98,12 @@
         if (res.ok) {
           localStorage.setItem('hordeeToken', data.token);
           window.location.replace('index.html');
+        } else if (data.code === 'PENDING_APPROVAL') {
+          errMsg.className = 'text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2';
+          errMsg.innerHTML = '⏳ บัญชีของคุณยังรออนุมัติจากผู้ดูแลระบบ<br><span class="text-xs">กรุณาติดต่อผู้ดูแลระบบหากรอนานเกิน 24 ชั่วโมง</span>';
+          errMsg.classList.remove('hidden');
         } else {
+          errMsg.className = 'text-sm text-red-500 bg-red-50 border border-red-200 rounded-lg px-3 py-2';
           errMsg.textContent = data.error || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
           errMsg.classList.remove('hidden');
         }

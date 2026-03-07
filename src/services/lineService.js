@@ -8,26 +8,47 @@ const { buildInvoiceFlexMessage } = require('../utils/flexMessage');
 const prisma = new PrismaClient();
 
 /**
- * Build a LINE client using tokens from DB (fallback to env vars).
+ * Build a LINE client using tokens from PropertySetting for a specific property.
+ * @param {string} propertyId
  */
-async function getLineClient() {
-  const rows = await prisma.setting.findMany({
-    where: { key: { in: ['lineChannelAccessToken', 'lineChannelSecret'] } },
+async function getLineClient(propertyId) {
+  const rows = await prisma.propertySetting.findMany({
+    where: {
+      propertyId,
+      key: { in: ['lineChannelAccessToken', 'lineChannelSecret'] },
+    },
   });
   const map    = Object.fromEntries(rows.map(s => [s.key, s.value]));
   const token  = map.lineChannelAccessToken || process.env.LINE_CHANNEL_ACCESS_TOKEN;
   const secret = map.lineChannelSecret      || process.env.LINE_CHANNEL_SECRET;
+
+  if (!token) throw new Error(`LINE token not configured for property ${propertyId}`);
   return new Client({ channelAccessToken: token, channelSecret: secret });
 }
 
 /**
  * Push an invoice Flex Message to a LINE user.
  */
-async function pushInvoiceMessage(lineUserId, invoice) {
-  const client = await getLineClient();
-  const row    = await prisma.setting.findUnique({ where: { key: 'dormName' } });
-  const dormName = row?.value || 'หอพัก';
-  const message  = buildInvoiceFlexMessage(invoice, dormName);
+async function pushInvoiceMessage(lineUserId, invoice, propertyId) {
+  const client = await getLineClient(propertyId);
+
+  // โหลด settings ที่เกี่ยวกับ card design
+  const rows = await prisma.propertySetting.findMany({
+    where: {
+      propertyId,
+      key: { in: ['dormName', 'cardStyle', 'cardHeaderColor', 'cardAccentColor'] },
+    },
+  });
+  const s = Object.fromEntries(rows.map(r => [r.key, r.value]));
+
+  const dormName = s.dormName || 'หอพัก';
+  const theme    = {
+    style:       s.cardStyle       || 'classic',
+    headerColor: s.cardHeaderColor || '#1e40af',
+    accentColor: s.cardAccentColor || '#1e40af',
+  };
+
+  const message = buildInvoiceFlexMessage(invoice, dormName, theme);
   return client.pushMessage(lineUserId, message);
 }
 
@@ -35,8 +56,8 @@ async function pushInvoiceMessage(lineUserId, invoice) {
  * Download an image from LINE's content API and save to uploads/slips/.
  * Returns the local file path.
  */
-async function downloadLineImage(messageId) {
-  const client = await getLineClient();
+async function downloadLineImage(messageId, propertyId) {
+  const client = await getLineClient(propertyId);
   const stream = await client.getMessageContent(messageId);
   const dir    = path.join(process.cwd(), 'uploads', 'slips');
   fs.mkdirSync(dir, { recursive: true });
@@ -54,8 +75,8 @@ async function downloadLineImage(messageId) {
 /**
  * Reply with a text message.
  */
-async function replyText(replyToken, text) {
-  const client = await getLineClient();
+async function replyText(replyToken, text, propertyId) {
+  const client = await getLineClient(propertyId);
   return client.replyMessage(replyToken, { type: 'text', text });
 }
 

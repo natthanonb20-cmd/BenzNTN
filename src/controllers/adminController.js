@@ -173,6 +173,43 @@ exports.updateUser = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
+// ─── Pending Registrations ────────────────────────────────────────────────────
+
+/** GET /api/admin/pending — รายการสมัครรออนุมัติ */
+exports.listPending = async (req, res, next) => {
+  try {
+    const props = await prisma.property.findMany({
+      where:   { isActive: false },
+      include: {
+        users: { select: { id: true, username: true, isActive: true } },
+        subscription: { select: { plan: true, expiresAt: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json(props);
+  } catch (e) { next(e); }
+};
+
+/** POST /api/admin/properties/:id/approve — อนุมัติ */
+exports.approveProperty = async (req, res, next) => {
+  try {
+    await prisma.$transaction([
+      prisma.property.update({ where: { id: req.params.id }, data: { isActive: true } }),
+      prisma.user.updateMany({ where: { propertyId: req.params.id }, data: { isActive: true } }),
+    ]);
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+};
+
+/** POST /api/admin/properties/:id/reject — ปฏิเสธ + ลบออก */
+exports.rejectProperty = async (req, res, next) => {
+  try {
+    // ลบทุกอย่างที่เกี่ยวข้อง (cascade จาก Prisma schema)
+    await prisma.property.delete({ where: { id: req.params.id } });
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+};
+
 // ─── Dashboard Stats ──────────────────────────────────────────────────────────
 
 /** GET /api/admin/stats */

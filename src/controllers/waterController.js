@@ -119,6 +119,8 @@ exports.create = async (req, res, next) => {
 exports.update = async (req, res, next) => {
   try {
     const { smallPacks, largePacks, isPaid, note, saleDate } = req.body;
+    const exists = await prisma.waterSale.findFirst({ where: { id: req.params.id, propertyId: req.propertyId } });
+    if (!exists) return res.status(404).json({ error: 'ไม่พบรายการน้ำดื่ม' });
     const prices = await getWaterPrices();
     const total  = (Number(smallPacks ?? 0) * prices.smallPrice) + (Number(largePacks ?? 0) * prices.largePrice);
     const sale   = await prisma.waterSale.update({
@@ -141,6 +143,8 @@ exports.update = async (req, res, next) => {
 /** PUT /api/water/:id/pay — mark as cash paid */
 exports.markPaid = async (req, res, next) => {
   try {
+    const exists = await prisma.waterSale.findFirst({ where: { id: req.params.id, propertyId: req.propertyId } });
+    if (!exists) return res.status(404).json({ error: 'ไม่พบรายการน้ำดื่ม' });
     const sale = await prisma.waterSale.update({
       where: { id: req.params.id },
       data:  { isPaid: true, paidAt: new Date() },
@@ -152,6 +156,8 @@ exports.markPaid = async (req, res, next) => {
 /** DELETE /api/water/:id */
 exports.remove = async (req, res, next) => {
   try {
+    const exists = await prisma.waterSale.findFirst({ where: { id: req.params.id, propertyId: req.propertyId } });
+    if (!exists) return res.status(404).json({ error: 'ไม่พบรายการน้ำดื่ม' });
     await prisma.waterSale.delete({ where: { id: req.params.id } });
     res.json({ ok: true });
   } catch (e) { next(e); }

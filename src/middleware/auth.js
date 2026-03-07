@@ -1,4 +1,6 @@
 const jwt = require('jsonwebtoken');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 /**
  * ตรวจสอบ JWT — แนบ req.user และ req.propertyId
@@ -19,14 +21,26 @@ function adminAuth(req, res, next) {
 }
 
 /**
- * เฉพาะ Property Admin — ต้องมี propertyId ใน JWT
+ * เฉพาะ Property Admin — ต้องมี propertyId
+ * fallback อ่านจาก DB กรณี token เก่าไม่มี propertyId
  */
 function propertyAuth(req, res, next) {
-  adminAuth(req, res, () => {
-    if (!req.propertyId) {
-      return res.status(403).json({ error: 'ต้องเข้าสู่ระบบในฐานะเจ้าของหอพัก' });
-    }
-    next();
+  adminAuth(req, res, async () => {
+    if (req.propertyId) return next();
+
+    // JWT เก่าอาจไม่มี propertyId — อ่านจาก DB แทน
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: req.user.userId },
+        select: { propertyId: true },
+      });
+      if (user?.propertyId) {
+        req.propertyId = user.propertyId;
+        return next();
+      }
+    } catch {}
+
+    return res.status(403).json({ error: 'ต้องเข้าสู่ระบบในฐานะเจ้าของหอพัก' });
   });
 }
 

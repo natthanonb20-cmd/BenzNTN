@@ -14,8 +14,8 @@ exports.list = async (req, res, next) => {
 
 exports.get = async (req, res, next) => {
   try {
-    const tenant = await prisma.tenant.findUniqueOrThrow({
-      where: { id: req.params.id },
+    const tenant = await prisma.tenant.findFirstOrThrow({
+      where: { id: req.params.id, propertyId: req.propertyId },
       include: { contracts: { include: { room: true, invoices: { orderBy: { createdAt: 'desc' }, take: 6 } } } },
     });
     res.json(tenant);
@@ -35,12 +35,19 @@ exports.create = async (req, res, next) => {
 exports.update = async (req, res, next) => {
   try {
     const { name, nickname, phone, lineUserId, nationalId, note } = req.body;
+    const exists = await prisma.tenant.findFirst({ where: { id: req.params.id, propertyId: req.propertyId } });
+    if (!exists) return res.status(404).json({ error: 'ไม่พบผู้เช่า' });
     const tenant = await prisma.tenant.update({
       where: { id: req.params.id },
       data: { name, nickname, phone, lineUserId, nationalId, note },
     });
     res.json(tenant);
-  } catch (e) { next(e); }
+  } catch (e) {
+    if (e?.code === 'P2002' && e?.meta?.target?.includes('lineUserId')) {
+      return res.status(409).json({ error: 'Line User ID นี้ถูกใช้งานโดยผู้เช่าท่านอื่นแล้ว' });
+    }
+    next(e);
+  }
 };
 
 exports.remove = async (req, res, next) => {
@@ -85,6 +92,8 @@ exports.createContract = async (req, res, next) => {
 exports.updateContract = async (req, res, next) => {
   try {
     const { startDate, endDate, depositPaid, contractFiles, isActive } = req.body;
+    const exists = await prisma.contract.findFirst({ where: { id: req.params.contractId, tenant: { propertyId: req.propertyId } } });
+    if (!exists) return res.status(404).json({ error: 'ไม่พบสัญญา' });
     const contract = await prisma.contract.update({
       where: { id: req.params.contractId },
       data: {

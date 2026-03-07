@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const ctrl = require('../controllers/webhookController');
 
-// Line Platform will POST here
-router.post('/line', ctrl.handleLine);
+// LINE Platform จะ POST มาตาม propertyId ของแต่ละหอพัก
+router.post('/line/:propertyId', ctrl.handleLine);
 
 module.exports = router;

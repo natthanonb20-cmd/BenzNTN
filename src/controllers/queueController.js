@@ -36,6 +36,8 @@ exports.create = async (req, res, next) => {
 exports.update = async (req, res, next) => {
   try {
     const { name, nickname, phone, lineUserId, note, status } = req.body;
+    const exists = await prisma.waitingQueue.findFirst({ where: { id: req.params.id, propertyId: req.propertyId } });
+    if (!exists) return res.status(404).json({ error: 'ไม่พบรายการคิว' });
     const entry = await prisma.waitingQueue.update({
       where: { id: req.params.id },
       data: { name, nickname, phone, lineUserId, note, status },
@@ -46,6 +48,8 @@ exports.update = async (req, res, next) => {
 
 exports.remove = async (req, res, next) => {
   try {
+    const exists = await prisma.waitingQueue.findFirst({ where: { id: req.params.id, propertyId: req.propertyId } });
+    if (!exists) return res.status(404).json({ error: 'ไม่พบรายการคิว' });
     await prisma.waitingQueue.delete({ where: { id: req.params.id } });
     res.json({ ok: true });
   } catch (e) { next(e); }
@@ -57,7 +61,8 @@ exports.remove = async (req, res, next) => {
  */
 exports.convert = async (req, res, next) => {
   try {
-    const entry = await prisma.waitingQueue.findUniqueOrThrow({ where: { id: req.params.id } });
+    const entry = await prisma.waitingQueue.findFirst({ where: { id: req.params.id, propertyId: req.propertyId } });
+    if (!entry) return res.status(404).json({ error: 'ไม่พบรายการคิว' });
 
     const tenant = await prisma.tenant.create({
       data: {

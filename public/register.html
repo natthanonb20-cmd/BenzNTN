@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>หอดี — สมัครใช้งาน</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: 'Sarabun', sans-serif; }
+    .step-panel { display: none; }
+    .step-panel.active { display: block; }
+    .step-dot.done   { background: #1d4ed8; }
+    .step-dot.active { background: #1d4ed8; box-shadow: 0 0 0 4px #bfdbfe; }
+    .step-dot.idle   { background: #d1d5db; }
+    .step-line.done  { background: #1d4ed8; }
+    .step-line.idle  { background: #d1d5db; }
+    textarea:focus, input:focus { outline: none; box-shadow: 0 0 0 2px #93c5fd; }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-900 to-blue-700 flex items-center justify-center p-4 py-10">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-800 to-blue-700 px-8 py-6 text-white">
+      <div class="flex items-center gap-3 mb-1">
+        <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+          <span class="font-black text-xl leading-none">ห</span>
+        </div>
+        <h1 class="text-2xl font-bold">หอ<span class="text-amber-300 font-extrabold">ดี</span></h1>
+      </div>
+      <p class="text-blue-200 text-sm">สมัครใช้งานระบบจัดการหอพัก</p>
+    </div>
+
+    <!-- Step Indicator (ซ่อนตอน success/pending) -->
+    <div id="step-indicator" class="px-8 pt-6 pb-2">
+      <div class="flex items-center justify-center gap-0">
+        <div class="flex flex-col items-center gap-1">
+          <div id="dot-1" class="step-dot active w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold transition-all duration-300">1</div>
+          <span class="text-xs text-gray-500 font-medium">ข้อมูลหอพัก</span>
+        </div>
+        <div id="line-12" class="step-line idle h-0.5 w-20 mx-2 mb-4 transition-all duration-300"></div>
+        <div class="flex flex-col items-center gap-1">
+          <div id="dot-2" class="step-dot idle w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold transition-all duration-300 bg-gray-300">2</div>
+          <span class="text-xs text-gray-500 font-medium">บัญชีผู้ใช้</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="px-8 pb-8 pt-2">
+
+      <!-- ─── Step 1: ข้อมูลหอพัก ─── -->
+      <div id="step-1" class="step-panel active">
+        <h2 class="text-lg font-bold text-gray-800 mb-4">ข้อมูลหอพักของคุณ</h2>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">ชื่อหอพัก <span class="text-red-500">*</span></label>
+            <input id="inp-property-name" type="text" placeholder="เช่น หอดีพัก, หอสุขใจ"
+              class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm transition" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">ชื่อเจ้าของ</label>
+            <input id="inp-owner-name" type="text" placeholder="ชื่อ-นามสกุล"
+              class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm transition" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">เบอร์โทรศัพท์</label>
+            <input id="inp-phone" type="tel" placeholder="08x-xxx-xxxx"
+              class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm transition" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">ที่อยู่หอพัก</label>
+            <textarea id="inp-address" rows="2" placeholder="เลขที่ ถนน แขวง/ตำบล เขต/อำเภอ จังหวัด"
+              class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm transition resize-none"></textarea>
+          </div>
+        </div>
+        <div id="err-1" class="hidden mt-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-lg px-3 py-2"></div>
+        <button onclick="goStep(2)"
+          class="w-full mt-6 bg-blue-700 hover:bg-blue-800 text-white font-semibold py-3 rounded-xl transition text-sm">
+          ถัดไป →
+        </button>
+        <p class="text-center text-xs text-gray-400 mt-4">
+          มีบัญชีอยู่แล้ว?
+          <a href="login.html" class="text-blue-600 hover:underline font-medium">เข้าสู่ระบบ</a>
+        </p>
+      </div>
+
+      <!-- ─── Step 2: บัญชีผู้ใช้ ─── -->
+      <div id="step-2" class="step-panel">
+        <h2 class="text-lg font-bold text-gray-800 mb-1">ตั้งค่าบัญชีผู้ใช้</h2>
+        <p class="text-sm text-gray-500 mb-4">ใช้สำหรับเข้าสู่ระบบหลังได้รับการอนุมัติ</p>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">ชื่อผู้ใช้ <span class="text-red-500">*</span></label>
+            <input id="inp-username" type="text" placeholder="เช่น admin, hordee01" autocomplete="username"
+              class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm transition" />
+            <p class="text-xs text-gray-400 mt-1">ตัวอักษร ตัวเลข _ - . (ไม่มีช่องว่าง)</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">รหัสผ่าน <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <input id="inp-password" type="password" placeholder="อย่างน้อย 6 ตัวอักษร" autocomplete="new-password"
+                class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm transition pr-12" />
+              <button type="button" onclick="togglePw('inp-password')"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-lg">👁</button>
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">ยืนยันรหัสผ่าน <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <input id="inp-confirm" type="password" placeholder="พิมพ์รหัสผ่านอีกครั้ง" autocomplete="new-password"
+                class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm transition pr-12" />
+              <button type="button" onclick="togglePw('inp-confirm')"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-lg">👁</button>
+            </div>
+          </div>
+        </div>
+        <div id="err-2" class="hidden mt-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-lg px-3 py-2"></div>
+        <div class="flex gap-3 mt-6">
+          <button onclick="goStep(1)"
+            class="flex-1 border border-gray-300 text-gray-600 font-semibold py-3 rounded-xl hover:bg-gray-50 transition text-sm">
+            ← ย้อนกลับ
+          </button>
+          <button id="btn-submit" onclick="submitRegister()"
+            class="flex-grow bg-blue-700 hover:bg-blue-800 text-white font-semibold py-3 rounded-xl transition text-sm">
+            ส่งคำขอสมัคร ✓
+          </button>
+        </div>
+        <p class="text-center text-xs text-gray-400 mt-4">
+          มีบัญชีอยู่แล้ว?
+          <a href="login.html" class="text-blue-600 hover:underline font-medium">เข้าสู่ระบบ</a>
+        </p>
+      </div>
+
+      <!-- ─── Pending Approval Screen ─── -->
+      <div id="step-pending" class="step-panel text-center py-4">
+        <div class="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <span class="text-4xl">⏳</span>
+        </div>
+        <h2 class="text-xl font-bold text-gray-800 mb-2">ส่งคำขอสำเร็จ!</h2>
+        <p class="text-gray-600 text-sm mb-3">
+          <span id="pending-name" class="font-semibold text-blue-700"></span>
+        </p>
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-left mb-4">
+          <p class="text-sm font-semibold text-amber-700 mb-1">📋 ขั้นตอนถัดไป</p>
+          <ul class="text-sm text-amber-600 space-y-1 list-disc list-inside">
+            <li>ผู้ดูแลระบบจะตรวจสอบและอนุมัติบัญชีของคุณ</li>
+            <li>เมื่ออนุมัติแล้วจึงจะสามารถเข้าสู่ระบบได้</li>
+            <li>กรุณาติดต่อผู้ดูแลหากรอนานเกิน 24 ชั่วโมง</li>
+          </ul>
+        </div>
+        <a href="login.html"
+          class="inline-block w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold py-3 rounded-xl transition text-sm">
+          กลับหน้าเข้าสู่ระบบ
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    if (localStorage.getItem('hordeeToken')) {
+      window.location.replace('index.html');
+    }
+
+    let currentStep = 1;
+
+    function goStep(n) {
+      if (n > currentStep && !validateStep(currentStep)) return;
+      currentStep = n;
+      document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('step-' + n).classList.add('active');
+      updateDots();
+    }
+
+    function updateDots() {
+      [1, 2].forEach(i => {
+        const dot = document.getElementById('dot-' + i);
+        dot.className = 'step-dot w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold transition-all duration-300';
+        if (i < currentStep)       dot.classList.add('done');
+        else if (i === currentStep) dot.classList.add('active');
+        else                        dot.classList.add('idle', 'bg-gray-300');
+      });
+      const line = document.getElementById('line-12');
+      line.className = 'step-line h-0.5 w-20 mx-2 mb-4 transition-all duration-300 ' + (currentStep > 1 ? 'done' : 'idle');
+    }
+
+    function validateStep(step) {
+      const errEl = document.getElementById('err-' + step);
+      if (step === 1) {
+        if (!document.getElementById('inp-property-name').value.trim()) {
+          showErr(errEl, 'กรุณากรอกชื่อหอพัก'); return false;
+        }
+      }
+      if (step === 2) {
+        const username = document.getElementById('inp-username').value.trim();
+        const password = document.getElementById('inp-password').value;
+        const confirm  = document.getElementById('inp-confirm').value;
+        if (!username)                    { showErr(errEl, 'กรุณากรอกชื่อผู้ใช้'); return false; }
+        if (!/^[\w\-.]+$/.test(username)) { showErr(errEl, 'ชื่อผู้ใช้ใช้ได้เฉพาะตัวอักษร ตัวเลข _ - .'); return false; }
+        if (!password)                    { showErr(errEl, 'กรุณากรอกรหัสผ่าน'); return false; }
+        if (password.length < 6)          { showErr(errEl, 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร'); return false; }
+        if (password !== confirm)         { showErr(errEl, 'รหัสผ่านไม่ตรงกัน'); return false; }
+      }
+      hideErr(errEl);
+      return true;
+    }
+
+    function showErr(el, msg) { el.textContent = msg; el.classList.remove('hidden'); }
+    function hideErr(el)      { el.classList.add('hidden'); }
+    function togglePw(id) {
+      const inp = document.getElementById(id);
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+    }
+
+    async function submitRegister() {
+      if (!validateStep(2)) return;
+      const errEl = document.getElementById('err-2');
+      const btn   = document.getElementById('btn-submit');
+
+      const payload = {
+        propertyName:    document.getElementById('inp-property-name').value.trim(),
+        ownerName:       document.getElementById('inp-owner-name').value.trim()  || null,
+        phone:           document.getElementById('inp-phone').value.trim()        || null,
+        address:         document.getElementById('inp-address').value.trim()      || null,
+        username:        document.getElementById('inp-username').value.trim(),
+        password:        document.getElementById('inp-password').value,
+        confirmPassword: document.getElementById('inp-confirm').value,
+      };
+
+      hideErr(errEl);
+      btn.textContent = 'กำลังส่งคำขอ...';
+      btn.disabled    = true;
+
+      try {
+        const res  = await fetch('/api/auth/register', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify(payload),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          showErr(errEl, data.error || 'เกิดข้อผิดพลาด');
+          return;
+        }
+
+        // 202 = pending approval
+        document.getElementById('step-indicator').classList.add('hidden');
+        document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+        document.getElementById('step-pending').classList.add('active');
+        document.getElementById('pending-name').textContent = `"${payload.propertyName}" ส่งคำขอเรียบร้อยแล้ว`;
+
+      } catch {
+        showErr(errEl, 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้');
+      } finally {
+        btn.textContent = 'ส่งคำขอสมัคร ✓';
+        btn.disabled    = false;
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      if (currentStep === 1) goStep(2);
+      else if (currentStep === 2) submitRegister();
+    });
+
+    document.getElementById('inp-property-name').focus();
+  </script>
+</body>
+</html>

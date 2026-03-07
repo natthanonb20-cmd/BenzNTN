@@ -4,27 +4,40 @@ const prisma = new PrismaClient();
 const { downloadLineImage, replyText } = require('../services/lineService');
 
 /**
- * Verify Line signature (HMAC-SHA256 of raw body with channel secret).
- * Reads secret from DB first, falls back to env var.
+ * Verify LINE signature using the property's own Channel Secret.
  */
-async function verifySignature(rawBody, signature) {
-  const row    = await prisma.setting.findUnique({ where: { key: 'lineChannelSecret' } });
+async function verifySignature(rawBody, signature, propertyId) {
+  const row    = await prisma.propertySetting.findUnique({
+    where: { propertyId_key: { propertyId, key: 'lineChannelSecret' } },
+  });
   const secret = row?.value || process.env.LINE_CHANNEL_SECRET;
-  const hash   = crypto.createHmac('SHA256', secret).update(rawBody).digest('base64');
+  if (!secret) return false;
+  const hash = crypto.createHmac('SHA256', secret).update(rawBody).digest('base64');
   return hash === signature;
 }
 
+/**
+ * POST /webhook/line/:propertyId
+ * รับ event จาก LINE OA ของแต่ละหอพัก
+ */
 exports.handleLine = async (req, res) => {
-  console.log('[LINE] request received');
-  // Line sends raw body so we can verify signature
-  const rawBody   = req.body; // Buffer because we use express.raw() in app.js
-  const signature = req.headers['x-line-signature'];
-  console.log('[LINE] signature:', signature);
-  console.log('[LINE] body length:', rawBody?.length);
+  const { propertyId } = req.params;
 
-  const sigOk = await verifySignature(rawBody, signature);
-  console.log('[LINE] signature valid:', sigOk);
+  // ตรวจสอบว่า property มีอยู่จริงและ active
+  const property = await prisma.property.findUnique({
+    where: { id: propertyId },
+    select: { id: true, isActive: true },
+  });
+  if (!property || !property.isActive) {
+    return res.status(404).json({ error: 'Property not found' });
+  }
+
+  const rawBody   = req.body;
+  const signature = req.headers['x-line-signature'];
+
+  const sigOk = await verifySignature(rawBody, signature, propertyId);
   if (!sigOk) {
+    console.warn(`[LINE] Invalid signature for property ${propertyId}`);
     return res.status(403).json({ error: 'Invalid signature' });
   }
 
@@ -35,94 +48,95 @@ exports.handleLine = async (req, res) => {
     return res.status(400).json({ error: 'Bad JSON' });
   }
 
-  // Respond to Line immediately (must be within 5s)
+  // ตอบ LINE ทันที (ต้องไม่เกิน 5 วินาที)
   res.status(200).end();
 
-  // Process events asynchronously
+  // Process events
   for (const event of body.events ?? []) {
     try {
-      await processEvent(event);
+      await processEvent(event, propertyId);
     } catch (err) {
-      console.error('Webhook event error:', err);
+      console.error(`[LINE] Event error (property ${propertyId}):`, err.message);
     }
   }
 };
 
-async function processEvent(event) {
+async function processEvent(event, propertyId) {
   const { type, source, replyToken } = event;
   const lineUserId = source?.userId;
   if (!lineUserId) return;
 
-  // ---- Image message = potential slip ----
   if (type === 'message' && event.message?.type === 'image') {
-    await handleSlip(event, lineUserId);
+    await handleSlip(event, lineUserId, propertyId);
     return;
   }
 
-  // ---- Text message: simple auto-reply ----
   if (type === 'message' && event.message?.type === 'text') {
     const text = event.message.text.trim();
 
     if (text === 'บิล' || text === 'ยอด') {
-      await handleInvoiceQuery(lineUserId, replyToken);
+      await handleInvoiceQuery(lineUserId, replyToken, propertyId);
       return;
     }
 
-    // ---- ลงทะเบียน: ผู้เช่าพิมพ์เลขห้อง เช่น "101" หรือ "ห้อง 101" ----
+    // ผู้เช่าพิมพ์เลขห้อง เช่น "101" หรือ "ห้อง 101"
     const roomMatch = text.match(/^(?:ห้อง\s*)?(\d+(?:\/\d+)?)$/);
     if (roomMatch) {
-      await handleRegister(lineUserId, replyToken, roomMatch[1]);
+      await handleRegister(lineUserId, replyToken, roomMatch[1], propertyId);
       return;
     }
 
-    // ---- ข้อความทั่วไป: แนะนำวิธีใช้ ----
     await replyText(replyToken,
       'สวัสดีครับ 👋\n' +
-      'พิมพ์ตัวเลขห้องของท่านเพื่อลงทะเบียน เช่น "101"\n' +
-      'หรือพิมพ์ "บิล" เพื่อดูยอดค้างชำระ'
+      'พิมพ์ตัวเลขห้องของคุณที่เจ้าของห้องพักแจ้ง เช่น 149/19 \n' +
+      'หรือพิมพ์ "บิล" เพื่อดูยอดค้างชำระ',
+      propertyId
     );
   }
 }
 
-async function handleRegister(lineUserId, replyToken, roomNumber) {
-  // หาห้องที่มีผู้เช่าอยู่ปัจจุบัน
+async function handleRegister(lineUserId, replyToken, roomNumber, propertyId) {
   const contract = await prisma.contract.findFirst({
     where: {
       isActive: true,
-      room: { roomNumber },
+      room: { roomNumber, propertyId },   // scoped to this property
     },
     include: { tenant: true, room: true },
   });
 
   if (!contract) {
-    await replyText(replyToken, `❌ ไม่พบห้อง ${roomNumber} หรือห้องไม่มีผู้เช่าอยู่\nกรุณาติดต่อแอดมิน`);
+    await replyText(replyToken,
+      `❌ ไม่พบห้อง ${roomNumber} หรือห้องไม่มีผู้เช่าอยู่\nกรุณาติดต่อแอดมิน`,
+      propertyId
+    );
     return;
   }
 
-  // บันทึก lineUserId ลง tenant
   await prisma.tenant.update({
     where: { id: contract.tenantId },
     data:  { lineUserId },
   });
 
-  await replyText(
-    replyToken,
+  await replyText(replyToken,
     `✅ ลงทะเบียนสำเร็จ!\n` +
     `ห้อง: ${roomNumber}\n` +
     `ชื่อ: ${contract.tenant.name}\n\n` +
-    `พิมพ์ "บิล" เพื่อดูยอดค้างชำระได้เลยครับ 🙏`
+    `พิมพ์ "บิล" เพื่อดูยอดค้างชำระได้เลยครับ 🙏`,
+    propertyId
   );
 }
 
-async function handleSlip(event, lineUserId) {
+async function handleSlip(event, lineUserId, propertyId) {
   const { replyToken, message } = event;
 
-  // Find the active contract for this tenant
   const tenant = await prisma.tenant.findFirst({
-    where: { lineUserId },
+    where: {
+      lineUserId,
+      contracts: { some: { isActive: true, room: { propertyId } } },  // scoped
+    },
     include: {
       contracts: {
-        where: { isActive: true },
+        where: { isActive: true, room: { propertyId } },
         include: {
           invoices: {
             where: { status: 'PENDING' },
@@ -136,37 +150,41 @@ async function handleSlip(event, lineUserId) {
   });
 
   if (!tenant) {
-    await replyText(replyToken, 'ไม่พบข้อมูลผู้เช่าของท่านในระบบ กรุณาติดต่อแอดมิน');
+    await replyText(replyToken,
+      'ไม่พบข้อมูลผู้เช่าของท่านในระบบ กรุณาติดต่อแอดมิน',
+      propertyId
+    );
     return;
   }
 
   const latestInvoice = tenant.contracts[0]?.invoices[0];
   if (!latestInvoice) {
-    await replyText(replyToken, 'ไม่พบใบแจ้งหนี้ที่รอชำระ ขอบคุณครับ/ค่ะ');
+    await replyText(replyToken, 'ไม่พบใบแจ้งหนี้ที่รอชำระ ขอบคุณครับ/ค่ะ', propertyId);
     return;
   }
 
-  // Download slip image
-  const slipPath = await downloadLineImage(message.id);
+  const slipPath = await downloadLineImage(message.id, propertyId);
 
-  // Update invoice status → REVIEW
   await prisma.invoice.update({
     where: { id: latestInvoice.id },
     data:  { status: 'REVIEW', slipPath },
   });
 
-  await replyText(
-    replyToken,
-    '✅ ได้รับสลิปเรียบร้อยแล้ว\nแอดมินจะตรวจสอบและยืนยันการชำระภายใน 24 ชั่วโมง\nขอบคุณครับ/ค่ะ 🙏'
+  await replyText(replyToken,
+    '✅ ได้รับสลิปเรียบร้อยแล้ว\nแอดมินจะตรวจสอบและยืนยันการชำระภายใน 24 ชั่วโมง\nขอบคุณครับ/ค่ะ 🙏',
+    propertyId
   );
 }
 
-async function handleInvoiceQuery(lineUserId, replyToken) {
+async function handleInvoiceQuery(lineUserId, replyToken, propertyId) {
   const tenant = await prisma.tenant.findFirst({
-    where: { lineUserId },
+    where: {
+      lineUserId,
+      contracts: { some: { isActive: true, room: { propertyId } } },  // scoped
+    },
     include: {
       contracts: {
-        where: { isActive: true },
+        where: { isActive: true, room: { propertyId } },
         include: {
           room: true,
           invoices: {
@@ -182,7 +200,7 @@ async function handleInvoiceQuery(lineUserId, replyToken) {
 
   const invoice = tenant?.contracts[0]?.invoices[0];
   if (!invoice) {
-    await replyText(replyToken, '✅ ไม่มียอดค้างชำระในขณะนี้ ขอบคุณครับ/ค่ะ');
+    await replyText(replyToken, '✅ ไม่มียอดค้างชำระในขณะนี้ ขอบคุณครับ/ค่ะ', propertyId);
     return;
   }
 
@@ -191,12 +209,12 @@ async function handleInvoiceQuery(lineUserId, replyToken) {
   const room   = tenant.contracts[0].room;
   const status = invoice.status === 'REVIEW' ? '⏳ รอตรวจสอบสลิป' : '🔴 รอชำระเงิน';
 
-  await replyText(
-    replyToken,
+  await replyText(replyToken,
     `📋 ยอดค้างชำระห้อง ${room.roomNumber}\n` +
     `เดือน: ${monthNames[invoice.month - 1]} ${invoice.year + 543}\n` +
     `ยอดรวม: ฿${Number(invoice.totalAmount).toLocaleString('th-TH')}\n` +
     `สถานะ: ${status}\n\n` +
-    `กรุณาส่งรูปสลิปในแชทนี้เพื่อยืนยันการชำระ`
+    `กรุณาส่งรูปสลิปในแชทนี้เพื่อยืนยันการชำระ`,
+    propertyId
   );
 }

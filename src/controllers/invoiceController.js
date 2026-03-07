@@ -6,7 +6,7 @@ const { pushInvoiceMessage } = require('../services/lineService');
 exports.list = async (req, res, next) => {
   try {
     const { status, month, year } = req.query;
-    const where = {};
+    const where = { contract: { room: { propertyId: req.propertyId } } };
     if (status) where.status = status;
     if (month)  where.month  = Number(month);
     if (year)   where.year   = Number(year);
@@ -25,8 +25,8 @@ exports.list = async (req, res, next) => {
 
 exports.get = async (req, res, next) => {
   try {
-    const invoice = await prisma.invoice.findUniqueOrThrow({
-      where: { id: req.params.id },
+    const invoice = await prisma.invoice.findFirstOrThrow({
+      where: { id: req.params.id, contract: { room: { propertyId: req.propertyId } } },
       include: {
         items:    { orderBy: { sortOrder: 'asc' } },
         contract: { include: { tenant: true, room: true } },
@@ -59,6 +59,8 @@ exports.create = async (req, res, next) => {
 exports.updateStatus = async (req, res, next) => {
   try {
     const { status } = req.body; // PENDING | REVIEW | PAID
+    const exists = await prisma.invoice.findFirst({ where: { id: req.params.id, contract: { room: { propertyId: req.propertyId } } } });
+    if (!exists) return res.status(404).json({ error: 'ไม่พบใบแจ้งหนี้' });
     const data = { status };
     if (status === 'PAID') data.paidAt = new Date();
     const invoice = await prisma.invoice.update({ where: { id: req.params.id }, data });
@@ -88,13 +90,15 @@ exports.pushLine = async (req, res, next) => {
     const lineUserId = invoice.contract.tenant.lineUserId;
     if (!lineUserId) return res.status(400).json({ error: 'Tenant has no Line User ID' });
 
-    await pushInvoiceMessage(lineUserId, invoice);
+    await pushInvoiceMessage(lineUserId, invoice, req.propertyId);
     res.json({ ok: true });
   } catch (e) { next(e); }
 };
 
 exports.remove = async (req, res, next) => {
   try {
+    const exists = await prisma.invoice.findFirst({ where: { id: req.params.id, contract: { room: { propertyId: req.propertyId } } } });
+    if (!exists) return res.status(404).json({ error: 'ไม่พบใบแจ้งหนี้' });
     await prisma.invoice.delete({ where: { id: req.params.id } });
     res.json({ ok: true });
   } catch (e) { next(e); }
@@ -117,7 +121,7 @@ exports.uploadSlip = async (req, res, next) => {
 exports.getRates = async (req, res, next) => {
   try {
     const { contractId } = req.params;
-    const contract = await prisma.contract.findUniqueOrThrow({ where: { id: contractId } });
+    const contract = await prisma.contract.findFirstOrThrow({ where: { id: contractId, room: { propertyId: req.propertyId } } });
     const rates = await getEffectiveRates(contract.roomId);
     res.json(rates);
   } catch (e) { next(e); }

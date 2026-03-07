@@ -22,7 +22,7 @@ router.post('/login', async (req, res) => {
       include: { property: { select: { id: true, name: true, isActive: true } } },
     });
 
-    if (!user || !user.isActive) {
+    if (!user) {
       return res.status(401).json({ error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
     }
 
@@ -31,9 +31,14 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
     }
 
-    // ตรวจสอบ property ยังใช้งานได้อยู่ (เฉพาะ PROPERTY_ADMIN)
-    if (user.role === 'PROPERTY_ADMIN' && (!user.property || !user.property.isActive)) {
-      return res.status(403).json({ error: 'บัญชีหอพักถูกระงับ กรุณาติดต่อผู้ดูแลระบบ' });
+    // ตรวจสอบสถานะบัญชี (เฉพาะ PROPERTY_ADMIN)
+    if (user.role === 'PROPERTY_ADMIN') {
+      if (!user.isActive) {
+        return res.status(403).json({ error: 'บัญชีของคุณยังรออนุมัติจากผู้ดูแลระบบ', code: 'PENDING_APPROVAL' });
+      }
+      if (!user.property || !user.property.isActive) {
+        return res.status(403).json({ error: 'บัญชีหอพักถูกระงับ กรุณาติดต่อผู้ดูแลระบบ', code: 'SUSPENDED' });
+      }
     }
 
     const token = jwt.sign(
@@ -102,6 +107,91 @@ router.get('/me', adminAuth, async (req, res) => {
     res.json(user);
   } catch (e) {
     res.status(500).json({ error: e.message });
+  }
+});
+
+/**
+ * POST /api/auth/register
+ * สมัครใช้งานหอดี — สร้าง Property + User + Subscription ใหม่
+ * Body: { propertyName, ownerName?, phone?, address?,
+ *         username, password, confirmPassword,
+ *         lineChannelAccessToken?, lineChannelSecret? }
+ */
+router.post('/register', async (req, res) => {
+  try {
+    const {
+      propertyName, ownerName, phone, address,
+      username, password, confirmPassword,
+      lineChannelAccessToken, lineChannelSecret,
+    } = req.body;
+
+    // Validate required fields
+    if (!propertyName?.trim()) return res.status(400).json({ error: 'กรุณากรอกชื่อหอพัก' });
+    if (!username?.trim())     return res.status(400).json({ error: 'กรุณากรอกชื่อผู้ใช้' });
+    if (!password)             return res.status(400).json({ error: 'กรุณากรอกรหัสผ่าน' });
+    if (password.length < 6)   return res.status(400).json({ error: 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร' });
+    if (password !== confirmPassword) return res.status(400).json({ error: 'รหัสผ่านไม่ตรงกัน' });
+
+    // Check username uniqueness
+    const existing = await prisma.user.findUnique({ where: { username: username.trim() } });
+    if (existing) return res.status(409).json({ error: 'ชื่อผู้ใช้นี้ถูกใช้งานแล้ว' });
+
+    const hashed = await bcrypt.hash(password, 12);
+
+    // Create Property + User + Subscription in one transaction
+    const property = await prisma.$transaction(async (tx) => {
+      const prop = await tx.property.create({
+        data: {
+          name:                   propertyName.trim(),
+          ownerName:              ownerName?.trim()  || null,
+          phone:                  phone?.trim()      || null,
+          address:                address?.trim()    || null,
+          lineChannelAccessToken: lineChannelAccessToken?.trim() || null,
+          lineChannelSecret:      lineChannelSecret?.trim()      || null,
+          isActive:               false, // รอ Master Admin อนุมัติก่อน
+        },
+      });
+
+      await tx.user.create({
+        data: {
+          propertyId: prop.id,
+          username:   username.trim(),
+          password:   hashed,
+          role:       'PROPERTY_ADMIN',
+          isActive:   false, // ล็อกจนกว่า admin จะอนุมัติ
+        },
+      });
+
+      // FREE_TRIAL 30 วัน
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 30);
+      await tx.subscription.create({
+        data: {
+          propertyId: prop.id,
+          plan:       'FREE_TRIAL',
+          roomLimit:  10,
+          startDate:  new Date(),
+          expiresAt,
+          isActive:   true,
+        },
+      });
+
+      // Default property settings
+      await tx.propertySetting.createMany({
+        data: [
+          { propertyId: prop.id, key: 'electricRate', value: '8' },
+          { propertyId: prop.id, key: 'waterRate',    value: '18' },
+        ],
+      });
+
+      return prop;
+    });
+
+    // ไม่ออก token — รอ admin อนุมัติก่อน
+    res.status(202).json({ pending: true, propertyName: property.name });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง' });
   }
 });
 

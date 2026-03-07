@@ -16,10 +16,10 @@
     <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
       <a href="index.html" class="flex items-center gap-2.5 select-none no-underline">
         <div class="w-9 h-9 bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0">
-          <span class="text-blue-800 font-black text-lg leading-none">ห</span>
+          <svg class="w-5 h-5 text-blue-800" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M4.5 2.25a.75.75 0 000 1.5v16.5h-.75a.75.75 0 000 1.5h16.5a.75.75 0 000-1.5h-.75V3.75a.75.75 0 000-1.5h-15zM9 6a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5H9zm-.75 3.75A.75.75 0 019 9h1.5a.75.75 0 010 1.5H9a.75.75 0 01-.75-.75zM9 12a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5H9zm3.75-5.25A.75.75 0 0113.5 6H15a.75.75 0 010 1.5h-1.5a.75.75 0 01-.75-.75zM13.5 9a.75.75 0 000 1.5H15A.75.75 0 0015 9h-1.5zm-.75 3.75a.75.75 0 01.75-.75H15a.75.75 0 010 1.5h-1.5a.75.75 0 01-.75-.75zM9 19.5v-2.25a.75.75 0 01.75-.75h4.5a.75.75 0 01.75.75V19.5H9z" clip-rule="evenodd" /></svg>
         </div>
         <div class="leading-tight">
-          <div class="font-bold text-lg tracking-wide text-white leading-none">หอ<span class="text-amber-300 font-extrabold">ดี</span></div>
+          <div id="nav-property-name" class="font-bold text-lg tracking-wide text-white leading-none">ระบบหอพัก</div>
           <div class="text-blue-300 text-[11px] font-normal mt-0.5">ระบบจัดการหอพัก</div>
         </div>
       </a>
@@ -44,7 +44,7 @@
     <!-- ข้อมูลหอพัก -->
     <section class="bg-white rounded-xl shadow p-6">
       <h2 class="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
-        <span class="text-xl">🏠</span> ข้อมูลหอพัก
+        <span class="text-xl">🏠</span> หัวบิลใน Card line
       </h2>
       <div class="space-y-3">
         <div>
@@ -62,7 +62,31 @@
       <h2 class="text-base font-semibold text-gray-700 mb-1 flex items-center gap-2">
         <span class="text-xl">💬</span> เชื่อมต่อ LINE OA
       </h2>
-      <p class="text-xs text-gray-400 mb-4">ดูค่าได้จาก LINE Developers Console → Messaging API</p>
+      <div class="flex flex-wrap gap-2 mb-4">
+        <a href="https://developers.line.biz/console/" target="_blank" rel="noopener"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#06C755] hover:bg-[#05a847] text-white text-[11px] font-medium rounded-lg transition">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          LINE Developers Console
+        </a>
+      </div>
+      <p class="text-xs text-gray-400 mb-4">คัดลอก Channel Secret และ Channel Access Token จาก LINE Developers Console → Messaging API</p>
+
+      <!-- Webhook URL -->
+      <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+        <p class="text-xs font-semibold text-blue-700 mb-1">📎 Webhook URL ของหอพักคุณ</p>
+        <p class="text-xs text-blue-500 mb-2">คัดลอกไปวางใน LINE Developers Console → Messaging API → Webhook settings</p>
+        <div class="flex items-center gap-2">
+          <input id="webhook-url-display" type="text" readonly
+            class="flex-1 bg-white border border-blue-300 rounded-lg px-3 py-2 text-xs font-mono text-gray-700 focus:outline-none cursor-pointer"
+            value="กำลังโหลด..." onclick="this.select()" />
+          <button onclick="copyWebhookUrl()"
+            class="shrink-0 bg-blue-600 text-white text-xs font-medium px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+            คัดลอก
+          </button>
+        </div>
+        <p id="webhook-copy-msg" class="text-xs text-green-600 mt-1 hidden">✅ คัดลอกแล้ว!</p>
+      </div>
+
       <div class="space-y-3">
         <div>
           <label class="block text-sm font-medium text-gray-600 mb-1">Channel Secret</label>
@@ -80,10 +104,171 @@
         </div>
       </div>
       <div class="mt-4 flex items-center justify-between">
-        <button onclick="testLine()" class="btn-outline">ทดสอบการเชื่อมต่อ</button>
-        <button onclick="saveGroup('line')" class="btn-primary">บันทึก</button>
+        <button onclick="testLine()" class="btn-outline">ทดสอบ</button>
+        <button onclick="saveLineSettings()" id="btn-save-line" class="btn-primary">บันทึก</button>
       </div>
       <p id="line-test-result" class="mt-2 text-sm hidden"></p>
+      <p id="line-save-result" class="mt-2 text-sm hidden"></p>
+
+      <!-- Test send LINE message -->
+      <hr class="my-4" />
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-600">ทดสอบส่ง LINE message</label>
+        <div class="flex gap-2">
+          <input id="test-line-user-id" type="text" placeholder="LINE User ID (เช่น U3aaedd...)"
+            class="input-field flex-1" />
+          <button id="btn-line-test-send" onclick="sendTestLineMessage()" class="btn-primary shrink-0">ส่ง</button>
+        </div>
+        <p id="line-send-test-result" class="text-sm hidden"></p>
+      </div>
+    </section>
+
+    <!-- Card Design -->
+    <section class="bg-white rounded-xl shadow p-6">
+      <h2 class="text-base font-semibold text-gray-700 mb-1 flex items-center gap-2">
+        <span class="text-xl">🎨</span> ดีไซน์การ์ด LINE
+      </h2>
+      <p class="text-xs text-gray-400 mb-5">เลือกรูปแบบและสีของ Card ที่ส่งให้ผู้เช่าทาง LINE</p>
+
+      <!-- Style Picker -->
+      <label class="block text-sm font-medium text-gray-600 mb-3">รูปแบบการ์ด</label>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5" id="style-picker">
+
+        <!-- Classic -->
+        <label class="cursor-pointer group">
+          <input type="radio" name="cardStyle" value="classic" class="sr-only" onchange="onStyleChange(this)" checked>
+          <div class="style-thumb border-2 border-blue-500 ring-2 ring-blue-200 rounded-xl overflow-hidden group-hover:border-blue-400 transition" data-style="classic">
+            <div id="sth-c-hdr" class="h-3 w-full" style="background:#1e40af"></div>
+            <div class="bg-gray-50 px-2 py-2 space-y-1.5">
+              <div class="flex gap-1">
+                <div class="h-1.5 bg-gray-300 rounded flex-1"></div>
+                <div id="sth-c-amt1" class="h-1.5 rounded w-7" style="background:#1e40af"></div>
+              </div>
+              <div class="flex gap-1">
+                <div class="h-1.5 bg-gray-200 rounded flex-1"></div>
+                <div id="sth-c-amt2" class="h-1.5 rounded w-7" style="background:#93c5fd"></div>
+              </div>
+              <div class="flex gap-1">
+                <div class="h-1.5 bg-gray-200 rounded flex-1"></div>
+                <div class="h-1.5 bg-gray-300 rounded w-5"></div>
+              </div>
+              <div class="border-t border-gray-200 pt-1.5 flex gap-1">
+                <div class="h-1.5 bg-gray-600 rounded flex-1"></div>
+                <div id="sth-c-total" class="h-2 rounded w-8" style="background:#1e40af"></div>
+              </div>
+            </div>
+            <div id="sth-c-ftr" class="h-5 flex items-center justify-center" style="background:#dbeafe">
+              <div class="h-1 w-12 bg-blue-300 rounded"></div>
+            </div>
+          </div>
+          <p class="text-center text-xs text-gray-600 mt-1.5 font-semibold">Classic</p>
+        </label>
+
+        <!-- Receipt -->
+        <label class="cursor-pointer group">
+          <input type="radio" name="cardStyle" value="receipt" class="sr-only" onchange="onStyleChange(this)">
+          <div class="style-thumb border-2 border-gray-200 rounded-xl bg-gray-50 overflow-hidden group-hover:border-blue-400 transition" data-style="receipt">
+            <div class="px-2 py-2 space-y-1.5">
+              <div class="h-1.5 bg-gray-600 rounded w-3/4 mx-auto"></div>
+              <div class="h-1 bg-gray-300 rounded w-1/2 mx-auto"></div>
+              <div class="border-t border-dashed border-gray-300 pt-1.5 space-y-1">
+                <div class="flex gap-1">
+                  <div class="h-1.5 bg-gray-300 rounded flex-1"></div>
+                  <div class="h-1.5 bg-gray-500 rounded w-5"></div>
+                </div>
+                <div class="flex gap-1">
+                  <div class="h-1.5 bg-gray-300 rounded flex-1"></div>
+                  <div class="h-1.5 bg-gray-500 rounded w-5"></div>
+                </div>
+              </div>
+              <div class="border-t-2 border-gray-400 pt-1.5 flex gap-1">
+                <div class="h-1.5 bg-gray-500 rounded flex-1"></div>
+                <div id="sth-r-total" class="h-2 rounded w-8" style="background:#1e40af"></div>
+              </div>
+              <div id="sth-r-cta" class="h-1.5 rounded w-3/4 mx-auto mt-1" style="background:#93c5fd"></div>
+            </div>
+          </div>
+          <p class="text-center text-xs text-gray-600 mt-1.5 font-semibold">Receipt</p>
+        </label>
+
+        <!-- Minimal -->
+        <label class="cursor-pointer group">
+          <input type="radio" name="cardStyle" value="minimal" class="sr-only" onchange="onStyleChange(this)">
+          <div class="style-thumb border-2 border-gray-200 rounded-xl bg-white overflow-hidden group-hover:border-blue-400 transition" data-style="minimal">
+            <div class="px-2 py-2 space-y-1.5">
+              <div class="h-1 bg-gray-300 rounded w-1/3"></div>
+              <div id="sth-m-amt" class="h-3 rounded w-2/3" style="background:#1e40af"></div>
+              <div class="h-1 bg-gray-200 rounded w-1/2"></div>
+              <div class="h-px bg-gray-200"></div>
+              <div class="flex gap-1">
+                <div class="h-1.5 bg-gray-200 rounded flex-1"></div>
+                <div class="h-1.5 bg-gray-400 rounded w-5"></div>
+              </div>
+              <div class="flex gap-1">
+                <div class="h-1.5 bg-gray-200 rounded flex-1"></div>
+                <div class="h-1.5 bg-gray-400 rounded w-5"></div>
+              </div>
+              <div class="h-px bg-gray-200"></div>
+              <div id="sth-m-cta" class="h-1.5 rounded w-2/3" style="background:#93c5fd"></div>
+            </div>
+          </div>
+          <p class="text-center text-xs text-gray-600 mt-1.5 font-semibold">Minimal</p>
+        </label>
+
+        <!-- Bold -->
+        <label class="cursor-pointer group">
+          <input type="radio" name="cardStyle" value="bold" class="sr-only" onchange="onStyleChange(this)">
+          <div class="style-thumb border-2 border-gray-200 rounded-xl overflow-hidden group-hover:border-blue-400 transition" data-style="bold">
+            <div id="sth-b-hdr" class="px-2 py-2 space-y-1" style="background:#1e40af">
+              <div class="h-1.5 rounded w-2/3" style="background:rgba(255,255,255,0.7)"></div>
+              <div class="h-1 rounded w-1/2" style="background:rgba(255,255,255,0.4)"></div>
+            </div>
+            <div class="bg-white px-2 py-2 space-y-1.5">
+              <div class="h-1 bg-gray-300 rounded w-1/3"></div>
+              <div id="sth-b-amt" class="h-2.5 rounded w-2/3" style="background:#1e40af"></div>
+              <div class="flex gap-1">
+                <div class="h-4 bg-gray-100 rounded flex-1"></div>
+                <div class="h-4 bg-gray-100 rounded flex-1"></div>
+                <div class="h-4 bg-gray-100 rounded flex-1"></div>
+              </div>
+              <div id="sth-b-btn" class="h-3 rounded" style="background:#1e40af"></div>
+            </div>
+          </div>
+          <p class="text-center text-xs text-gray-600 mt-1.5 font-semibold">Bold</p>
+        </label>
+      </div>
+
+      <!-- Color Pickers -->
+      <div class="grid grid-cols-2 gap-4 mb-5">
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-2">สีหัว Card (Header)</label>
+          <div class="flex items-center gap-2">
+            <input type="color" id="cardHeaderColor" value="#1e40af"
+              class="w-10 h-10 rounded-lg border border-gray-300 cursor-pointer p-0.5"
+              oninput="syncColor('cardHeaderColor')" />
+            <input type="text" id="cardHeaderColorHex" value="#1e40af" maxlength="7"
+              placeholder="#1e40af"
+              class="flex-1 border border-gray-300 rounded-xl px-3 py-2 text-sm font-mono text-center focus:outline-none focus:ring-2 focus:ring-blue-400"
+              oninput="syncHex('cardHeaderColor')" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-2">สีตัวเลข / Accent</label>
+          <div class="flex items-center gap-2">
+            <input type="color" id="cardAccentColor" value="#1e40af"
+              class="w-10 h-10 rounded-lg border border-gray-300 cursor-pointer p-0.5"
+              oninput="syncColor('cardAccentColor')" />
+            <input type="text" id="cardAccentColorHex" value="#1e40af" maxlength="7"
+              placeholder="#1e40af"
+              class="flex-1 border border-gray-300 rounded-xl px-3 py-2 text-sm font-mono text-center focus:outline-none focus:ring-2 focus:ring-blue-400"
+              oninput="syncHex('cardAccentColor')" />
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end">
+        <button onclick="saveGroup('card')" class="btn-primary">บันทึก</button>
+      </div>
     </section>
 
     <!-- อัตราค่าสาธารณูปโภค -->
@@ -160,21 +345,36 @@
       </div>
       <p id="pw-error" class="mt-2 text-sm text-red-500 hidden"></p>
       <div class="mt-4 flex justify-end">
-        <button onclick="changePassword()" class="btn-primary">เปลี่ยนรหัสผ่าน</button>
+        <button onclick="changePassword()" class="btn-primary">บันทึก</button>
       </div>
     </section>
 
+    <!-- Admin Panel Button — แสดงเฉพาะ MASTER_ADMIN -->
+    <div id="admin-panel-link" class="hidden">
+      <a href="admin.html"
+        class="flex items-center justify-between w-full bg-blue-800 hover:bg-blue-900 text-white px-6 py-4 rounded-2xl shadow transition">
+        <div class="flex items-center gap-3">
+          <span class="text-2xl">⚙️</span>
+          <div>
+            <p class="font-bold">จัดการระบบ Master Admin</p>
+            <p class="text-blue-200 text-sm">อนุมัติผู้ใช้ใหม่ · จัดการหอพักทั้งหมด · ดูสถิติรวม</p>
+          </div>
+        </div>
+        <span class="text-blue-300 text-xl">→</span>
+      </a>
+    </div>
+
   </main>
 
-  <style>
+  <style type="text/tailwindcss">
     .input-field {
       @apply w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition;
     }
     .btn-primary {
-      @apply px-5 py-2 bg-blue-700 hover:bg-blue-800 text-white text-sm font-medium rounded-xl transition;
+      @apply px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-medium rounded-lg transition;
     }
     .btn-outline {
-      @apply px-5 py-2 border border-blue-600 text-blue-700 hover:bg-blue-50 text-sm font-medium rounded-xl transition;
+      @apply px-3 py-1.5 bg-gray-100 hover:bg-gray-200 border border-gray-200 text-gray-600 hover:text-gray-800 text-[11px] font-medium rounded-lg transition;
     }
   </style>
 
@@ -183,8 +383,24 @@
     if (!TOKEN) { window.location.replace('login.html'); throw new Error('not logged in'); }
     const headers = { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' };
 
+    // แสดงปุ่ม Admin Panel เฉพาะ MASTER_ADMIN
+    (async () => {
+      try {
+        const me = await fetch('/api/auth/me', { headers }).then(r => r.json());
+        if (me.role === 'MASTER_ADMIN') document.getElementById('admin-panel-link').classList.remove('hidden');
+      } catch {}
+    })();
+
     // ---- Load all settings on page load ----
     async function loadSettings() {
+      // โหลด Webhook URL ของ property นี้
+      const me = await fetch('/api/auth/me', { headers }).then(r => r.json());
+      if (me.propertyId) {
+        const baseUrl = (await fetch('/api/config/base-url').then(r => r.json()).catch(() => ({baseUrl:location.origin}))).baseUrl;
+        document.getElementById('webhook-url-display').value =
+          `${baseUrl}/webhook/line/${me.propertyId}`;
+      }
+
       const data = await fetch('/api/settings', { headers }).then(r => r.json());
       if (data.dormName)               document.getElementById('dormName').value = data.dormName;
       if (data.lineChannelSecret)      document.getElementById('lineChannelSecret').value = data.lineChannelSecret;
@@ -195,6 +411,28 @@
       if (data.waterSmallPrice) document.getElementById('waterSmallPrice').value = data.waterSmallPrice;
       if (data.waterLargeLabel) document.getElementById('waterLargeLabel').value = data.waterLargeLabel;
       if (data.waterLargePrice) document.getElementById('waterLargePrice').value = data.waterLargePrice;
+
+      // Card Design
+      const cardStyle = data.cardStyle || 'classic';
+      const radio = document.querySelector(`input[name="cardStyle"][value="${cardStyle}"]`);
+      if (radio) { radio.checked = true; updateStyleSelection(cardStyle); }
+      const hColor = data.cardHeaderColor || '#1e40af';
+      const aColor = data.cardAccentColor || '#1e40af';
+      document.getElementById('cardHeaderColor').value    = hColor;
+      document.getElementById('cardHeaderColorHex').value = hColor;
+      document.getElementById('cardAccentColor').value    = aColor;
+      document.getElementById('cardAccentColorHex').value = aColor;
+      updatePreviewColors();
+    }
+
+    function copyWebhookUrl() {
+      const inp = document.getElementById('webhook-url-display');
+      inp.select();
+      navigator.clipboard.writeText(inp.value).then(() => {
+        const msg = document.getElementById('webhook-copy-msg');
+        msg.classList.remove('hidden');
+        setTimeout(() => msg.classList.add('hidden'), 2500);
+      });
     }
 
     // ---- Save helpers ----
@@ -214,6 +452,52 @@
       setTimeout(() => el.remove(), 3000);
     }
 
+    async function saveLineSettings() {
+      const secret = document.getElementById('lineChannelSecret').value.trim();
+      const token  = document.getElementById('lineChannelAccessToken').value.trim();
+      const resultEl = document.getElementById('line-save-result');
+      const btn = document.getElementById('btn-save-line');
+
+      if (!secret || !token) {
+        resultEl.className = 'mt-2 text-sm text-red-500';
+        resultEl.textContent = '❌ กรุณากรอก Channel Secret และ Channel Access Token';
+        resultEl.classList.remove('hidden');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = '⏳ กำลังตั้งค่า...';
+      resultEl.classList.add('hidden');
+
+      try {
+        const r = await fetch('/api/settings/line-save', {
+          method: 'POST', headers,
+          body: JSON.stringify({ lineChannelSecret: secret, lineChannelAccessToken: token }),
+        });
+        const d = await r.json();
+
+        if (!r.ok) throw new Error(d.error || 'บันทึกไม่สำเร็จ');
+
+        if (d.autoSetup) {
+          resultEl.className = 'mt-2 text-sm text-green-600';
+          resultEl.innerHTML = `✅ ตั้งค่า Webhook อัตโนมัติสำเร็จ!<br><span class="text-xs font-mono text-gray-500">${d.webhookUrl}</span>`;
+          toast('✅ บันทึกและตั้ง Webhook สำเร็จ!');
+        } else {
+          resultEl.className = 'mt-2 text-sm text-amber-600';
+          resultEl.innerHTML = `⚠️ บันทึกสำเร็จ แต่ตั้ง Webhook อัตโนมัติไม่ได้: ${d.warning}<br><span class="text-xs text-gray-500">กรุณาไปตั้งค่าใน LINE Console เอง</span>`;
+          toast('✅ บันทึกสำเร็จ (ต้องตั้ง Webhook ใน LINE Console เอง)');
+        }
+        resultEl.classList.remove('hidden');
+      } catch (e) {
+        resultEl.className = 'mt-2 text-sm text-red-500';
+        resultEl.textContent = '❌ ' + e.message;
+        resultEl.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'บันทึก';
+      }
+    }
+
     async function saveGroup(group) {
       try {
         if (group === 'dorm') {
@@ -231,11 +515,89 @@
           await saveSetting('waterSmallPrice', document.getElementById('waterSmallPrice').value);
           await saveSetting('waterLargeLabel', document.getElementById('waterLargeLabel').value.trim() || 'แพ็คใหญ่');
           await saveSetting('waterLargePrice', document.getElementById('waterLargePrice').value);
+        } else if (group === 'card') {
+          const style = document.querySelector('input[name="cardStyle"]:checked').value;
+          const headerColor = document.getElementById('cardHeaderColor').value;
+          const accentColor = document.getElementById('cardAccentColor').value;
+          await saveSetting('cardStyle', style);
+          await saveSetting('cardHeaderColor', headerColor);
+          await saveSetting('cardAccentColor', accentColor);
         }
         toast('✅ บันทึกสำเร็จ');
       } catch {
         toast('❌ บันทึกไม่สำเร็จ', false);
       }
+    }
+
+    // ---- Card Design helpers ----
+    function onStyleChange(radio) {
+      const style = radio.value;
+      updateStyleSelection(style);
+    }
+
+    function updateStyleSelection(style) {
+      document.querySelectorAll('.style-thumb').forEach(thumb => {
+        const s = thumb.getAttribute('data-style');
+        if (s === style) {
+          thumb.classList.remove('border-gray-200');
+          thumb.classList.add('border-blue-500', 'ring-2', 'ring-blue-200');
+        } else {
+          thumb.classList.remove('border-blue-500', 'ring-2', 'ring-blue-200');
+          thumb.classList.add('border-gray-200');
+        }
+      });
+    }
+
+    function syncColor(inputId) {
+      const colorInput = document.getElementById(inputId);
+      const hexInput = document.getElementById(inputId + 'Hex');
+      hexInput.value = colorInput.value.toUpperCase();
+      updatePreviewColors();
+    }
+
+    function syncHex(inputId) {
+      const hexInput = document.getElementById(inputId + 'Hex');
+      const colorInput = document.getElementById(inputId);
+      let val = hexInput.value.trim();
+      if (!/^#[0-9a-fA-F]{6}$/.test(val)) return;
+      colorInput.value = val.toLowerCase();
+      updatePreviewColors();
+    }
+
+    function updatePreviewColors() {
+      const hColor = document.getElementById('cardHeaderColor').value;
+      const aColor = document.getElementById('cardAccentColor').value;
+
+      // Classic
+      document.getElementById('sth-c-hdr').style.background = hColor;
+      document.getElementById('sth-c-amt1').style.background = hColor;
+      document.getElementById('sth-c-total').style.background = hColor;
+      document.getElementById('sth-c-ftr').style.background = lightenHex(hColor, 0.8);
+
+      // Receipt
+      document.getElementById('sth-r-total').style.background = hColor;
+      document.getElementById('sth-r-cta').style.background = lightenHex(hColor, 0.5);
+
+      // Minimal
+      document.getElementById('sth-m-amt').style.background = hColor;
+      document.getElementById('sth-m-cta').style.background = lightenHex(hColor, 0.5);
+
+      // Bold
+      document.getElementById('sth-b-hdr').style.background = hColor;
+      document.getElementById('sth-b-amt').style.background = hColor;
+      document.getElementById('sth-b-btn').style.background = hColor;
+    }
+
+    function lightenHex(hex, amount) {
+      try {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        const lr = Math.min(255, r + Math.round((255 - r) * amount));
+        const lg = Math.min(255, g + Math.round((255 - g) * amount));
+        const lb = Math.min(255, b + Math.round((255 - b) * amount));
+        return `#${lr.toString(16).padStart(2, '0')}${lg.toString(16).padStart(2, '0')}${lb.toString(16).padStart(2, '0')}`;
+      } catch { return '#f0f9ff'; }
     }
 
     // ---- Test LINE connection ----
@@ -268,6 +630,49 @@
       } catch {
         resultEl.className = 'mt-2 text-sm text-red-500';
         resultEl.textContent = '❌ ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้';
+      }
+    }
+
+    // ---- Test send LINE message ----
+    async function sendTestLineMessage() {
+      const resultEl = document.getElementById('line-send-test-result');
+      const btn = document.getElementById('btn-line-test-send');
+      const lineUserId = document.getElementById('test-line-user-id').value.trim();
+
+      if (!lineUserId) {
+        resultEl.className = 'text-sm text-red-500';
+        resultEl.textContent = '❌ กรุณาระบุ LINE User ID';
+        resultEl.classList.remove('hidden');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = '⏳';
+      resultEl.className = 'text-sm text-gray-500';
+      resultEl.textContent = '⏳ กำลังส่ง...';
+      resultEl.classList.remove('hidden');
+
+      try {
+        const r = await fetch('/api/settings/line-test-send', {
+          method: 'POST', headers,
+          body: JSON.stringify({ lineUserId }),
+        });
+        const d = await r.json();
+
+        if (r.ok) {
+          resultEl.className = 'text-sm text-green-600';
+          resultEl.textContent = `✅ ${d.msg}`;
+          document.getElementById('test-line-user-id').value = '';
+        } else {
+          resultEl.className = 'text-sm text-red-500';
+          resultEl.textContent = `❌ ${d.error || 'ไม่สามารถส่ง'}`;
+        }
+      } catch (e) {
+        resultEl.className = 'text-sm text-red-500';
+        resultEl.textContent = '❌ ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'ส่ง';
       }
     }
 
@@ -324,6 +729,22 @@
       localStorage.removeItem('hordeeToken');
       window.location.replace('login.html');
     }
+
+    // Load property name in navbar
+    (async () => {
+      const t = localStorage.getItem('hordeeToken');
+      if (!t) return;
+      try {
+        const r = await fetch('/api/settings', { headers: { Authorization: 'Bearer ' + t } });
+        if (r.ok) {
+          const s = await r.json();
+          if (s.dormName) {
+            const el = document.getElementById('nav-property-name');
+            if (el) el.textContent = s.dormName;
+          }
+        }
+      } catch {}
+    })();
 
     loadSettings();
   </script>

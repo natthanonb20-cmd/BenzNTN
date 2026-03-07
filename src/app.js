@@ -39,6 +39,11 @@ app.use('/webhook',      webhookRoutes);
 // Health check
 app.get('/health', (_, res) => res.json({ status: 'ok', ts: new Date() }));
 
+// Config endpoint — ส่ง BASE_URL ให้ frontend ใช้แสดง Webhook URL
+app.get('/api/config/base-url', (_, res) => {
+  res.json({ baseUrl: process.env.BASE_URL || `http://localhost:${process.env.PORT || 3001}` });
+});
+
 // Global error handler
 app.use((err, req, res, next) => {
   console.error(err);
