@@ -7,6 +7,9 @@ const prisma = new PrismaClient();
  */
 async function checkSubscription(req, res, next) {
   try {
+    // MASTER_ADMIN ข้ามการเช็ค subscription
+    if (req.user?.role === 'MASTER_ADMIN') return next();
+
     const sub = await prisma.subscription.findUnique({
       where: { propertyId: req.propertyId },
     });
