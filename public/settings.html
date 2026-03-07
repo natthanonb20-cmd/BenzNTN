@@ -395,10 +395,18 @@
     async function loadSettings() {
       // โหลด Webhook URL ของ property นี้
       const me = await fetch('/api/auth/me', { headers }).then(r => r.json());
-      if (me.propertyId) {
+      let pid = me.propertyId;
+      // MASTER_ADMIN ไม่มี propertyId → ดึง property แรกจาก settings
+      if (!pid) {
+        const props = await fetch('/api/admin/properties', { headers }).then(r => r.json()).catch(() => []);
+        if (props.length > 0) pid = props[0].id;
+      }
+      if (pid) {
         const baseUrl = (await fetch('/api/config/base-url').then(r => r.json()).catch(() => ({baseUrl:location.origin}))).baseUrl;
         document.getElementById('webhook-url-display').value =
-          `${baseUrl}/webhook/line/${me.propertyId}`;
+          `${baseUrl}/webhook/line/${pid}`;
+      } else {
+        document.getElementById('webhook-url-display').value = 'ไม่พบหอพักในระบบ';
       }
 
       const data = await fetch('/api/settings', { headers }).then(r => r.json());
