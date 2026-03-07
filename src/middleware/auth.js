@@ -26,6 +26,9 @@ function adminAuth(req, res, next) {
  */
 function propertyAuth(req, res, next) {
   adminAuth(req, res, async () => {
+    // MASTER_ADMIN ผ่านได้เลย
+    if (req.user.role === 'MASTER_ADMIN') return next();
+
     if (req.propertyId) return next();
 
     // JWT เก่าอาจไม่มี propertyId — อ่านจาก DB แทน
