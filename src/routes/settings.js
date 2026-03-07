@@ -182,4 +182,64 @@ router.post('/line-test-send', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+/**
+ * POST /api/settings/line-broadcast
+ * ส่งข้อความประกาศหาผู้เช่าปัจจุบันทุกคนที่ลงทะเบียน LINE แล้ว
+ * Body: { message }
+ */
+router.post('/line-broadcast', async (req, res, next) => {
+  try {
+    const { message } = req.body;
+    if (!message?.trim()) return res.status(400).json({ error: 'กรุณาระบุข้อความ' });
+
+    const propertyId = req.propertyId;
+    const { getLineClient } = require('../services/lineService');
+    const client = await getLineClient(propertyId);
+
+    // ดึง tenant ที่ยังเช่าอยู่และมี lineUserId
+    const tenants = await prisma.tenant.findMany({
+      where: {
+        lineUserId: { not: null },
+        contracts: {
+          some: {
+            isActive: true,
+            room: { propertyId },
+          },
+        },
+      },
+      include: {
+        contracts: {
+          where: { isActive: true, room: { propertyId } },
+          include: { room: true },
+          take: 1,
+        },
+      },
+    });
+
+    if (tenants.length === 0) {
+      return res.json({ ok: true, sent: 0, failed: 0, message: 'ไม่มีผู้เช่าที่ลงทะเบียน LINE แล้ว' });
+    }
+
+    let sent = 0, failed = 0;
+    const results = [];
+
+    for (const tenant of tenants) {
+      const roomNumber = tenant.contracts[0]?.room?.roomNumber || '-';
+      try {
+        await client.pushMessage(tenant.lineUserId, {
+          type: 'text',
+          text: `📢 ประกาศจากหอพัก\n${'─'.repeat(20)}\n${message.trim()}`
+        });
+        sent++;
+        results.push({ name: tenant.name, room: roomNumber, status: 'success' });
+      } catch {
+        failed++;
+        results.push({ name: tenant.name, room: roomNumber, status: 'failed' });
+      }
+    }
+
+    res.json({ ok: true, sent, failed, total: tenants.length, results });
+  } catch (e) { next(e); }
+});
+
 module.exports = router;

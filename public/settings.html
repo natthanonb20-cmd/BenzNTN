@@ -123,6 +123,35 @@
       </div>
     </section>
 
+    <!-- LINE Broadcast -->
+    <section class="bg-white rounded-xl shadow p-6">
+      <h2 class="text-base font-semibold text-gray-700 mb-1 flex items-center gap-2">
+        <span class="text-xl">📢</span> ประกาศถึงผู้เช่าทั้งหมด
+      </h2>
+      <p class="text-xs text-gray-400 mb-5">ส่งข้อความหาผู้เช่าปัจจุบันทุกคนที่ลงทะเบียน LINE แล้ว</p>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">ข้อความประกาศ</label>
+          <textarea id="broadcast-msg" rows="4" placeholder="เช่น หยุดจ่ายน้ำวันที่ 10 มีนาคม เวลา 09.00-12.00 น. ขออภัยในความไม่สะดวก"
+            class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition resize-none"></textarea>
+          <p class="text-xs text-gray-400 mt-1">ข้อความจะถูกส่งหาผู้เช่าที่มีสถานะเช่าอยู่ปัจจุบันเท่านั้น</p>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <div id="broadcast-count" class="text-sm text-gray-500"></div>
+          <button id="btn-broadcast" onclick="sendBroadcast()"
+            class="flex items-center gap-2 bg-[#06C755] hover:bg-green-600 text-white font-semibold px-5 py-2.5 rounded-xl transition text-sm">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.03 2 11c0 3.07 1.6 5.77 4.07 7.47L5.5 22l3.72-1.95A10.6 10.6 0 0012 20.5c5.52 0 10-4.03 10-9s-4.48-9-10-9z"/></svg>
+            ส่งประกาศ
+          </button>
+        </div>
+
+        <!-- Result -->
+        <div id="broadcast-result" class="hidden rounded-xl p-4 text-sm"></div>
+      </div>
+    </section>
+
     <!-- Card Design -->
     <section class="bg-white rounded-xl shadow p-6">
       <h2 class="text-base font-semibold text-gray-700 mb-1 flex items-center gap-2">
@@ -642,6 +671,62 @@
     }
 
     // ---- Test send LINE message ----
+    async function sendBroadcast() {
+      const msg     = document.getElementById('broadcast-msg').value.trim();
+      const btn     = document.getElementById('btn-broadcast');
+      const resultEl = document.getElementById('broadcast-result');
+
+      if (!msg) {
+        resultEl.className = 'rounded-xl p-4 text-sm bg-red-50 border border-red-200 text-red-600';
+        resultEl.innerHTML = '❌ กรุณาพิมพ์ข้อความก่อนส่ง';
+        resultEl.classList.remove('hidden');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '⏳ กำลังส่ง...';
+      resultEl.className = 'rounded-xl p-4 text-sm bg-gray-50 border border-gray-200 text-gray-500';
+      resultEl.innerHTML = '⏳ กำลังส่งข้อความ...';
+      resultEl.classList.remove('hidden');
+
+      try {
+        const r = await fetch('/api/settings/line-broadcast', {
+          method: 'POST', headers,
+          body: JSON.stringify({ message: msg }),
+        });
+        const d = await r.json();
+
+        if (r.ok) {
+          const rows = (d.results || []).map(t =>
+            `<div class="flex items-center justify-between py-1 border-b border-gray-100 last:border-0">
+              <span class="text-gray-700">ห้อง ${t.room} — ${t.name}</span>
+              <span class="${t.status === 'success' ? 'text-green-600' : 'text-red-500'} font-medium">
+                ${t.status === 'success' ? '✅ ส่งแล้ว' : '❌ ล้มเหลว'}
+              </span>
+            </div>`
+          ).join('');
+
+          resultEl.className = 'rounded-xl p-4 text-sm bg-green-50 border border-green-200';
+          resultEl.innerHTML = `
+            <p class="font-semibold text-green-700 mb-3">
+              📢 ส่งประกาศสำเร็จ ${d.sent}/${d.total} คน
+              ${d.failed > 0 ? `<span class="text-red-500 ml-2">(ล้มเหลว ${d.failed} คน)</span>` : ''}
+            </p>
+            <div class="space-y-0">${rows}</div>`;
+          document.getElementById('broadcast-msg').value = '';
+        } else {
+          resultEl.className = 'rounded-xl p-4 text-sm bg-red-50 border border-red-200 text-red-600';
+          resultEl.innerHTML = `❌ ${d.error}`;
+        }
+      } catch {
+        resultEl.className = 'rounded-xl p-4 text-sm bg-red-50 border border-red-200 text-red-600';
+        resultEl.innerHTML = '❌ ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้';
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.03 2 11c0 3.07 1.6 5.77 4.07 7.47L5.5 22l3.72-1.95A10.6 10.6 0 0012 20.5c5.52 0 10-4.03 10-9s-4.48-9-10-9z"/></svg> ส่งประกาศ`;
+      }
+    }
+
     async function sendTestLineMessage() {
       const resultEl = document.getElementById('line-send-test-result');
       const btn = document.getElementById('btn-line-test-send');
