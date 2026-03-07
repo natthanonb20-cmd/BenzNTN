@@ -12,8 +12,13 @@ router.use(propertyAuth);
  */
 router.get('/', async (req, res, next) => {
   try {
+    let propertyId = req.propertyId;
+    if (!propertyId) {
+      const firstProp = await prisma.property.findFirst({ select: { id: true } });
+      propertyId = firstProp?.id;
+    }
     const settings = await prisma.propertySetting.findMany({
-      where: { propertyId: req.propertyId },
+      where: { propertyId },
     });
     res.json(Object.fromEntries(settings.map(s => [s.key, s.value])));
   } catch (e) { next(e); }
@@ -25,12 +30,18 @@ router.get('/', async (req, res, next) => {
  */
 router.put('/:key', async (req, res, next) => {
   try {
+    let propertyId = req.propertyId;
+    if (!propertyId) {
+      const firstProp = await prisma.property.findFirst({ select: { id: true } });
+      propertyId = firstProp?.id;
+      if (!propertyId) return res.status(400).json({ error: 'ไม่พบหอพักในระบบ' });
+    }
     const { key } = req.params;
     const { value } = req.body;
     const setting = await prisma.propertySetting.upsert({
-      where: { propertyId_key: { propertyId: req.propertyId, key } },
+      where: { propertyId_key: { propertyId, key } },
       update: { value },
-      create: { propertyId: req.propertyId, key, value },
+      create: { propertyId, key, value },
     });
     res.json(setting);
   } catch (e) { next(e); }
@@ -48,7 +59,13 @@ router.post('/line-save', async (req, res, next) => {
       return res.status(400).json({ error: 'กรุณาระบุ Channel Secret และ Access Token' });
     }
 
-    const propertyId = req.propertyId;
+    // MASTER_ADMIN ไม่มี propertyId → ดึง property แรกจาก DB
+    let propertyId = req.propertyId;
+    if (!propertyId) {
+      const firstProp = await prisma.property.findFirst({ select: { id: true } });
+      if (!firstProp) return res.status(400).json({ error: 'ไม่พบหอพักในระบบ' });
+      propertyId = firstProp.id;
+    }
 
     // 1. บันทึก credentials ลง DB
     await prisma.$transaction([
