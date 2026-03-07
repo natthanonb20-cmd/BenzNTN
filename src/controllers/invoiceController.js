@@ -6,7 +6,7 @@ const { pushInvoiceMessage } = require('../services/lineService');
 exports.list = async (req, res, next) => {
   try {
     const { status, month, year } = req.query;
-    const where = { contract: { room: { propertyId: req.propertyId } } };
+    const where = req.propertyId ? { contract: { room: { propertyId: req.propertyId } } } : {};
     if (status) where.status = status;
     if (month)  where.month  = Number(month);
     if (year)   where.year   = Number(year);
