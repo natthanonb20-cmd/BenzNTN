@@ -102,6 +102,22 @@
           errMsg.className = 'text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2';
           errMsg.innerHTML = '⏳ บัญชีของคุณยังรออนุมัติจากผู้ดูแลระบบ<br><span class="text-xs">กรุณาติดต่อผู้ดูแลระบบหากรอนานเกิน 24 ชั่วโมง</span>';
           errMsg.classList.remove('hidden');
+        } else if (data.code === 'TRIAL_EXPIRED' || data.code === 'SUSPENDED') {
+          errMsg.className = 'bg-orange-50 border border-orange-300 rounded-xl px-4 py-3';
+          errMsg.innerHTML = `
+            <div class="flex items-start gap-3">
+              <span class="text-2xl">⏰</span>
+              <div>
+                <p class="font-semibold text-orange-700 text-sm">ครบกำหนดทดลองใช้งานแล้ว</p>
+                <p class="text-orange-600 text-xs mt-1">ติดต่อเพื่อต่ออายุการใช้งาน</p>
+                <a href="https://line.me/ti/p/~rotbenzzz" target="_blank"
+                  class="inline-flex items-center gap-2 mt-2 bg-[#06C755] hover:bg-green-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.03 2 11c0 3.07 1.6 5.77 4.07 7.47L5.5 22l3.72-1.95A10.6 10.6 0 0012 20.5c5.52 0 10-4.03 10-9s-4.48-9-10-9z"/></svg>
+                  Line: rotbenzzz
+                </a>
+              </div>
+            </div>`;
+          errMsg.classList.remove('hidden');
         } else {
           errMsg.className = 'text-sm text-red-500 bg-red-50 border border-red-200 rounded-lg px-3 py-2';
           errMsg.textContent = data.error || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
