@@ -56,6 +56,55 @@ exports.create = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
+exports.updateItems = async (req, res, next) => {
+  try {
+    const invoice = await prisma.invoice.findFirst({
+      where: { id: req.params.id, contract: { room: { propertyId: req.propertyId } } },
+    });
+    if (!invoice) return res.status(404).json({ error: 'ไม่พบใบแจ้งหนี้' });
+    if (invoice.status === 'PAID') return res.status(400).json({ error: 'ไม่สามารถแก้ไขบิลที่ชำระแล้ว' });
+
+    const { items, dueDate, note } = req.body;
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'กรุณาระบุรายการ' });
+    }
+
+    // คำนวณยอดรวมใหม่
+    const totalAmount = items.reduce((sum, i) => sum + Number(i.amount), 0);
+
+    await prisma.$transaction([
+      // ลบ items เก่าทั้งหมด แล้วสร้างใหม่
+      prisma.invoiceItem.deleteMany({ where: { invoiceId: req.params.id } }),
+      prisma.invoice.update({
+        where: { id: req.params.id },
+        data: {
+          totalAmount,
+          dueDate: dueDate ? new Date(dueDate) : invoice.dueDate,
+          note: note ?? invoice.note,
+          items: {
+            create: items.map((item, idx) => ({
+              label:         item.label,
+              billingType:   item.billingType || 'FIXED',
+              amount:        Number(item.amount),
+              unitRate:      item.unitRate      ? Number(item.unitRate)      : null,
+              previousMeter: item.previousMeter ? Number(item.previousMeter) : null,
+              currentMeter:  item.currentMeter  ? Number(item.currentMeter)  : null,
+              unitUsed:      item.unitUsed       ? Number(item.unitUsed)      : null,
+              sortOrder:     idx,
+            })),
+          },
+        },
+      }),
+    ]);
+
+    const updated = await prisma.invoice.findUnique({
+      where: { id: req.params.id },
+      include: { items: { orderBy: { sortOrder: 'asc' } }, contract: { include: { tenant: true, room: true } } },
+    });
+    res.json(updated);
+  } catch (e) { next(e); }
+};
+
 exports.updateStatus = async (req, res, next) => {
   try {
     const { status } = req.body; // PENDING | REVIEW | PAID

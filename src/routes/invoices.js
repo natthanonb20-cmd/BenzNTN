@@ -24,6 +24,7 @@ const slipUpload = multer({ storage: slipStorage, limits: { fileSize: 10 * 1024 
 router.get('/',               ctrl.list);
 router.get('/:id',            ctrl.get);
 router.post('/',              ctrl.create);        // สร้างบิลพร้อม items
+router.put('/:id',            ctrl.updateItems);   // แก้ไขรายการในบิล
 router.put('/:id/status',     ctrl.updateStatus);  // อัปเดตสถานะ (PAID ฯลฯ)
 router.post('/:id/slip',      slipUpload.single('slip'), ctrl.uploadSlip); // แนบสลิป
 router.post('/:id/push-line', ctrl.pushLine);      // ส่ง Flex Message แจ้งผู้เช่า

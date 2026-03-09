@@ -79,6 +79,56 @@
     </div>
   </main>
 
+  <!-- Edit Invoice Modal -->
+  <div id="edit-invoice-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+      <div class="sticky top-0 bg-white px-6 pt-6 pb-3 border-b border-gray-100">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-bold text-gray-800">✏️ แก้ไขใบแจ้งหนี้</h3>
+          <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">✕</button>
+        </div>
+        <p id="edit-invoice-subtitle" class="text-sm text-gray-500 mt-1"></p>
+      </div>
+
+      <div class="px-6 py-4 space-y-4">
+        <!-- วันครบกำหนด -->
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">วันครบกำหนดชำระ</label>
+          <input id="edit-due-date" type="date" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        </div>
+
+        <!-- รายการ -->
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-2">รายการค่าใช้จ่าย</label>
+          <div id="edit-items-list" class="space-y-2"></div>
+        </div>
+
+        <!-- ยอดรวม -->
+        <div class="bg-blue-50 rounded-xl px-4 py-3 flex items-center justify-between">
+          <span class="text-sm font-medium text-blue-700">ยอดรวมทั้งหมด</span>
+          <span id="edit-total-display" class="text-lg font-bold text-blue-800">฿0.00</span>
+        </div>
+
+        <!-- หมายเหตุ -->
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">หมายเหตุ</label>
+          <textarea id="edit-note" rows="2" placeholder="หมายเหตุ (ถ้ามี)"
+            class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"></textarea>
+        </div>
+
+        <p id="edit-invoice-error" class="hidden text-sm text-red-500 bg-red-50 border border-red-200 rounded-lg px-3 py-2"></p>
+      </div>
+
+      <div class="px-6 pb-6 flex gap-3">
+        <button onclick="closeEditModal()" class="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm hover:bg-gray-50 transition">ยกเลิก</button>
+        <button id="btn-save-edit" onclick="saveEditInvoice()"
+          class="flex-1 bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2.5 rounded-xl text-sm transition">
+          บันทึก
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Slip Image Viewer Modal -->
   <div id="slip-viewer-modal" class="hidden fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4" onclick="closeSlipViewer()">
     <div class="relative max-w-2xl w-full" onclick="event.stopPropagation()">
@@ -172,6 +222,7 @@
 
         const actions = [];
         if (inv.status === 'PENDING') {
+          actions.push(`<button onclick='openEditModal(${JSON.stringify(inv)})' class="px-2 py-1 bg-amber-100 text-amber-700 text-xs rounded hover:bg-amber-200">✏️ แก้ไข</button>`);
           actions.push(`<button onclick='openSlipModal(${JSON.stringify(inv)})' class="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded hover:bg-purple-200">แนบสลิป</button>`);
           actions.push(`<button onclick="pushLine('${inv.id}')" class="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600">Line</button>`);
         }
@@ -229,6 +280,97 @@
     }
 
     // ---- Slip Modal ----
+    // ---- Edit Invoice Modal ----
+    let _editInvoiceId = null;
+
+    function openEditModal(inv) {
+      _editInvoiceId = inv.id;
+      const room   = inv.contract?.room?.roomNumber ?? '—';
+      const tenant = inv.contract?.tenant?.name     ?? '—';
+      const month  = `${MONTHS[inv.month-1]} ${inv.year+543}`;
+
+      document.getElementById('edit-invoice-subtitle').textContent = `ห้อง ${room} — ${tenant} (${month})`;
+      document.getElementById('edit-note').value     = inv.note || '';
+      document.getElementById('edit-invoice-error').classList.add('hidden');
+
+      // วันครบกำหนด
+      if (inv.dueDate) {
+        document.getElementById('edit-due-date').value = inv.dueDate.slice(0, 10);
+      }
+
+      // สร้าง input rows สำหรับแต่ละรายการ
+      const list = document.getElementById('edit-items-list');
+      list.innerHTML = (inv.items || []).map((item, idx) => `
+        <div class="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2">
+          <input type="text" value="${item.label}" data-idx="${idx}" data-field="label"
+            oninput="updateEditItem(this)"
+            class="flex-1 text-sm bg-transparent border-b border-gray-300 focus:outline-none focus:border-blue-400 py-1" />
+          <span class="text-gray-400 text-sm shrink-0">฿</span>
+          <input type="number" value="${Number(item.amount)}" data-idx="${idx}" data-field="amount"
+            oninput="updateEditItem(this); recalcEditTotal()"
+            class="w-28 text-sm text-right bg-transparent border-b border-gray-300 focus:outline-none focus:border-blue-400 py-1" />
+        </div>
+      `).join('');
+
+      // เก็บ items data ไว้ใน memory
+      window._editItems = inv.items.map(i => ({ ...i, amount: Number(i.amount) }));
+      recalcEditTotal();
+      document.getElementById('edit-invoice-modal').classList.remove('hidden');
+    }
+
+    function updateEditItem(el) {
+      const idx   = Number(el.dataset.idx);
+      const field = el.dataset.field;
+      window._editItems[idx][field] = field === 'amount' ? Number(el.value) : el.value;
+    }
+
+    function recalcEditTotal() {
+      const total = (window._editItems || []).reduce((s, i) => s + Number(i.amount), 0);
+      document.getElementById('edit-total-display').textContent =
+        '฿' + total.toLocaleString('th-TH', { minimumFractionDigits: 2 });
+    }
+
+    function closeEditModal() {
+      document.getElementById('edit-invoice-modal').classList.add('hidden');
+      _editInvoiceId = null;
+    }
+
+    async function saveEditInvoice() {
+      const btn     = document.getElementById('btn-save-edit');
+      const errEl   = document.getElementById('edit-invoice-error');
+      const dueDate = document.getElementById('edit-due-date').value;
+      const note    = document.getElementById('edit-note').value.trim();
+
+      errEl.classList.add('hidden');
+      btn.disabled = true;
+      btn.textContent = 'กำลังบันทึก...';
+
+      try {
+        const r = await fetch(`/api/invoices/${_editInvoiceId}`, {
+          method: 'PUT', headers,
+          body: JSON.stringify({ items: window._editItems, dueDate: dueDate || null, note }),
+        });
+        const d = await r.json();
+        if (!r.ok) {
+          errEl.textContent = d.error;
+          errEl.classList.remove('hidden');
+          return;
+        }
+        closeEditModal();
+        loadInvoices();
+      } catch {
+        errEl.textContent = 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้';
+        errEl.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'บันทึก';
+      }
+    }
+
+    document.getElementById('edit-invoice-modal').addEventListener('click', function(e) {
+      if (e.target === this) closeEditModal();
+    });
+
     function openSlipModal(inv) {
       _slipInvoiceId = inv.id;
       const room   = inv.contract?.room?.roomNumber ?? '—';
