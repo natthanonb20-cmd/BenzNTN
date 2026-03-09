@@ -244,10 +244,7 @@
             <td class="px-4 py-3 text-center">${slip}</td>
             <td class="px-4 py-3 text-center">
               <div class="flex gap-1 justify-center flex-wrap">
-                ${inv.status === 'PENDING' ? `<button onclick='openSlipModal(${JSON.stringify(inv)})' class="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded hover:bg-purple-200">แนบสลิป</button>` : ''}
-                ${inv.status === 'REVIEW'  ? `<button onclick="setStatus('${inv.id}','PAID')" class="px-2 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600">ยืนยัน</button>` : ''}
-                ${inv.status !== 'PAID'    ? `<button onclick="pushLine('${inv.id}')" class="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600">Line</button>` : ''}
-                <button onclick="del('${inv.id}')" class="px-2 py-1 bg-red-100 text-red-500 text-xs rounded hover:bg-red-200">ลบ</button>
+                ${actions.join('')}
               </div>
             </td>
           </tr>`;
