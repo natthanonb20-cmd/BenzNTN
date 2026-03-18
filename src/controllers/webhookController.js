@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const { downloadLineImage, replyText } = require('../services/lineService');
+const { getWaterPrices } = require('./waterController');
 
 /**
  * Verify LINE signature using the property's own Channel Secret.
@@ -79,6 +80,18 @@ async function processEvent(event, propertyId) {
       return;
     }
 
+    // ตรวจสอบคำสั่งบันทึกน้ำดื่ม (เจ้าของหอเท่านั้น)
+    const waterParsed = parseWaterOrder(text);
+    if (waterParsed) {
+      const isTenant = await prisma.tenant.findFirst({
+        where: { lineUserId, contracts: { some: { isActive: true, room: { propertyId } } } },
+      });
+      if (!isTenant) {
+        await handleWaterOrder(lineUserId, replyToken, text, waterParsed, propertyId);
+        return;
+      }
+    }
+
     // ผู้เช่าพิมพ์เลขห้อง เช่น "101" หรือ "ห้อง 101"
     const roomMatch = text.match(/^(?:ห้อง\s*)?(\d+(?:\/\d+)?)$/);
     if (roomMatch) {
@@ -93,6 +106,127 @@ async function processEvent(event, propertyId) {
       propertyId
     );
   }
+}
+
+/**
+ * แยกว่าข้อความเป็นคำสั่งน้ำดื่มหรือไม่
+ * รองรับ: "149/22 เล็ก 5", "149/22เล็ก5 จ่ายแล้ว", "บ้านแอน เล็ก 30=760"
+ */
+function parseWaterOrder(text) {
+  const sizeMatch = text.match(/(เล็ก|ใหญ่)/);
+  if (!sizeMatch) return null;
+
+  const roomNumMatch = text.match(/(\d+\/\d+)/);
+  const size = sizeMatch[1] === 'เล็ก' ? 'small' : 'large';
+
+  // ดึงตัวเลขทั้งหมด (ไม่รวมส่วนเลขห้อง)
+  const textWithoutRoom = roomNumMatch ? text.replace(roomNumMatch[1], '') : text;
+  const allNums = [...textWithoutRoom.matchAll(/=?\s*(\d+)\s*บาท?/g), ...textWithoutRoom.matchAll(/(?<![=/\d])(\d+)(?!\s*บาท)/g)];
+  const nums = [...new Set(textWithoutRoom.match(/\d+/g)?.map(Number) ?? [])];
+
+  if (nums.length === 0) return null;
+
+  let qty, statedPrice;
+  if (nums.length === 1) {
+    qty = nums[0];
+    statedPrice = null;
+  } else {
+    // ถ้ามี =number หรือ numberบาท → นั่นคือราคา
+    const priceByEq   = textWithoutRoom.match(/=\s*(\d+)/);
+    const priceByBaht = textWithoutRoom.match(/(\d+)\s*บาท/);
+    if (priceByEq) {
+      statedPrice = Number(priceByEq[1]);
+      qty = nums.find(n => n !== statedPrice) ?? nums[0];
+    } else if (priceByBaht) {
+      statedPrice = Number(priceByBaht[1]);
+      qty = nums.find(n => n !== statedPrice) ?? nums[0];
+    } else {
+      // ตัวเลขเล็กสุด = qty, ใหญ่สุด = ราคา
+      qty = Math.min(...nums);
+      statedPrice = Math.max(...nums);
+    }
+  }
+
+  const isPaid = statedPrice !== null || /จ่ายแล้ว|ชำระแล้ว/.test(text);
+
+  if (roomNumMatch) {
+    return { type: 'tenant', room: roomNumMatch[1], size, qty, statedPrice, isPaid: /จ่ายแล้ว|ชำระแล้ว/.test(text) };
+  }
+
+  // Walk-in: เอาชื่อออกจากข้อความ (ส่วนที่ไม่ใช่ตัวเลข/keyword)
+  const customerName = text
+    .replace(/(เล็ก|ใหญ่|แพ็ค|จ่ายแล้ว|ชำระแล้ว|บาท)/g, '')
+    .replace(/[=\d]/g, '')
+    .trim() || 'ลูกค้าทั่วไป';
+
+  return { type: 'walkin', customerName, size, qty, statedPrice, isPaid };
+}
+
+async function handleWaterOrder(lineUserId, replyToken, originalText, parsed, propertyId) {
+  const prices = await getWaterPrices();
+  const unitPrice  = parsed.size === 'small' ? prices.smallPrice : prices.largePrice;
+  const sizeLabel  = parsed.size === 'small' ? prices.smallLabel : prices.largeLabel;
+  const calcAmount = unitPrice * parsed.qty;
+
+  let tenantId;
+  let displayName;
+
+  if (parsed.type === 'tenant') {
+    const contract = await prisma.contract.findFirst({
+      where: { isActive: true, room: { roomNumber: parsed.room, propertyId } },
+      include: { tenant: true },
+    });
+    if (!contract) {
+      await replyText(replyToken, `❌ ไม่พบห้อง ${parsed.room} หรือไม่มีผู้เช่า`, propertyId);
+      return;
+    }
+    tenantId    = contract.tenantId;
+    displayName = `ห้อง ${parsed.room} (${contract.tenant.name})`;
+  } else {
+    // Walk-in → ใช้ dummy tenant "ลูกค้าทั่วไป" ของ property นี้
+    let walkIn = await prisma.tenant.findFirst({
+      where: { name: 'ลูกค้าทั่วไป', propertyId },
+    });
+    if (!walkIn) {
+      walkIn = await prisma.tenant.create({ data: { name: 'ลูกค้าทั่วไป', propertyId } });
+    }
+    tenantId    = walkIn.id;
+    displayName = parsed.customerName;
+  }
+
+  const recordAmount = parsed.statedPrice ?? calcAmount;
+
+  await prisma.waterSale.create({
+    data: {
+      propertyId,
+      tenantId,
+      smallPacks:  parsed.size === 'small' ? parsed.qty : 0,
+      largePacks:  parsed.size === 'large'  ? parsed.qty : 0,
+      totalAmount: recordAmount,
+      isPaid:      parsed.isPaid,
+      note:        `LINE: ${originalText}`,
+    },
+  });
+
+  // สร้าง reply
+  let msg = `✅ บันทึกแล้ว\n${displayName}\n${sizeLabel}: ${parsed.qty} แพ็ค\n`;
+
+  if (parsed.statedPrice !== null) {
+    msg += `ราคาที่พิม: ฿${parsed.statedPrice.toLocaleString('th-TH')}\n`;
+    msg += `ระบบคำนวณ: ฿${calcAmount.toLocaleString('th-TH')} (${parsed.qty} × ฿${unitPrice})\n`;
+    const diff = parsed.statedPrice - calcAmount;
+    if (diff !== 0) {
+      msg += `⚠️ ต่างกัน ฿${Math.abs(diff).toLocaleString('th-TH')} กรุณาตรวจสอบ`;
+    } else {
+      msg += `✓ ราคาถูกต้อง`;
+    }
+  } else {
+    msg += `ยอด: ฿${calcAmount.toLocaleString('th-TH')}`;
+  }
+
+  msg += parsed.isPaid ? '\n💚 จ่ายแล้ว' : '\n🔴 ค้างชำระ';
+
+  await replyText(replyToken, msg, propertyId);
 }
 
 async function handleRegister(lineUserId, replyToken, roomNumber, propertyId) {
