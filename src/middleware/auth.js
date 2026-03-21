@@ -26,14 +26,21 @@ function adminAuth(req, res, next) {
  */
 function propertyAuth(req, res, next) {
   adminAuth(req, res, async () => {
-    // MASTER_ADMIN → ดึง property แรกแล้ว set propertyId อัตโนมัติ
+    // MASTER_ADMIN → อ่าน propertyId จาก DB เสมอ (ไม่เชื่อ JWT เพราะอาจเก่า)
     if (req.user.role === 'MASTER_ADMIN') {
-      if (!req.propertyId) {
-        try {
-          const firstProp = await prisma.property.findFirst({ select: { id: true } });
-          if (firstProp) req.propertyId = firstProp.id;
-        } catch {}
-      }
+      try {
+        const user = await prisma.user.findUnique({
+          where: { id: req.user.userId },
+          select: { propertyId: true },
+        });
+        if (user?.propertyId) {
+          req.propertyId = user.propertyId;
+        } else {
+          // fallback: ถ้า user ไม่มี propertyId ให้ดึง property ล่าสุด
+          const prop = await prisma.property.findFirst({ orderBy: { createdAt: 'desc' }, select: { id: true } });
+          if (prop) req.propertyId = prop.id;
+        }
+      } catch {}
       return next();
     }
 
