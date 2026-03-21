@@ -243,7 +243,7 @@ function buildBold({ dormName, room, tenant, monthTh, yearThai, totalStr, items,
         { type: 'box', layout: 'vertical', height: '1px', backgroundColor: '#e5e7eb', margin: 'md', contents: [] },
         {
           type: 'button',
-          action: { type: 'cameraRoll', label: '📎 ส่งสลิปชำระเงิน' },
+          action: { type: 'message', label: '📎 ส่งสลิปชำระเงิน', text: 'ส่งสลิป' },
           color: accentColor, style: 'primary', height: 'sm',
         },
       ],
