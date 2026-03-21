@@ -48,7 +48,13 @@
   <!-- Modal -->
   <div id="modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
-      <h2 class="text-lg font-bold text-gray-800">เพิ่ม / แก้ไขห้องพัก</h2>
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-bold text-gray-800">เพิ่ม / แก้ไขห้องพัก</h2>
+        <div class="text-right">
+          <p class="text-xs text-gray-400">รวมทั้งหมด/เดือน</p>
+          <p id="m-total" class="text-lg font-bold text-blue-700">฿0</p>
+        </div>
+      </div>
       <div class="grid grid-cols-2 gap-3">
         <div class="col-span-2">
           <label class="block text-sm text-gray-600 mb-1">เลขห้อง *</label>
@@ -147,8 +153,18 @@
       document.getElementById('m-wrate').value     = room?.customWaterRate    ?? '';
       document.getElementById('m-desc').value      = room?.description ?? '';
       document.getElementById('modal').classList.remove('hidden');
+      updateTotal();
     }
     function closeModal() { document.getElementById('modal').classList.add('hidden'); }
+
+    function updateTotal() {
+      const total = ['m-rent','m-common','m-furniture','m-parking']
+        .reduce((s, id) => s + (Number(document.getElementById(id).value) || 0), 0);
+      document.getElementById('m-total').textContent = '฿' + total.toLocaleString('th-TH');
+    }
+    ['m-rent','m-common','m-furniture','m-parking'].forEach(id => {
+      document.getElementById(id).addEventListener('input', updateTotal);
+    });
 
     async function saveRoom() {
       const id   = document.getElementById('m-id').value;
