@@ -149,7 +149,8 @@ exports.pushLine = async (req, res, next) => {
     const lineUserId = invoice.contract.tenant.lineUserId;
     if (!lineUserId) return res.status(400).json({ error: 'Tenant has no Line User ID' });
 
-    await pushInvoiceMessage(lineUserId, invoice, req.propertyId);
+    const propertyId = invoice.contract.room.propertyId || req.propertyId;
+    await pushInvoiceMessage(lineUserId, invoice, propertyId);
     res.json({ ok: true });
   } catch (e) { next(e); }
 };
