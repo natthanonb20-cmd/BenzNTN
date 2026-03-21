@@ -166,7 +166,10 @@ exports.remove = async (req, res, next) => {
 
 exports.rejectSlip = async (req, res, next) => {
   try {
-    const exists = await prisma.invoice.findFirst({ where: { id: req.params.id, contract: { room: { propertyId: req.propertyId } } } });
+    const exists = await prisma.invoice.findUnique({
+      where: { id: req.params.id },
+      include: { contract: { include: { room: true } } },
+    });
     if (!exists) return res.status(404).json({ error: 'ไม่พบใบแจ้งหนี้' });
     if (exists.slipPath) {
       const fs = require('fs');
