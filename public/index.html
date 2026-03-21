@@ -325,6 +325,7 @@
               <div class="flex gap-1 justify-center flex-wrap">
                 ${inv.status === 'PENDING' ? `<button onclick='openSlipModal(${JSON.stringify(inv)})' class="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded hover:bg-purple-200">แนบสลิป</button>` : ''}
                 ${inv.status === 'REVIEW'  ? `<button onclick="markPaid('${inv.id}')" class="px-2 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600">ยืนยัน</button>` : ''}
+                ${inv.status === 'REVIEW'  ? `<button onclick="rejectSlip('${inv.id}')" class="px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600">ปฏิเสธ</button>` : ''}
                 ${slipBtn}
                 ${inv.status !== 'PAID' ? `<button onclick="pushLine('${inv.id}')" class="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600">ส่ง Line</button>` : ''}
               </div>
@@ -340,6 +341,12 @@
     function closeSlipViewer() {
       document.getElementById('slip-viewer-modal').classList.add('hidden');
       document.getElementById('slip-viewer-img').src = '';
+    }
+
+    async function rejectSlip(id) {
+      if (!confirm('ปฏิเสธสลิปนี้? รูปจะถูกลบและสถานะกลับเป็นรอชำระ')) return;
+      await fetch(`/api/invoices/${id}/reject-slip`, { method: 'POST', headers });
+      loadDashboard();
     }
 
     async function markPaid(id) {
