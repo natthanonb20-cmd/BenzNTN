@@ -2,6 +2,7 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const { createInvoice, getEffectiveRates } = require('../services/billingService');
 const { pushInvoiceMessage } = require('../services/lineService');
+const XLSX = require('xlsx');
 
 exports.list = async (req, res, next) => {
   try {
@@ -163,6 +164,46 @@ exports.uploadSlip = async (req, res, next) => {
       data: { slipPath, status: 'REVIEW' },
     });
     res.json(invoice);
+  } catch (e) { next(e); }
+};
+
+// Export invoices to Excel
+exports.exportExcel = async (req, res, next) => {
+  try {
+    const { status, month, year } = req.query;
+    const MONTHS_TH = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    const STATUS_TH = { PENDING: 'รอชำระ', REVIEW: 'รอตรวจสลิป', PAID: 'ชำระแล้ว' };
+    const where = { contract: { room: { propertyId: req.propertyId } } };
+    if (status) where.status = status;
+    if (month)  where.month  = Number(month);
+    if (year)   where.year   = Number(year);
+
+    const invoices = await prisma.invoice.findMany({
+      where,
+      include: { contract: { include: { tenant: true, room: true } } },
+      orderBy: [{ year: 'desc' }, { month: 'desc' }],
+    });
+
+    const rows = invoices.map(inv => ({
+      'ห้อง':           inv.contract?.room?.roomNumber ?? '',
+      'ผู้เช่า':         inv.contract?.tenant?.name    ?? '',
+      'เบอร์โทร':        inv.contract?.tenant?.phone   ?? '',
+      'งวด':            `${MONTHS_TH[inv.month - 1]} ${inv.year + 543}`,
+      'ยอด (฿)':        Number(inv.totalAmount),
+      'สถานะ':          STATUS_TH[inv.status] ?? inv.status,
+      'ครบกำหนด':       inv.dueDate ? new Date(inv.dueDate).toLocaleDateString('th-TH') : '',
+      'ชำระวันที่':      inv.paidAt  ? new Date(inv.paidAt).toLocaleDateString('th-TH')  : '',
+    }));
+
+    const wb  = XLSX.utils.book_new();
+    const ws  = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = [10,20,14,12,14,14,14,14].map(w => ({ wch: w }));
+    XLSX.utils.book_append_sheet(wb, ws, 'ใบแจ้งหนี้');
+
+    const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    res.setHeader('Content-Disposition', 'attachment; filename="invoices.xlsx"');
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.send(buf);
   } catch (e) { next(e); }
 };
 

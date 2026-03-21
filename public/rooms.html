@@ -55,12 +55,20 @@
           <input id="m-room"  type="text"   placeholder="101" class="inp" />
         </div>
         <div>
-          <label class="block text-sm text-gray-600 mb-1">ชั้น</label>
-          <input id="m-floor" type="number" placeholder="1"   class="inp" />
-        </div>
-        <div>
           <label class="block text-sm text-gray-600 mb-1">ค่าเช่า/เดือน (฿) *</label>
           <input id="m-rent"  type="number" placeholder="3500" class="inp" />
+        </div>
+        <div>
+          <label class="block text-sm text-gray-600 mb-1">ค่าส่วนกลาง (฿)</label>
+          <input id="m-common" type="number" placeholder="0" class="inp" />
+        </div>
+        <div>
+          <label class="block text-sm text-gray-600 mb-1">ค่าเช่าเฟอร์นิเจอร์ (฿)</label>
+          <input id="m-furniture" type="number" placeholder="0" class="inp" />
+        </div>
+        <div>
+          <label class="block text-sm text-gray-600 mb-1">ค่าจอดรถ (฿)</label>
+          <input id="m-parking" type="number" placeholder="0" class="inp" />
         </div>
         <div>
           <label class="block text-sm text-gray-600 mb-1">ราคาไฟ/หน่วย (ว่าง=default)</label>
@@ -72,7 +80,7 @@
         </div>
         <div class="col-span-2">
           <label class="block text-sm text-gray-600 mb-1">หมายเหตุ</label>
-          <input id="m-desc"  type="text"   placeholder="เช่น ห้องมุม ชั้น 1" class="inp" />
+          <input id="m-desc"  type="text"   placeholder="เช่น ห้องมุม" class="inp" />
         </div>
       </div>
       <input type="hidden" id="m-id" />
@@ -106,7 +114,7 @@
             <div class="flex items-start justify-between">
               <div>
                 <p class="text-2xl font-bold text-blue-700">${r.roomNumber}</p>
-                <p class="text-xs text-gray-400">ชั้น ${r.floor ?? '—'}</p>
+                ${r.commonFee || r.furnitureFee || r.parkingFee ? `<p class="text-xs text-gray-400">${[r.commonFee ? `ส่วนกลาง ฿${Number(r.commonFee).toLocaleString('th-TH')}` : '', r.furnitureFee ? `เฟอร์นิเจอร์ ฿${Number(r.furnitureFee).toLocaleString('th-TH')}` : '', r.parkingFee ? `จอดรถ ฿${Number(r.parkingFee).toLocaleString('th-TH')}` : ''].filter(Boolean).join(' · ')}</p>` : ''}
               </div>
               <span class="text-xs px-2 py-0.5 rounded-full ${occupied ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'}">${occupied ? 'มีผู้เช่า' : 'ว่าง'}</span>
             </div>
@@ -121,13 +129,15 @@
     }
 
     function openModal(room) {
-      document.getElementById('m-id').value    = room?.id    ?? '';
-      document.getElementById('m-room').value  = room?.roomNumber ?? '';
-      document.getElementById('m-floor').value = room?.floor ?? '';
-      document.getElementById('m-rent').value  = room?.monthlyRent ?? '';
-      document.getElementById('m-erate').value = room?.customElectricRate ?? '';
-      document.getElementById('m-wrate').value = room?.customWaterRate    ?? '';
-      document.getElementById('m-desc').value  = room?.description ?? '';
+      document.getElementById('m-id').value        = room?.id    ?? '';
+      document.getElementById('m-room').value      = room?.roomNumber ?? '';
+      document.getElementById('m-rent').value      = room?.monthlyRent ?? '';
+      document.getElementById('m-common').value    = room?.commonFee ?? '';
+      document.getElementById('m-furniture').value = room?.furnitureFee ?? '';
+      document.getElementById('m-parking').value   = room?.parkingFee ?? '';
+      document.getElementById('m-erate').value     = room?.customElectricRate ?? '';
+      document.getElementById('m-wrate').value     = room?.customWaterRate    ?? '';
+      document.getElementById('m-desc').value      = room?.description ?? '';
       document.getElementById('modal').classList.remove('hidden');
     }
     function closeModal() { document.getElementById('modal').classList.add('hidden'); }
@@ -136,11 +146,13 @@
       const id   = document.getElementById('m-id').value;
       const body = {
         roomNumber:         document.getElementById('m-room').value,
-        floor:              document.getElementById('m-floor').value  || null,
         monthlyRent:        document.getElementById('m-rent').value,
-        customElectricRate: document.getElementById('m-erate').value  || null,
-        customWaterRate:    document.getElementById('m-wrate').value  || null,
-        description:        document.getElementById('m-desc').value   || null,
+        commonFee:          document.getElementById('m-common').value    || null,
+        furnitureFee:       document.getElementById('m-furniture').value || null,
+        parkingFee:         document.getElementById('m-parking').value   || null,
+        customElectricRate: document.getElementById('m-erate').value     || null,
+        customWaterRate:    document.getElementById('m-wrate').value     || null,
+        description:        document.getElementById('m-desc').value      || null,
       };
       const url    = id ? `/api/rooms/${id}` : '/api/rooms';
       const method = id ? 'PUT' : 'POST';

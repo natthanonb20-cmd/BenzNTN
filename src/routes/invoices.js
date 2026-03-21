@@ -33,4 +33,7 @@ router.delete('/:id',         ctrl.remove);
 // ดึง effective rates สำหรับห้องของ contract (ใช้ใน billing.html)
 router.get('/rates/:contractId', ctrl.getRates);
 
+// Export
+router.get('/export/excel', ctrl.exportExcel);
+
 module.exports = router;

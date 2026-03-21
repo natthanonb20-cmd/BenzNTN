@@ -151,6 +151,7 @@
               <th class="px-4 py-3 text-left">ผู้เช่า</th>
               <th class="px-4 py-3 text-left">เดือน</th>
               <th class="px-4 py-3 text-right">ยอด (฿)</th>
+              <th class="px-4 py-3 text-center">ครบกำหนด</th>
               <th class="px-4 py-3 text-center">สถานะ</th>
               <th class="px-4 py-3 text-center">จัดการ</th>
             </tr>
@@ -280,9 +281,11 @@
       const tbody = document.getElementById('invoice-tbody');
 
       if (!active.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">ไม่มีใบแจ้งหนี้ที่ค้างอยู่ 🎉</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">ไม่มีใบแจ้งหนี้ที่ค้างอยู่ 🎉</td></tr>';
         return;
       }
+
+      const today = new Date(); today.setHours(0,0,0,0);
 
       tbody.innerHTML = active.map(inv => {
         const room   = inv.contract?.room?.roomNumber ?? '—';
@@ -295,6 +298,17 @@
           ? '<span class="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-medium">ชำระแล้ว</span>'
           : '<span class="px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 text-xs font-medium">รอชำระ</span>';
 
+        // นับถอยหลังวันครบกำหนด
+        let dueBadge = '<span class="text-gray-300 text-xs">—</span>';
+        if (inv.dueDate) {
+          const due  = new Date(inv.dueDate); due.setHours(0,0,0,0);
+          const diff = Math.round((due - today) / 86400000);
+          if (diff < 0)      dueBadge = `<span class="text-xs font-semibold text-red-600 bg-red-50 px-2 py-0.5 rounded-full">เกิน ${Math.abs(diff)} วัน</span>`;
+          else if (diff === 0) dueBadge = `<span class="text-xs font-semibold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full">ครบวันนี้!</span>`;
+          else if (diff <= 3) dueBadge = `<span class="text-xs font-semibold text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded-full">อีก ${diff} วัน</span>`;
+          else                dueBadge = `<span class="text-xs text-gray-500">อีก ${diff} วัน</span>`;
+        }
+
         const slipBtn = inv.slipPath
           ? `<button onclick="viewSlip('/${inv.slipPath}')" class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded hover:bg-gray-200">🧧 สลิป</button>`
           : '';
@@ -305,6 +319,7 @@
             <td class="px-4 py-3 text-gray-700">${tenant}</td>
             <td class="px-4 py-3 text-gray-500">${month}</td>
             <td class="px-4 py-3 text-right font-semibold">${total}</td>
+            <td class="px-4 py-3 text-center">${dueBadge}</td>
             <td class="px-4 py-3 text-center">${badge}</td>
             <td class="px-4 py-3 text-center">
               <div class="flex gap-1 justify-center flex-wrap">

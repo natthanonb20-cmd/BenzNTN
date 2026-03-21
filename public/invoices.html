@@ -55,6 +55,7 @@
           <option value="REVIEW">รอตรวจสลิป</option>
           <option value="PAID">ชำระแล้ว</option>
         </select>
+        <button onclick="exportExcel()" class="border border-green-600 text-green-700 px-4 py-1.5 rounded-lg text-sm hover:bg-green-50 transition">⬇️ Excel</button>
         <a href="billing.html" class="bg-blue-700 text-white px-4 py-1.5 rounded-lg text-sm hover:bg-blue-800 transition">+ ออกบิลใหม่</a>
       </div>
     </div>
@@ -186,6 +187,25 @@
       if (p.get('month'))   document.getElementById('filter-month').value  = p.get('month');
       if (p.get('year'))    document.getElementById('filter-year').value   = p.get('year');
     })();
+
+    function exportExcel() {
+      const status = document.getElementById('filter-status').value;
+      const month  = document.getElementById('filter-month').value;
+      const year   = document.getElementById('filter-year').value;
+      const qs = new URLSearchParams();
+      if (status) qs.set('status', status);
+      if (month)  qs.set('month',  month);
+      if (year)   qs.set('year',   year);
+      const token = localStorage.getItem('hordeeToken');
+      // download via hidden anchor with Authorization header workaround
+      fetch(`/api/invoices/export/excel${qs.toString() ? '?'+qs : ''}`, { headers })
+        .then(r => r.blob()).then(blob => {
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'invoices.xlsx';
+          a.click();
+        });
+    }
 
     async function load() {
       const status = document.getElementById('filter-status').value;

@@ -30,15 +30,17 @@ exports.get = async (req, res, next) => {
 /** checkSubscription + checkRoomLimit run BEFORE this via route middleware */
 exports.create = async (req, res, next) => {
   try {
-    const { roomNumber, floor, monthlyRent, customElectricRate, customWaterRate, description } = req.body;
+    const { roomNumber, monthlyRent, customElectricRate, customWaterRate, commonFee, furnitureFee, parkingFee, description } = req.body;
     const room = await prisma.room.create({
       data: {
         propertyId: req.propertyId,
         roomNumber,
-        floor:              floor             ? Number(floor)             : null,
         monthlyRent,
         customElectricRate: customElectricRate ? Number(customElectricRate) : null,
         customWaterRate:    customWaterRate    ? Number(customWaterRate)    : null,
+        commonFee:          commonFee          ? Number(commonFee)          : null,
+        furnitureFee:       furnitureFee       ? Number(furnitureFee)       : null,
+        parkingFee:         parkingFee         ? Number(parkingFee)         : null,
         description,
       },
     });
@@ -48,16 +50,18 @@ exports.create = async (req, res, next) => {
 
 exports.update = async (req, res, next) => {
   try {
-    const { roomNumber, floor, monthlyRent, customElectricRate, customWaterRate, description, isActive } = req.body;
+    const { roomNumber, monthlyRent, customElectricRate, customWaterRate, commonFee, furnitureFee, parkingFee, description, isActive } = req.body;
     // ตรวจสอบว่าห้องนี้เป็นของ property นี้ก่อนแก้ไข
     const room = await prisma.room.update({
       where:  { id: req.params.id, propertyId: req.propertyId },
       data: {
         roomNumber,
-        floor:              floor             !== undefined ? Number(floor)             : undefined,
         monthlyRent,
-        customElectricRate: customElectricRate !== undefined ? Number(customElectricRate) : undefined,
-        customWaterRate:    customWaterRate    !== undefined ? Number(customWaterRate)    : undefined,
+        customElectricRate: customElectricRate !== undefined ? (customElectricRate ? Number(customElectricRate) : null) : undefined,
+        customWaterRate:    customWaterRate    !== undefined ? (customWaterRate    ? Number(customWaterRate)    : null) : undefined,
+        commonFee:          commonFee          !== undefined ? (commonFee          ? Number(commonFee)          : null) : undefined,
+        furnitureFee:       furnitureFee       !== undefined ? (furnitureFee       ? Number(furnitureFee)       : null) : undefined,
+        parkingFee:         parkingFee         !== undefined ? (parkingFee         ? Number(parkingFee)         : null) : undefined,
         description,
         isActive,
       },

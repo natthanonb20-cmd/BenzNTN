@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const XLSX = require('xlsx');
 
 exports.list = async (req, res, next) => {
   try {
@@ -24,9 +25,9 @@ exports.get = async (req, res, next) => {
 
 exports.create = async (req, res, next) => {
   try {
-    const { name, nickname, phone, lineUserId, nationalId, note } = req.body;
+    const { name, nickname, phone, lineUserId, nationalId, note, billDueDay } = req.body;
     const tenant = await prisma.tenant.create({
-      data: { propertyId: req.propertyId, name, nickname, phone, lineUserId, nationalId, note },
+      data: { propertyId: req.propertyId, name, nickname, phone, lineUserId, nationalId, note, billDueDay: billDueDay ? Number(billDueDay) : 5 },
     });
     res.status(201).json(tenant);
   } catch (e) { next(e); }
@@ -34,12 +35,12 @@ exports.create = async (req, res, next) => {
 
 exports.update = async (req, res, next) => {
   try {
-    const { name, nickname, phone, lineUserId, nationalId, note } = req.body;
+    const { name, nickname, phone, lineUserId, nationalId, note, billDueDay } = req.body;
     const exists = await prisma.tenant.findFirst({ where: { id: req.params.id, propertyId: req.propertyId } });
     if (!exists) return res.status(404).json({ error: 'ไม่พบผู้เช่า' });
     const tenant = await prisma.tenant.update({
       where: { id: req.params.id },
-      data: { name, nickname, phone, lineUserId, nationalId, note },
+      data: { name, nickname, phone, lineUserId, nationalId, note, billDueDay: billDueDay ? Number(billDueDay) : undefined },
     });
     res.json(tenant);
   } catch (e) {
@@ -59,6 +60,46 @@ exports.remove = async (req, res, next) => {
     }
     await prisma.tenant.delete({ where: { id } });
     res.json({ ok: true });
+  } catch (e) { next(e); }
+};
+
+exports.exportExcel = async (req, res, next) => {
+  try {
+    const tenants = await prisma.tenant.findMany({
+      where:   { propertyId: req.propertyId },
+      include: { contracts: { where: { isActive: true }, include: { room: true } }, vehicles: true },
+      orderBy: { name: 'asc' },
+    });
+
+    const rows = tenants.map(t => {
+      const c    = t.contracts[0];
+      const cars  = t.vehicles.filter(v => v.type === 'CAR').map(v => v.plate).join(', ');
+      const motos = t.vehicles.filter(v => v.type === 'MOTORCYCLE').map(v => v.plate).join(', ');
+      return {
+        'ชื่อ':              t.name,
+        'ชื่อเล่น':           t.nickname ?? '',
+        'เบอร์โทร':           t.phone     ?? '',
+        'เลขบัตรประชาชน':    t.nationalId ?? '',
+        'ห้อง':              c?.room?.roomNumber ?? '',
+        'วันเข้าอยู่':        c?.startDate ? new Date(c.startDate).toLocaleDateString('th-TH') : '',
+        'วันครบสัญญา':       c?.endDate   ? new Date(c.endDate).toLocaleDateString('th-TH')   : '',
+        'กำหนดชำระวันที่':    t.billDueDay,
+        'ทะเบียนรถยนต์':      cars,
+        'ทะเบียนมอเตอร์ไซค์': motos,
+        'LINE':              t.lineUserId ?? '',
+        'หมายเหตุ':           t.note ?? '',
+      };
+    });
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = [20,12,14,16,8,14,14,8,16,16,36,20].map(w => ({ wch: w }));
+    XLSX.utils.book_append_sheet(wb, ws, 'รายชื่อผู้เช่า');
+
+    const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    res.setHeader('Content-Disposition', 'attachment; filename="tenants.xlsx"');
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.send(buf);
   } catch (e) { next(e); }
 };
 

@@ -4,6 +4,7 @@ const ctrl = require('../controllers/tenantController');
 
 router.use(propertyAuth);
 
+router.get('/export/excel', ctrl.exportExcel);
 router.get('/',          ctrl.list);
 router.get('/:id',       ctrl.get);
 router.post('/',         ctrl.create);

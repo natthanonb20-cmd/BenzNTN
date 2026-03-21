@@ -84,13 +84,32 @@
         </div>
       </div>
 
-      <!-- Rent -->
+      <!-- Rent & Fixed Fees -->
       <div class="bg-white rounded-xl shadow p-5 space-y-3">
-        <h2 class="font-semibold text-gray-700 text-base">2. ค่าเช่า</h2>
+        <h2 class="font-semibold text-gray-700 text-base">2. ค่าเช่าและค่าธรรมเนียม</h2>
         <div class="flex items-center gap-3">
-          <label class="block text-sm text-gray-600 w-24">ค่าเช่า (฿)</label>
+          <label class="block text-sm text-gray-600 w-32">ค่าเช่าบ้าน (฿)</label>
           <input id="inp-rent" type="number" step="0.01" placeholder="3500"
-            class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+            class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            oninput="recalcTotal()" />
+        </div>
+        <div class="flex items-center gap-3">
+          <label class="block text-sm text-gray-600 w-32">ค่าส่วนกลาง (฿)</label>
+          <input id="inp-common" type="number" step="0.01" placeholder="0"
+            class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            oninput="recalcTotal()" />
+        </div>
+        <div class="flex items-center gap-3">
+          <label class="block text-sm text-gray-600 w-32">ค่าเช่าเฟอร์นิเจอร์ (฿)</label>
+          <input id="inp-furniture" type="number" step="0.01" placeholder="0"
+            class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            oninput="recalcTotal()" />
+        </div>
+        <div class="flex items-center gap-3">
+          <label class="block text-sm text-gray-600 w-32">ค่าจอดรถ (฿)</label>
+          <input id="inp-parking" type="number" step="0.01" placeholder="0"
+            class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            oninput="recalcTotal()" />
         </div>
       </div>
 
@@ -283,7 +302,11 @@
         opt.dataset.rent          = room.monthlyRent;
         opt.dataset.electricRate  = room.customElectricRate ?? '';
         opt.dataset.waterRate     = room.customWaterRate    ?? '';
+        opt.dataset.commonFee     = room.commonFee     ?? '';
+        opt.dataset.furnitureFee  = room.furnitureFee  ?? '';
+        opt.dataset.parkingFee    = room.parkingFee    ?? '';
         opt.dataset.tenantId      = contract.tenantId ?? '';
+        opt.dataset.billDueDay    = contract.tenant?.billDueDay ?? 5;
         sel.appendChild(opt);
       });
 
@@ -312,9 +335,20 @@
       const eRate = opt.dataset.electricRate ? parseFloat(opt.dataset.electricRate) : defaultRates.electricRate;
       const wRate = opt.dataset.waterRate    ? parseFloat(opt.dataset.waterRate)    : defaultRates.waterRate;
 
-      document.getElementById('inp-rent').value   = rent;
+      document.getElementById('inp-rent').value      = rent;
+      document.getElementById('inp-common').value    = opt.dataset.commonFee    ? parseFloat(opt.dataset.commonFee)    : '';
+      document.getElementById('inp-furniture').value = opt.dataset.furnitureFee ? parseFloat(opt.dataset.furnitureFee) : '';
+      document.getElementById('inp-parking').value   = opt.dataset.parkingFee   ? parseFloat(opt.dataset.parkingFee)   : '';
       document.getElementById('elec-rate').value  = eRate;
       document.getElementById('water-rate').value = wRate;
+
+      // Auto-fill dueDate จาก billDueDay ของผู้เช่า
+      const dueDay  = parseInt(opt.dataset.billDueDay || 5);
+      const selMonth = parseInt(document.getElementById('inp-month').value || new Date().getMonth() + 1);
+      const selYear  = parseInt(document.getElementById('inp-year').value  || new Date().getFullYear());
+      const dueDate  = new Date(selYear, selMonth - 1 + 1, dueDay); // เดือนถัดไป วันที่ dueDay
+      document.getElementById('inp-due').value = dueDate.toISOString().split('T')[0];
+
       calcElec(); calcWater(); recalcTotal();
       await loadUnpaidWater(opt.dataset.tenantId);
     }
@@ -426,7 +460,10 @@
 
     // ---- Total ----
     function recalcTotal() {
-      let total = parseFloat(document.getElementById('inp-rent').value || 0);
+      let total = parseFloat(document.getElementById('inp-rent').value || 0)
+               + parseFloat(document.getElementById('inp-common').value    || 0)
+               + parseFloat(document.getElementById('inp-furniture').value || 0)
+               + parseFloat(document.getElementById('inp-parking').value   || 0);
 
       if (modes.elec === 'METER') {
         const p = parseFloat(document.getElementById('elec-prev').value || 0);
@@ -463,11 +500,15 @@
       const items = [];
       let sortOrder = 0;
 
-      // Rent
-      const rent = parseFloat(document.getElementById('inp-rent').value || 0);
-      if (rent > 0) {
-        items.push({ label: 'ค่าเช่าห้อง', billingType: 'FIXED', amount: rent, sortOrder: sortOrder++ });
-      }
+      // Rent & fixed fees
+      const rent      = parseFloat(document.getElementById('inp-rent').value      || 0);
+      const common    = parseFloat(document.getElementById('inp-common').value    || 0);
+      const furniture = parseFloat(document.getElementById('inp-furniture').value || 0);
+      const parking   = parseFloat(document.getElementById('inp-parking').value   || 0);
+      if (rent      > 0) items.push({ label: 'ค่าเช่าบ้าน',          billingType: 'FIXED', amount: rent,      sortOrder: sortOrder++ });
+      if (common    > 0) items.push({ label: 'ค่าส่วนกลาง',           billingType: 'FIXED', amount: common,    sortOrder: sortOrder++ });
+      if (furniture > 0) items.push({ label: 'ค่าเช่าเฟอร์นิเจอร์',   billingType: 'FIXED', amount: furniture, sortOrder: sortOrder++ });
+      if (parking   > 0) items.push({ label: 'ค่าจอดรถ',              billingType: 'FIXED', amount: parking,   sortOrder: sortOrder++ });
 
       // Electric
       if (modes.elec === 'METER') {
@@ -569,8 +610,7 @@
       }
     }
 
-    // Recalc on rent change
-    document.getElementById('inp-rent').addEventListener('input', recalcTotal);
+    // inp-rent already has oninput="recalcTotal()" inline
   </script>
 
   <script>

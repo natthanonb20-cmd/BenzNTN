@@ -80,15 +80,9 @@ async function processEvent(event, propertyId) {
       return;
     }
 
-    // ตรวจสอบคำสั่งบันทึกน้ำดื่ม (เจ้าของหอเท่านั้น)
-    const waterParsed = parseWaterOrder(text);
-    if (waterParsed) {
-      const isWaterAdmin = await checkWaterAdmin(lineUserId, propertyId);
-      if (isWaterAdmin) {
-        await handleWaterOrder(lineUserId, replyToken, text, waterParsed, propertyId);
-        return;
-      }
-    }
+    // [DISABLED] บันทึกน้ำดื่มผ่าน LINE — ปิดไว้ชั่วคราว
+    // const waterParsed = parseWaterOrder(text);
+    // if (waterParsed) { ... }
 
     // ผู้เช่าพิมพ์เลขห้อง เช่น "101" หรือ "ห้อง 101"
     const roomMatch = text.match(/^(?:ห้อง\s*)?(\d+(?:\/\d+)?)$/);

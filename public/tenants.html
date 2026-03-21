@@ -50,6 +50,7 @@
   <main class="max-w-6xl mx-auto px-4 py-6">
     <div class="flex items-center justify-between mb-4">
       <h1 class="text-2xl font-bold text-gray-800">ผู้เช่า</h1>
+      <button onclick="exportTenants()" class="border border-green-600 text-green-700 px-4 py-2 rounded-lg text-sm hover:bg-green-50 transition">⬇️ Excel</button>
       <button onclick="openTenantModal()" class="bg-blue-700 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-800 transition">+ เพิ่มผู้เช่า</button>
     </div>
 
@@ -99,6 +100,12 @@
         <div><label class="lbl">Line User ID</label>    <input id="m-line"  type="text" class="inp" placeholder="Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" /></div>
         <div><label class="lbl">เลขบัตรประชาชน</label> <input id="m-nid"   type="text" class="inp" /></div>
         <div><label class="lbl">หมายเหตุ</label>        <input id="m-note"  type="text" class="inp" /></div>
+        <div><label class="lbl">กำหนดชำระบิลวันที่</label>
+          <div class="flex items-center gap-2">
+            <input id="m-dueday" type="number" min="1" max="31" class="inp w-24" placeholder="5" />
+            <span class="text-sm text-gray-500">ของทุกเดือน (ค่าเริ่มต้น: วันที่ 5)</span>
+          </div>
+        </div>
       </div>
       <input type="hidden" id="m-id" />
       <div class="flex gap-2 pt-2">
@@ -339,9 +346,10 @@
       document.getElementById('m-name').value     = t?.name       ?? '';
       document.getElementById('m-nickname').value = t?.nickname   ?? '';
       document.getElementById('m-phone').value    = t?.phone      ?? '';
-      document.getElementById('m-line').value     = t?.lineUserId ?? '';
-      document.getElementById('m-nid').value      = t?.nationalId ?? '';
-      document.getElementById('m-note').value     = t?.note       ?? '';
+      document.getElementById('m-line').value     = t?.lineUserId  ?? '';
+      document.getElementById('m-nid').value      = t?.nationalId  ?? '';
+      document.getElementById('m-note').value     = t?.note        ?? '';
+      document.getElementById('m-dueday').value   = t?.billDueDay  ?? 5;
       document.getElementById('tenant-modal').classList.remove('hidden');
     }
 
@@ -356,6 +364,7 @@
         lineUserId: document.getElementById('m-line').value.trim()     || null,
         nationalId: document.getElementById('m-nid').value.trim()      || null,
         note:       document.getElementById('m-note').value.trim()     || null,
+        billDueDay: Number(document.getElementById('m-dueday').value)  || 5,
       };
       const r = await fetch(id ? `/api/tenants/${id}` : '/api/tenants', {
         method: id ? 'PUT' : 'POST', headers, body: JSON.stringify(body),
@@ -655,6 +664,18 @@
     function closeVehicleModal() {
       document.getElementById('vehicle-modal').classList.add('hidden');
       vmTenantId = null;
+    }
+
+    async function exportTenants() {
+      try {
+        const r = await fetch('/api/tenants/export/excel', { headers });
+        if (!r.ok) { alert('❌ ไม่สามารถดาวน์โหลดได้'); return; }
+        const blob = await r.blob();
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href = url; a.download = 'tenants.xlsx'; a.click();
+        URL.revokeObjectURL(url);
+      } catch { alert('❌ เกิดข้อผิดพลาด'); }
     }
 
     function closeAllModals() {
