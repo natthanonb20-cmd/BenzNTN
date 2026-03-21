@@ -147,7 +147,7 @@ exports.pushLine = async (req, res, next) => {
     });
 
     const lineUserId = invoice.contract.tenant.lineUserId;
-    if (!lineUserId) return res.status(400).json({ error: 'Tenant has no Line User ID' });
+    if (!lineUserId) return res.status(400).json({ error: 'ยังไม่ได้ตั้งค่า LINE ID ของผู้เช่า\nกรุณาไปแก้ไขข้อมูลผู้เช่าแล้วกรอก LINE User ID' });
 
     const propertyId = invoice.contract.room.propertyId || req.propertyId;
     await pushInvoiceMessage(lineUserId, invoice, propertyId);
