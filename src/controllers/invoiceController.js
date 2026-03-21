@@ -43,7 +43,16 @@ exports.create = async (req, res, next) => {
     if (!contractId || !month || !year || !items?.length) {
       return res.status(400).json({ error: 'contractId, month, year and items are required' });
     }
-    const invoice = await createInvoice({ contractId, month: Number(month), year: Number(year), dueDate, note, items });
+    let invoice;
+    try {
+      invoice = await createInvoice({ contractId, month: Number(month), year: Number(year), dueDate, note, items });
+    } catch (e) {
+      if (e?.code === 'P2002') {
+        const MONTHS_TH = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+        return res.status(409).json({ error: `มีใบแจ้งหนี้เดือน${MONTHS_TH[Number(month)-1]} ${Number(year)+543} ของห้องนี้อยู่แล้ว\nกรุณาตรวจสอบในหน้าใบแจ้งหนี้` });
+      }
+      throw e;
+    }
 
     // Link unpaid water sales to this invoice
     if (Array.isArray(waterSaleIds) && waterSaleIds.length) {
