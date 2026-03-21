@@ -65,6 +65,7 @@ exports.handleLine = async (req, res) => {
 async function processEvent(event, propertyId) {
   const { type, source, replyToken } = event;
   const lineUserId = source?.userId;
+  console.log(`[LINE] incoming event type=${type} userId=${lineUserId}`);
   if (!lineUserId) return;
 
   if (type === 'message' && event.message?.type === 'image') {
