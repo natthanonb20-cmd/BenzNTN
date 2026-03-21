@@ -82,8 +82,8 @@ function buildClassic({ dormName, room, tenant, monthTh, yearThai, totalStr, ite
       type: 'box', layout: 'vertical', backgroundColor: headerColor, paddingAll: '20px',
       contents: [
         { type: 'box', layout: 'horizontal', contents: [
-          { type: 'text', text: `🏠 ${dormName}`, color: '#ffffff', size: 'lg', weight: 'bold', flex: 1, wrap: true },
-          { type: 'text', text: `ห้อง ${room.roomNumber}`, color: '#93c5fd', size: 'lg', weight: 'bold', align: 'end', flex: 1, wrap: true },
+          { type: 'text', text: `🏠 ${dormName}`, color: '#ffffff', size: 'md', weight: 'bold', flex: 1, wrap: true },
+          { type: 'text', text: `ห้อง ${room.roomNumber}`, color: '#93c5fd', size: 'md', weight: 'bold', align: 'end', flex: 1, wrap: true },
         ]},
         { type: 'text', text: `ใบแจ้งค่าใช้จ่าย ${monthTh} ${yearThai}`, color: '#bfdbfe', size: 'sm', margin: 'md' },
         { type: 'text', text: `ถึง: ${tenant.name}`, color: '#dbeafe', size: 'xs', margin: 'sm' },
@@ -97,8 +97,8 @@ function buildClassic({ dormName, room, tenant, monthTh, yearThai, totalStr, ite
         ...itemRows(),
         { type: 'separator', margin: 'md', color: '#e5e7eb' },
         { type: 'box', layout: 'horizontal', margin: 'md', contents: [
-          { type: 'text', text: 'ยอดรวมทั้งหมด', size: 'md', weight: 'bold', color: '#111827', flex: 1 },
-          { type: 'text', text: totalStr, size: 'lg', weight: 'bold', color: accentColor, align: 'end', flex: 1, wrap: true },
+          { type: 'text', text: 'ยอดรวมทั้งหมด', size: 'sm', weight: 'bold', color: '#111827', flex: 1 },
+          { type: 'text', text: totalStr, size: 'md', weight: 'bold', color: accentColor, align: 'end', flex: 1, wrap: true },
         ]},
         ...dueDateRow(),
       ],
