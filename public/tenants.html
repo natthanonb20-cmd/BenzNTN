@@ -318,6 +318,8 @@
                   class="px-2.5 py-1 bg-gray-100 text-gray-600 rounded text-xs hover:bg-gray-200">แก้ไข</button>
                 <button onclick='openContractModal("${t.id}","${t.name.replace(/"/g,"")}", ${JSON.stringify(c ?? null)})'
                   class="px-2.5 py-1 bg-blue-100 text-blue-700 rounded text-xs hover:bg-blue-200">📋 สัญญา</button>
+                <button onclick='openVehicleModal("${t.id}","${t.name.replace(/"/g,"")}")'
+                  class="px-2.5 py-1 bg-green-100 text-green-700 rounded text-xs hover:bg-green-200">🚗 รถ</button>
                 <button onclick='deleteTenant("${t.id}","${t.name.replace(/"/g,"")}")'
                   class="px-2.5 py-1 bg-red-100 text-red-600 rounded text-xs hover:bg-red-200">ลบ</button>
               </div>
@@ -591,6 +593,70 @@
     }
 
     // ── Utils ──────────────────────────────────────────
+    // ── Vehicle modal ──────────────────────────────────
+    let vmTenantId = null;
+    async function openVehicleModal(tenantId, tenantName) {
+      vmTenantId = tenantId;
+      document.getElementById('vm-tenant-name').textContent = tenantName;
+      document.getElementById('vm-plate').value = '';
+      document.getElementById('vm-brand').value = '';
+      document.getElementById('vm-color').value = '';
+      document.getElementById('vm-type').value  = 'CAR';
+      await loadVehicles();
+      document.getElementById('vehicle-modal').classList.remove('hidden');
+    }
+
+    async function loadVehicles() {
+      const r = await fetch(`/api/tenants/${vmTenantId}/vehicles`, { headers });
+      const vehicles = await r.json();
+      const list = document.getElementById('vm-list');
+      if (!vehicles.length) {
+        list.innerHTML = '<p class="text-sm text-gray-400 text-center py-2">ยังไม่มีรถที่ลงทะเบียน</p>';
+        return;
+      }
+      list.innerHTML = vehicles.map(v => {
+        const icon  = v.type === 'CAR' ? '🚗' : '🏍️';
+        const label = v.type === 'CAR' ? 'รถยนต์' : 'มอเตอร์ไซค์';
+        const info  = [v.brand, v.color].filter(Boolean).join(' · ');
+        return `<div class="flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2">
+          <div>
+            <span class="text-sm font-semibold">${icon} ${v.plate}</span>
+            <span class="text-xs text-gray-500 ml-2">${label}${info ? ' · ' + info : ''}</span>
+          </div>
+          <button onclick="removeVehicle('${v.id}')" class="text-red-400 hover:text-red-600 text-xs px-2">ลบ</button>
+        </div>`;
+      }).join('');
+    }
+
+    async function addVehicle() {
+      const type  = document.getElementById('vm-type').value;
+      const plate = document.getElementById('vm-plate').value.trim().toUpperCase();
+      const brand = document.getElementById('vm-brand').value.trim() || null;
+      const color = document.getElementById('vm-color').value.trim() || null;
+      if (!plate) { alert('กรุณาระบุเลขทะเบียน'); return; }
+      const r = await fetch(`/api/tenants/${vmTenantId}/vehicles`, {
+        method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, plate, brand, color }),
+      });
+      const data = await r.json();
+      if (!r.ok) { alert(data.error); return; }
+      document.getElementById('vm-plate').value = '';
+      document.getElementById('vm-brand').value = '';
+      document.getElementById('vm-color').value = '';
+      await loadVehicles();
+    }
+
+    async function removeVehicle(vehicleId) {
+      if (!confirm('ลบรถคันนี้?')) return;
+      await fetch(`/api/tenants/${vmTenantId}/vehicles/${vehicleId}`, { method: 'DELETE', headers });
+      await loadVehicles();
+    }
+
+    function closeVehicleModal() {
+      document.getElementById('vehicle-modal').classList.add('hidden');
+      vmTenantId = null;
+    }
+
     function closeAllModals() {
       ['tenant-modal','contract-modal'].forEach(id => document.getElementById(id).classList.add('hidden'));
       pendingFiles = [];
@@ -608,6 +674,32 @@
     }
 
   </script>
+
+  <!-- ═══════════════ Vehicle Modal ═══════════════ -->
+  <div id="vehicle-modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4">
+      <div class="flex justify-between items-center">
+        <h3 class="text-lg font-bold text-gray-800">🚗 ทะเบียนรถ — <span id="vm-tenant-name"></span></h3>
+        <button onclick="closeVehicleModal()" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+      </div>
+      <div id="vm-list" class="space-y-2 max-h-52 overflow-y-auto"></div>
+      <div class="border-t pt-4 space-y-3">
+        <p class="text-sm font-medium text-gray-700">เพิ่มรถ</p>
+        <div class="flex gap-2">
+          <select id="vm-type" class="border rounded-lg px-3 py-2 text-sm flex-shrink-0">
+            <option value="CAR">🚗 รถยนต์</option>
+            <option value="MOTORCYCLE">🏍️ มอเตอร์ไซค์</option>
+          </select>
+          <input id="vm-plate" type="text" placeholder="ทะเบียน เช่น กข 1234" class="border rounded-lg px-3 py-2 text-sm flex-1" style="text-transform:uppercase" />
+        </div>
+        <div class="flex gap-2">
+          <input id="vm-brand" type="text" placeholder="ยี่ห้อ (เช่น Toyota)" class="border rounded-lg px-3 py-2 text-sm flex-1" />
+          <input id="vm-color" type="text" placeholder="สี" class="border rounded-lg px-3 py-2 text-sm w-24" />
+        </div>
+        <button onclick="addVehicle()" class="w-full bg-green-600 text-white py-2 rounded-xl text-sm hover:bg-green-700 transition">+ เพิ่มรถ</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Image lightbox -->
   <div id="lightbox" class="hidden fixed inset-0 bg-black/85 flex items-center justify-center z-[60] p-4"

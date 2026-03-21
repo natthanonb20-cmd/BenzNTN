@@ -14,4 +14,9 @@ router.delete('/:id',    ctrl.remove);
 router.post('/:id/contracts',                   ctrl.createContract);
 router.put ('/:id/contracts/:contractId',        ctrl.updateContract);
 
+// Vehicle sub-resource
+router.get   ('/:id/vehicles',             ctrl.listVehicles);
+router.post  ('/:id/vehicles',             ctrl.addVehicle);
+router.delete('/:id/vehicles/:vehicleId',  ctrl.removeVehicle);
+
 module.exports = router;

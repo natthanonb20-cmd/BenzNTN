@@ -29,6 +29,7 @@ model Property {
   waitingQueues WaitingQueue[]
   waterSales    WaterSale[]
   settings      PropertySetting[]
+  vehicles      Vehicle[]
 }
 
 // -------------------------------------------------------
@@ -134,9 +135,32 @@ model Tenant {
   property   Property    @relation(fields: [propertyId], references: [id])
   contracts  Contract[]
   waterSales WaterSale[]
+  vehicles   Vehicle[]
 
   @@index([propertyId])
   @@unique([propertyId, lineUserId])          // LINE ID unique per property
+}
+
+// -------------------------------------------------------
+// Vehicle — ทะเบียนรถผู้เช่า
+// -------------------------------------------------------
+model Vehicle {
+  id         String      @id @default(cuid())
+  tenantId   String
+  propertyId String
+  type       VehicleType
+  plate      String                           // เลขทะเบียน
+  brand      String?                          // ยี่ห้อ
+  color      String?                          // สี
+  note       String?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+  property Property @relation(fields: [propertyId], references: [id])
+
+  @@index([tenantId])
+  @@index([propertyId])
 }
 
 // -------------------------------------------------------
@@ -291,4 +315,9 @@ enum QueueStatus {
   WAITING
   CONVERTED
   CANCELLED
+}
+
+enum VehicleType {
+  CAR
+  MOTORCYCLE
 }

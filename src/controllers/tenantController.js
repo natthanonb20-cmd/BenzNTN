@@ -62,6 +62,48 @@ exports.remove = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
+exports.listVehicles = async (req, res, next) => {
+  try {
+    const vehicles = await prisma.vehicle.findMany({
+      where: { tenantId: req.params.id, propertyId: req.propertyId },
+      orderBy: { createdAt: 'asc' },
+    });
+    res.json(vehicles);
+  } catch (e) { next(e); }
+};
+
+exports.addVehicle = async (req, res, next) => {
+  try {
+    const { type, plate, brand, color, note } = req.body;
+    if (!type || !plate) return res.status(400).json({ error: 'กรุณาระบุประเภทและเลขทะเบียน' });
+    if (!['CAR', 'MOTORCYCLE'].includes(type)) return res.status(400).json({ error: 'ประเภทรถไม่ถูกต้อง' });
+
+    // รถยนต์ได้แค่ 1 คัน
+    if (type === 'CAR') {
+      const existing = await prisma.vehicle.count({
+        where: { tenantId: req.params.id, type: 'CAR' },
+      });
+      if (existing >= 1) return res.status(409).json({ error: 'ผู้เช่าสามารถลงทะเบียนรถยนต์ได้สูงสุด 1 คัน' });
+    }
+
+    const vehicle = await prisma.vehicle.create({
+      data: { tenantId: req.params.id, propertyId: req.propertyId, type, plate: plate.toUpperCase(), brand, color, note },
+    });
+    res.status(201).json(vehicle);
+  } catch (e) { next(e); }
+};
+
+exports.removeVehicle = async (req, res, next) => {
+  try {
+    const v = await prisma.vehicle.findFirst({
+      where: { id: req.params.vehicleId, tenantId: req.params.id, propertyId: req.propertyId },
+    });
+    if (!v) return res.status(404).json({ error: 'ไม่พบข้อมูลรถ' });
+    await prisma.vehicle.delete({ where: { id: v.id } });
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+};
+
 exports.createContract = async (req, res, next) => {
   try {
     const { roomId, startDate, endDate, depositPaid, contractFiles } = req.body;
