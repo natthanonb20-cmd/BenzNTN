@@ -20,7 +20,7 @@ exports.listProperties = async (req, res, next) => {
         subscription: true,
         _count: { select: { rooms: { where: { isActive: true } }, tenants: true } },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: 'asc' },
     });
     res.json(props);
   } catch (e) { next(e); }
