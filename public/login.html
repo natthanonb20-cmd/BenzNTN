@@ -132,6 +132,13 @@
       }
     });
 
+    // Enter key support
+    ['inp-username', 'inp-password'].forEach(id => {
+      document.getElementById(id).addEventListener('keydown', e => {
+        if (e.key === 'Enter') document.getElementById('login-form').requestSubmit();
+      });
+    });
+
     // Focus username on load
     document.getElementById('inp-username').focus();
   </script>
