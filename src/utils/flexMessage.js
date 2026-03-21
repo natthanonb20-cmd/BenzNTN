@@ -241,11 +241,8 @@ function buildBold({ dormName, room, tenant, monthTh, yearThai, totalStr, items,
         ...chipRows,
         // CTA
         { type: 'box', layout: 'vertical', height: '1px', backgroundColor: '#e5e7eb', margin: 'md', contents: [] },
-        {
-          type: 'button',
-          action: { type: 'message', label: '📎 ส่งสลิปชำระเงิน', text: 'ส่งสลิป' },
-          color: accentColor, style: 'primary', height: 'sm',
-        },
+        { type: 'text', text: '📎 ส่งสลิปการโอนเงินในแชทนี้ได้เลย', size: 'sm', color: accentColor, weight: 'bold', align: 'center', wrap: true },
+        { type: 'text', text: 'ระบบตอบกลับโดยอัตโนมัติ', size: 'xs', color: '#6b7280', align: 'center', margin: 'xs' },
       ],
     },
   };
