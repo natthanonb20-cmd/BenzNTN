@@ -226,14 +226,24 @@
         <div id="water-bottle-sub" class="text-sm text-blue-700 font-medium"></div>
       </div>
 
-      <!-- Summary (sticky bottom) -->
+      <!-- Sticky bottom bar -->
       <div class="fixed bottom-0 left-0 right-0 z-40 bg-blue-800 text-white shadow-lg px-4 py-3">
-        <div class="max-w-2xl mx-auto flex justify-between items-center">
-          <span class="text-sm font-semibold">ยอดรวมทั้งหมด</span>
-          <span id="total-display" class="text-2xl font-bold">฿0.00</span>
+        <div class="max-w-2xl mx-auto flex items-center gap-3">
+          <div class="flex-1">
+            <p class="text-xs text-blue-300">ยอดรวมทั้งหมด</p>
+            <span id="total-display" class="text-xl font-bold">฿0.00</span>
+          </div>
+          <button type="submit" id="btn-save"
+            class="bg-white text-blue-800 font-semibold px-4 py-2 rounded-xl text-sm hover:bg-blue-50 transition">
+            💾 บันทึก
+          </button>
+          <button type="button" id="btn-save-send" onclick="submitForm(true)"
+            class="bg-green-500 hover:bg-green-400 text-white font-semibold px-4 py-2 rounded-xl text-sm transition">
+            📲 ส่ง Line
+          </button>
         </div>
       </div>
-      <div class="h-16"></div>
+      <div class="h-20"></div>
 
       <!-- Note -->
       <div class="bg-white rounded-xl shadow p-5">
@@ -242,17 +252,6 @@
           class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"></textarea>
       </div>
 
-      <!-- Actions -->
-      <div class="flex gap-3 pb-8">
-        <button type="submit" id="btn-save"
-          class="flex-1 bg-blue-700 hover:bg-blue-800 text-white font-semibold py-3 rounded-xl transition text-sm">
-          💾 บันทึกใบแจ้งหนี้
-        </button>
-        <button type="button" id="btn-save-send" onclick="submitForm(true)"
-          class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl transition text-sm">
-          📲 บันทึก + ส่ง Line
-        </button>
-      </div>
     </form>
   </main>
 
