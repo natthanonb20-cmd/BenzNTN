@@ -76,6 +76,11 @@ async function processEvent(event, propertyId) {
   if (type === 'message' && event.message?.type === 'text') {
     const text = event.message.text.trim();
 
+    if (text.toUpperCase() === 'LINEID') {
+      await replyText(replyToken, `LINE ID ของคุณ:\n${lineUserId}`, propertyId);
+      return;
+    }
+
     if (text === 'บิล' || text === 'ยอด') {
       await handleInvoiceQuery(lineUserId, replyToken, propertyId);
       return;
