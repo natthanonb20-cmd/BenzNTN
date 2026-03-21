@@ -83,10 +83,8 @@ async function processEvent(event, propertyId) {
     // ตรวจสอบคำสั่งบันทึกน้ำดื่ม (เจ้าของหอเท่านั้น)
     const waterParsed = parseWaterOrder(text);
     if (waterParsed) {
-      const isTenant = await prisma.tenant.findFirst({
-        where: { lineUserId, contracts: { some: { isActive: true, room: { propertyId } } } },
-      });
-      if (!isTenant) {
+      const isWaterAdmin = await checkWaterAdmin(lineUserId, propertyId);
+      if (isWaterAdmin) {
         await handleWaterOrder(lineUserId, replyToken, text, waterParsed, propertyId);
         return;
       }
@@ -106,6 +104,25 @@ async function processEvent(event, propertyId) {
       propertyId
     );
   }
+}
+
+/**
+ * เช็คว่า lineUserId มีสิทธิ์บันทึกน้ำดื่มหรือไม่
+ * ถ้า waterAdmins ตั้งไว้ → เช็ค list, ถ้าไม่ตั้ง → ทุกคนที่ไม่ใช่ผู้เช่า
+ */
+async function checkWaterAdmin(lineUserId, propertyId) {
+  const row = await prisma.propertySetting.findUnique({
+    where: { propertyId_key: { propertyId, key: 'waterAdmins' } },
+  });
+  if (row?.value) {
+    const allowed = row.value.split(',').map(s => s.trim()).filter(Boolean);
+    return allowed.includes(lineUserId);
+  }
+  // ไม่ได้ตั้ง waterAdmins → fallback: ทุกคนที่ไม่ใช่ผู้เช่า
+  const isTenant = await prisma.tenant.findFirst({
+    where: { lineUserId, contracts: { some: { isActive: true, room: { propertyId } } } },
+  });
+  return !isTenant;
 }
 
 /**
