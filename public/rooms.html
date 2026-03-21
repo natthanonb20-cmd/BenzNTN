@@ -101,6 +101,14 @@
     if (!TOKEN) { window.location.replace('login.html'); throw new Error('not logged in'); }
     const headers = { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' };
 
+    function feeLabel(r) {
+      const parts = [];
+      if (Number(r.commonFee)   > 0) parts.push('ส่วนกลาง ฿'    + Number(r.commonFee).toLocaleString('th-TH'));
+      if (Number(r.furnitureFee)> 0) parts.push('เฟอร์นิเจอร์ ฿' + Number(r.furnitureFee).toLocaleString('th-TH'));
+      if (Number(r.parkingFee)  > 0) parts.push('จอดรถ ฿'        + Number(r.parkingFee).toLocaleString('th-TH'));
+      return parts.length ? '<p class="text-xs text-gray-400">' + parts.join(' · ') + '</p>' : '';
+    }
+
     async function load() {
       const rooms = await fetch('/api/rooms', { headers }).then(r => r.json());
       const grid  = document.getElementById('room-grid');
@@ -114,7 +122,7 @@
             <div class="flex items-start justify-between">
               <div>
                 <p class="text-2xl font-bold text-blue-700">${r.roomNumber}</p>
-                ${r.commonFee || r.furnitureFee || r.parkingFee ? `<p class="text-xs text-gray-400">${[r.commonFee ? `ส่วนกลาง ฿${Number(r.commonFee).toLocaleString('th-TH')}` : '', r.furnitureFee ? `เฟอร์นิเจอร์ ฿${Number(r.furnitureFee).toLocaleString('th-TH')}` : '', r.parkingFee ? `จอดรถ ฿${Number(r.parkingFee).toLocaleString('th-TH')}` : ''].filter(Boolean).join(' · ')}</p>` : ''}
+                ${feeLabel(r)}
               </div>
               <span class="text-xs px-2 py-0.5 rounded-full ${occupied ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'}">${occupied ? 'มีผู้เช่า' : 'ว่าง'}</span>
             </div>
