@@ -347,7 +347,10 @@
       const selMonth = parseInt(document.getElementById('sel-month').value || new Date().getMonth() + 1);
       const selYear  = parseInt(document.getElementById('inp-year').value  || new Date().getFullYear());
       const dueDate  = new Date(selYear, selMonth - 1 + 1, dueDay); // เดือนถัดไป วันที่ dueDay
-      document.getElementById('inp-due').value = dueDate.toISOString().split('T')[0];
+      const dy = dueDate.getFullYear();
+      const dm = String(dueDate.getMonth() + 1).padStart(2, '0');
+      const dd = String(dueDate.getDate()).padStart(2, '0');
+      document.getElementById('inp-due').value = `${dy}-${dm}-${dd}`;
 
       calcElec(); calcWater(); recalcTotal();
       await loadUnpaidWater(opt.dataset.tenantId);
