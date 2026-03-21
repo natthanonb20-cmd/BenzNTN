@@ -309,10 +309,7 @@ async function handleSlip(event, lineUserId, propertyId) {
   }
 
   const latestInvoice = tenant.contracts[0]?.invoices[0];
-  if (!latestInvoice) {
-    await replyText(replyToken, 'ไม่พบใบแจ้งหนี้ที่รอชำระ ขอบคุณครับ/ค่ะ', propertyId);
-    return;
-  }
+  if (!latestInvoice) return; // ไม่มีบิล PENDING → เงียบ ไม่ตอบ
 
   const slipPath = await downloadLineImage(message.id, propertyId);
 
