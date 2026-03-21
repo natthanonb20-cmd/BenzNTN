@@ -54,15 +54,15 @@ router.put('/:key', async (req, res, next) => {
  */
 router.post('/line-save', async (req, res, next) => {
   try {
-    const { lineChannelSecret, lineChannelAccessToken } = req.body;
+    const { lineChannelSecret, lineChannelAccessToken, propertyId: bodyPropertyId } = req.body;
     if (!lineChannelSecret || !lineChannelAccessToken) {
       return res.status(400).json({ error: 'กรุณาระบุ Channel Secret และ Access Token' });
     }
 
-    // MASTER_ADMIN ไม่มี propertyId → ดึง property แรกจาก DB
-    let propertyId = req.propertyId;
+    // ใช้ propertyId จาก JWT → fallback ไป body → fallback ไป findFirst (เรียงล่าสุด)
+    let propertyId = req.propertyId || bodyPropertyId;
     if (!propertyId) {
-      const firstProp = await prisma.property.findFirst({ select: { id: true } });
+      const firstProp = await prisma.property.findFirst({ select: { id: true }, orderBy: { createdAt: 'desc' } });
       if (!firstProp) return res.status(400).json({ error: 'ไม่พบหอพักในระบบ' });
       propertyId = firstProp.id;
     }

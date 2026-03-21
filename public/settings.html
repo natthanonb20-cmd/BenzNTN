@@ -530,7 +530,7 @@
       try {
         const r = await fetch('/api/settings/line-save', {
           method: 'POST', headers,
-          body: JSON.stringify({ lineChannelSecret: secret, lineChannelAccessToken: token }),
+          body: JSON.stringify({ lineChannelSecret: secret, lineChannelAccessToken: token, propertyId: document.getElementById('webhook-url-display').value.split('/webhook/line/')[1] }),
         });
         const d = await r.json();
 
