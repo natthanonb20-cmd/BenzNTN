@@ -59,8 +59,8 @@ router.post('/line-save', async (req, res, next) => {
       return res.status(400).json({ error: 'กรุณาระบุ Channel Secret และ Access Token' });
     }
 
-    // ใช้ propertyId จาก JWT → fallback ไป body → fallback ไป findFirst (เรียงล่าสุด)
-    let propertyId = req.propertyId || bodyPropertyId;
+    // ใช้ propertyId จาก body (frontend รู้ค่าถูกต้อง) → fallback JWT → fallback findFirst
+    let propertyId = bodyPropertyId || req.propertyId;
     if (!propertyId) {
       const firstProp = await prisma.property.findFirst({ select: { id: true }, orderBy: { createdAt: 'desc' } });
       if (!firstProp) return res.status(400).json({ error: 'ไม่พบหอพักในระบบ' });
