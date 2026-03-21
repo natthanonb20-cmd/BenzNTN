@@ -344,7 +344,7 @@
 
       // Auto-fill dueDate จาก billDueDay ของผู้เช่า
       const dueDay  = parseInt(opt.dataset.billDueDay || 5);
-      const selMonth = parseInt(document.getElementById('inp-month').value || new Date().getMonth() + 1);
+      const selMonth = parseInt(document.getElementById('sel-month').value || new Date().getMonth() + 1);
       const selYear  = parseInt(document.getElementById('inp-year').value  || new Date().getFullYear());
       const dueDate  = new Date(selYear, selMonth - 1 + 1, dueDay); // เดือนถัดไป วันที่ dueDay
       document.getElementById('inp-due').value = dueDate.toISOString().split('T')[0];
