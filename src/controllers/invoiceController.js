@@ -164,6 +164,23 @@ exports.remove = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
+exports.rejectSlip = async (req, res, next) => {
+  try {
+    const exists = await prisma.invoice.findFirst({ where: { id: req.params.id, contract: { room: { propertyId: req.propertyId } } } });
+    if (!exists) return res.status(404).json({ error: 'ไม่พบใบแจ้งหนี้' });
+    if (exists.slipPath) {
+      const fs = require('fs');
+      const fullPath = require('path').join(process.cwd(), exists.slipPath);
+      fs.unlink(fullPath, () => {});
+    }
+    const invoice = await prisma.invoice.update({
+      where: { id: req.params.id },
+      data: { slipPath: null, status: 'PENDING' },
+    });
+    res.json(invoice);
+  } catch (e) { next(e); }
+};
+
 // แนบสลิปการโอน → ตั้งสถานะเป็น REVIEW อัตโนมัติ
 exports.uploadSlip = async (req, res, next) => {
   try {

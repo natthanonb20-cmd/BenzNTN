@@ -248,6 +248,7 @@
         }
         if (inv.status === 'REVIEW') {
           actions.push(`<button onclick="setStatus('${inv.id}','PAID')" class="px-2 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600">ยืนยัน</button>`);
+          actions.push(`<button onclick="rejectSlip('${inv.id}')" class="px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600">ปฏิเสธ</button>`);
         }
         if (inv.status !== 'PAID') {
           actions.push(`<button onclick="pushLine('${inv.id}')" class="px-2 py-1 bg-blue-100 text-blue-600 text-xs rounded hover:bg-blue-200" ${inv.status === 'PENDING' ? 'style="display:none"' : ''}>Line</button>`);
@@ -279,6 +280,11 @@
     async function pushLine(id) {
       const r = await fetch(`/api/invoices/${id}/push-line`, { method:'POST', headers });
       alert(r.ok ? '✅ ส่ง Line สำเร็จ' : '❌ ส่งไม่สำเร็จ');
+    }
+    async function rejectSlip(id) {
+      if (!confirm('ปฏิเสธสลิปนี้? รูปจะถูกลบและสถานะกลับเป็นรอชำระ')) return;
+      await fetch(`/api/invoices/${id}/reject-slip`, { method: 'POST', headers });
+      load();
     }
     async function del(id) {
       if (!confirm('ลบใบแจ้งหนี้นี้?')) return;
