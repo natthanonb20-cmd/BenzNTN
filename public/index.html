@@ -82,7 +82,10 @@
 
   <main class="max-w-6xl mx-auto px-4 py-6">
 
-    <p id="clock" class="text-xs text-gray-400 text-right mb-3"></p>
+    <p class="text-xs text-gray-400 text-right mb-3">
+      <span id="clock"></span>
+      <span id="weather" class="ml-3"></span>
+    </p>
 
     <!-- Summary Cards -->
     <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
@@ -401,6 +404,14 @@
       }
       updateClock();
       setInterval(updateClock, 1000);
+
+      // อุณหภูมิฉะเชิงเทรา
+      fetch('https://api.open-meteo.com/v1/forecast?latitude=13.69&longitude=101.07&current=temperature_2m,weathercode&timezone=Asia/Bangkok')
+        .then(r => r.json())
+        .then(d => {
+          const temp = d.current?.temperature_2m;
+          if (temp != null) document.getElementById('weather').textContent = `🌡️ ฉะเชิงเทรา ${temp}°C`;
+        }).catch(() => {});
     })();
   </script>
 
