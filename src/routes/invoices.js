@@ -2,10 +2,10 @@ const router  = require('express').Router();
 const multer  = require('multer');
 const path    = require('path');
 const fs      = require('fs');
-const { adminAuth } = require('../middleware/auth');
+const { propertyAuth } = require('../middleware/auth');
 const ctrl    = require('../controllers/invoiceController');
 
-router.use(adminAuth);
+router.use(propertyAuth);
 
 // Multer for slip uploads
 const slipStorage = multer.diskStorage({
