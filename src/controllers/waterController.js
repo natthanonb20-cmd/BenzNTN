@@ -1,10 +1,10 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-/** ดึงราคาน้ำดื่มจาก DB (fallback defaults) */
-async function getWaterPrices() {
-  const rows = await prisma.setting.findMany({
-    where: { key: { in: ['waterSmallPrice', 'waterLargePrice', 'waterSmallLabel', 'waterLargeLabel'] } },
+/** ดึงราคาน้ำดื่มจาก PropertySetting (fallback defaults) */
+async function getWaterPrices(propertyId) {
+  const rows = await prisma.propertySetting.findMany({
+    where: { propertyId, key: { in: ['waterSmallPrice', 'waterLargePrice', 'waterSmallLabel', 'waterLargeLabel'] } },
   });
   const m = Object.fromEntries(rows.map(r => [r.key, r.value]));
   return {
@@ -39,7 +39,7 @@ exports.list = async (req, res, next) => {
 
 /** GET /api/water/prices */
 exports.prices = async (req, res, next) => {
-  try { res.json(await getWaterPrices()); } catch (e) { next(e); }
+  try { res.json(await getWaterPrices(req.propertyId)); } catch (e) { next(e); }
 };
 
 /** GET /api/water/stats?date=YYYY-MM-DD */

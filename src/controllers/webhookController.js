@@ -180,7 +180,7 @@ function parseWaterOrder(text) {
 }
 
 async function handleWaterOrder(lineUserId, replyToken, originalText, parsed, propertyId) {
-  const prices = await getWaterPrices();
+  const prices = await getWaterPrices(propertyId);
   const unitPrice  = parsed.size === 'small' ? prices.smallPrice : prices.largePrice;
   const sizeLabel  = parsed.size === 'small' ? prices.smallLabel : prices.largeLabel;
   const calcAmount = unitPrice * parsed.qty;
