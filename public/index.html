@@ -333,6 +333,7 @@
                 ${inv.status === 'REVIEW'  ? `<button onclick="rejectSlip('${inv.id}')" class="px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600">ปฏิเสธ</button>` : ''}
                 ${slipBtn}
                 ${inv.status !== 'PAID' ? `<button onclick="pushLine('${inv.id}')" class="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600">ส่ง Line</button>` : ''}
+                ${inv.electricBillPath ? `<button onclick="pushElectricBill('${inv.id}')" class="px-2 py-1 bg-orange-400 text-white text-xs rounded hover:bg-orange-500">⚡ ค่าไฟ</button>` : ''}
               </div>
             </td>
           </tr>`;
@@ -365,6 +366,11 @@
     async function pushLine(id) {
       const r = await fetch(`/api/invoices/${id}/push-line`, { method: 'POST', headers });
       alert(r.ok ? '✅ ส่ง Line สำเร็จ' : '❌ ส่งไม่สำเร็จ กรุณาตรวจสอบ Line User ID');
+    }
+
+    async function pushElectricBill(id) {
+      const r = await fetch(`/api/invoices/${id}/push-electric-bill`, { method: 'POST', headers });
+      alert(r.ok ? '✅ ส่งบิลค่าไฟสำเร็จ' : '❌ ส่งไม่สำเร็จ กรุณาตรวจสอบ Line User ID');
     }
 
     // Load property name in navbar

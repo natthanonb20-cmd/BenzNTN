@@ -6,7 +6,7 @@ exports.list = async (req, res, next) => {
   try {
     const tenants = await prisma.tenant.findMany({
       where:   { propertyId: req.propertyId },
-      include: { contracts: { where: { isActive: true }, include: { room: true } } },
+      include: { contracts: { where: { isActive: true }, include: { room: true } }, bankAccount: true },
       orderBy: { name: 'asc' },
     });
     res.json(tenants);
@@ -35,12 +35,16 @@ exports.create = async (req, res, next) => {
 
 exports.update = async (req, res, next) => {
   try {
-    const { name, nickname, phone, lineUserId, nationalId, note, billDueDay } = req.body;
+    const { name, nickname, phone, lineUserId, nationalId, note, billDueDay, bankAccountId } = req.body;
     const exists = await prisma.tenant.findFirst({ where: { id: req.params.id, propertyId: req.propertyId } });
     if (!exists) return res.status(404).json({ error: 'ไม่พบผู้เช่า' });
     const tenant = await prisma.tenant.update({
       where: { id: req.params.id },
-      data: { name, nickname, phone, lineUserId, nationalId, note, billDueDay: billDueDay ? Number(billDueDay) : undefined },
+      data: {
+        name, nickname, phone, lineUserId, nationalId, note,
+        billDueDay: billDueDay ? Number(billDueDay) : undefined,
+        bankAccountId: bankAccountId || null,
+      },
     });
     res.json(tenant);
   } catch (e) {

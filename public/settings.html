@@ -398,6 +398,57 @@
       </div>
     </section>
 
+    <!-- บัญชีธนาคาร -->
+    <section class="bg-white rounded-xl shadow p-6">
+      <h2 class="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
+        <span class="text-xl">🏦</span> บัญชีธนาคาร
+      </h2>
+      <p class="text-xs text-gray-400 mb-4">จัดการบัญชีธนาคารที่ผู้เช่าโอนเงินมา สามารถกำหนดบัญชีให้แต่ละผู้เช่าได้ในหน้าผู้เช่า</p>
+      <div id="bank-account-list" class="space-y-2 mb-4"></div>
+      <button onclick="openBankModal()" class="px-4 py-2 bg-blue-700 text-white text-sm rounded-xl hover:bg-blue-800 transition">+ เพิ่มบัญชี</button>
+    </section>
+
+    <!-- Modal เพิ่ม/แก้ไขบัญชี -->
+    <div id="bank-modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
+        <h3 id="bank-modal-title" class="text-base font-bold text-gray-800">เพิ่มบัญชีธนาคาร</h3>
+        <input id="bank-id" type="hidden" />
+        <div>
+          <label class="block text-sm text-gray-600 mb-1">ธนาคาร *</label>
+          <select id="bank-name" class="input-field">
+            <option value="">-- เลือกธนาคาร --</option>
+            <option value="กสิกรไทย">ธนาคารกสิกรไทย (KBank)</option>
+            <option value="ไทยพาณิชย์">ธนาคารไทยพาณิชย์ (SCB)</option>
+            <option value="กรุงเทพ">ธนาคารกรุงเทพ (BBL)</option>
+            <option value="กรุงไทย">ธนาคารกรุงไทย (KTB)</option>
+            <option value="กรุงศรีอยุธยา">ธนาคารกรุงศรีอยุธยา (BAY)</option>
+            <option value="ทหารไทยธนชาต">ธนาคารทหารไทยธนชาต (TTB)</option>
+            <option value="ออมสิน">ธนาคารออมสิน (GSB)</option>
+            <option value="ธ.ก.ส.">ธนาคารเพื่อการเกษตรและสหกรณ์ (ธ.ก.ส.)</option>
+            <option value="อาคารสงเคราะห์">ธนาคารอาคารสงเคราะห์ (GHB)</option>
+            <option value="ซีไอเอ็มบีไทย">ธนาคารซีไอเอ็มบีไทย (CIMB)</option>
+            <option value="แลนด์ แอนด์ เฮ้าส์">ธนาคารแลนด์ แอนด์ เฮ้าส์ (LHB)</option>
+            <option value="ยูโอบี">ธนาคารยูโอบี (UOB)</option>
+            <option value="อิสลามแห่งประเทศไทย">ธนาคารอิสลามแห่งประเทศไทย (IBANK)</option>
+            <option value="ทิสโก้">ธนาคารทิสโก้ (TISCO)</option>
+            <option value="เกียรตินาคินภัทร">ธนาคารเกียรตินาคินภัทร (KKP)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm text-gray-600 mb-1">เลขบัญชี *</label>
+          <input id="bank-number" type="text" placeholder="xxx-x-xxxxx-x" class="input-field" />
+        </div>
+        <div>
+          <label class="block text-sm text-gray-600 mb-1">ชื่อบัญชี *</label>
+          <input id="bank-account-name" type="text" placeholder="ชื่อ-นามสกุล" class="input-field" />
+        </div>
+        <div class="flex gap-2 pt-2">
+          <button onclick="saveBankAccount()" class="flex-1 bg-blue-700 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-800 transition">บันทึก</button>
+          <button onclick="document.getElementById('bank-modal').classList.add('hidden')" class="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm hover:bg-gray-50 transition">ยกเลิก</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Admin Panel Button — แสดงเฉพาะ MASTER_ADMIN -->
     <div id="admin-panel-link" class="hidden">
       <a href="admin.html"
@@ -875,6 +926,62 @@
     })();
 
     loadSettings();
+
+    // ── บัญชีธนาคาร ──────────────────────────────────────────────
+    let _bankAccounts = [];
+    async function loadBankAccounts() {
+      const r = await fetch('/api/bank-accounts', { headers });
+      _bankAccounts = r.ok ? await r.json() : [];
+      const el = document.getElementById('bank-account-list');
+      if (!_bankAccounts.length) {
+        el.innerHTML = '<p class="text-sm text-gray-400">ยังไม่มีบัญชีธนาคาร</p>';
+        return;
+      }
+      el.innerHTML = _bankAccounts.map(a => `
+        <div class="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
+          <div>
+            <p class="text-sm font-semibold text-gray-800">🏦 ${a.bankName}</p>
+            <p class="text-sm text-gray-600">${a.accountNumber} · ${a.accountName}</p>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="openBankModal('${a.id}')" class="text-xs text-blue-600 hover:underline">แก้ไข</button>
+            <button onclick="deleteBankAccount('${a.id}')" class="text-xs text-red-500 hover:underline">ลบ</button>
+          </div>
+        </div>
+      `).join('');
+    }
+    loadBankAccounts();
+
+    function openBankModal(id) {
+      const a = _bankAccounts.find(x => x.id === id);
+      document.getElementById('bank-modal-title').textContent = a ? 'แก้ไขบัญชีธนาคาร' : 'เพิ่มบัญชีธนาคาร';
+      document.getElementById('bank-id').value = a?.id || '';
+      document.getElementById('bank-name').value = a?.bankName || '';
+      document.getElementById('bank-number').value = a?.accountNumber || '';
+      document.getElementById('bank-account-name').value = a?.accountName || '';
+      document.getElementById('bank-modal').classList.remove('hidden');
+    }
+
+    async function saveBankAccount() {
+      const id = document.getElementById('bank-id').value;
+      const body = {
+        bankName:      document.getElementById('bank-name').value.trim(),
+        accountNumber: document.getElementById('bank-number').value.trim(),
+        accountName:   document.getElementById('bank-account-name').value.trim(),
+      };
+      if (!body.bankName || !body.accountNumber || !body.accountName) { alert('กรุณากรอกข้อมูลให้ครบ'); return; }
+      const url = id ? `/api/bank-accounts/${id}` : '/api/bank-accounts';
+      const r = await fetch(url, { method: id ? 'PUT' : 'POST', headers, body: JSON.stringify(body) });
+      if (r.ok) { document.getElementById('bank-modal').classList.add('hidden'); loadBankAccounts(); }
+      else { const d = await r.json(); alert('❌ ' + (d.error || 'บันทึกไม่สำเร็จ')); }
+    }
+
+    async function deleteBankAccount(id) {
+      if (!confirm('ลบบัญชีนี้? ผู้เช่าที่ผูกไว้จะถูก unlink อัตโนมัติ')) return;
+      const r = await fetch(`/api/bank-accounts/${id}`, { method: 'DELETE', headers });
+      if (r.ok) loadBankAccounts();
+      else alert('❌ ลบไม่สำเร็จ');
+    }
   </script>
 </body>
 </html>

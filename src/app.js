@@ -33,8 +33,9 @@ app.use('/api/tenants',  tenantRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/settings', settingRoutes);
 app.use('/api/queue',    queueRoutes);
-app.use('/api/water',    waterRoutes);
-app.use('/webhook',      webhookRoutes);
+app.use('/api/water',         waterRoutes);
+app.use('/api/bank-accounts', require('./routes/bankAccounts'));
+app.use('/webhook',           webhookRoutes);
 
 // Health check
 app.get('/health', (_, res) => res.json({ status: 'ok', ts: new Date() }));

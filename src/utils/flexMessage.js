@@ -55,17 +55,26 @@ function buildInvoiceFlexMessage(invoice, dormName = 'หอพัก', theme = 
     ],
   }] : [];
 
+  const bankAccount = tenant.bankAccount;
+  const bankAccountRows = () => bankAccount ? [
+    { type: 'separator', margin: 'md', color: '#e5e7eb' },
+    { type: 'text', text: '🏦 โอนเข้าบัญชี', size: 'xs', color: '#6b7280', weight: 'bold', margin: 'md' },
+    { type: 'text', text: `ธนาคาร${bankAccount.bankName}`, size: 'sm', color: '#111827', margin: 'xs' },
+    { type: 'text', text: bankAccount.accountNumber, size: 'sm', color: '#111827', weight: 'bold' },
+    { type: 'text', text: `ชื่อ: ${bankAccount.accountName}`, size: 'xs', color: '#6b7280' },
+  ] : [];
+
   // ── Build by style ──────────────────────────────────────────────
   let bubble;
 
   if (style === 'receipt') {
-    bubble = buildReceipt({ dormName, room, tenant, monthTh, yearThai, totalStr, dueDateStr, items, itemRows, accentColor, dueDateRow });
+    bubble = buildReceipt({ dormName, room, tenant, monthTh, yearThai, totalStr, dueDateStr, items, itemRows, accentColor, dueDateRow, bankAccountRows });
   } else if (style === 'minimal') {
-    bubble = buildMinimal({ dormName, room, tenant, monthTh, yearThai, totalStr, items, itemRows, accentColor, dueDateRow });
+    bubble = buildMinimal({ dormName, room, tenant, monthTh, yearThai, totalStr, items, itemRows, accentColor, dueDateRow, bankAccountRows });
   } else if (style === 'bold') {
-    bubble = buildBold({ dormName, room, tenant, monthTh, yearThai, totalStr, items, headerColor, accentColor, dueDateRow });
+    bubble = buildBold({ dormName, room, tenant, monthTh, yearThai, totalStr, items, headerColor, accentColor, dueDateRow, bankAccountRows });
   } else {
-    bubble = buildClassic({ dormName, room, tenant, monthTh, yearThai, totalStr, items, itemRows, headerColor, accentColor, dueDateRow });
+    bubble = buildClassic({ dormName, room, tenant, monthTh, yearThai, totalStr, items, itemRows, headerColor, accentColor, dueDateRow, bankAccountRows });
   }
 
   return { type: 'flex', altText, contents: bubble };
@@ -74,7 +83,7 @@ function buildInvoiceFlexMessage(invoice, dormName = 'หอพัก', theme = 
 // ─────────────────────────────────────────────────────────────────
 // CLASSIC  (header สี + รายการ + footer)
 // ─────────────────────────────────────────────────────────────────
-function buildClassic({ dormName, room, tenant, monthTh, yearThai, totalStr, itemRows, headerColor, accentColor, dueDateRow }) {
+function buildClassic({ dormName, room, tenant, monthTh, yearThai, totalStr, itemRows, headerColor, accentColor, dueDateRow, bankAccountRows }) {
   const lightHeader = lighten(headerColor);
   return {
     type: 'bubble', size: 'kilo',
@@ -106,7 +115,8 @@ function buildClassic({ dormName, room, tenant, monthTh, yearThai, totalStr, ite
     footer: {
       type: 'box', layout: 'vertical', backgroundColor: lightHeader, paddingAll: '14px',
       contents: [
-        { type: 'text', text: '📎 ส่งสลิปการโอนเงินในแชทนี้ได้เลย', size: 'sm', color: accentColor, weight: 'bold', align: 'center', wrap: true },
+        ...bankAccountRows(),
+        { type: 'text', text: '📎 ส่งสลิปการโอนเงินในแชทนี้ได้เลย', size: 'sm', color: accentColor, weight: 'bold', align: 'center', wrap: true, margin: bankAccountRows().length ? 'md' : 'none' },
         { type: 'text', text: 'ระบบตอบกลับโดยอัตโนมัติ', size: 'xs', color: '#6b7280', align: 'center', margin: 'xs' },
       ],
     },
@@ -117,7 +127,7 @@ function buildClassic({ dormName, room, tenant, monthTh, yearThai, totalStr, ite
 // ─────────────────────────────────────────────────────────────────
 // RECEIPT  (สไตล์ใบเสร็จ เส้นประ)
 // ─────────────────────────────────────────────────────────────────
-function buildReceipt({ dormName, room, tenant, monthTh, yearThai, totalStr, items, accentColor, dueDateRow }) {
+function buildReceipt({ dormName, room, tenant, monthTh, yearThai, totalStr, items, accentColor, dueDateRow, bankAccountRows }) {
   const itemBoxes = items.map(item => ({
     type: 'box', layout: 'horizontal', margin: 'sm',
     contents: [
@@ -159,6 +169,8 @@ function buildReceipt({ dormName, room, tenant, monthTh, yearThai, totalStr, ite
         ]},
         ...dueDateRow('#dc2626'),
         { type: 'text', text: '- - - - - - - - - - - - - - - - -', size: 'xxs', color: '#cccccc', align: 'center', margin: 'sm' },
+        // Bank account
+        ...bankAccountRows(),
         // Footer
         { type: 'text', text: '📎 ส่งสลิปในแชทนี้ได้เลย', size: 'sm', color: accentColor, align: 'center', weight: 'bold', margin: 'sm' },
       ],
@@ -169,7 +181,7 @@ function buildReceipt({ dormName, room, tenant, monthTh, yearThai, totalStr, ite
 // ─────────────────────────────────────────────────────────────────
 // MINIMAL  (เรียบ ตัวเลขใหญ่)
 // ─────────────────────────────────────────────────────────────────
-function buildMinimal({ dormName, room, tenant, monthTh, yearThai, totalStr, items, itemRows, accentColor, dueDateRow }) {
+function buildMinimal({ dormName, room, tenant, monthTh, yearThai, totalStr, items, itemRows, accentColor, dueDateRow, bankAccountRows }) {
   return {
     type: 'bubble', size: 'kilo',
     body: {
@@ -187,8 +199,9 @@ function buildMinimal({ dormName, room, tenant, monthTh, yearThai, totalStr, ite
         ...dueDateRow(),
         // Separator
         { type: 'box', layout: 'vertical', height: '1px', backgroundColor: '#e5e7eb', margin: 'lg', contents: [] },
-        // CTA
-        { type: 'text', text: `ถึง: ${tenant.name}`, size: 'xs', color: '#9ca3af' },
+        // Bank account + CTA
+        ...bankAccountRows(),
+        { type: 'text', text: `ถึง: ${tenant.name}`, size: 'xs', color: '#9ca3af', margin: bankAccountRows().length ? 'md' : 'none' },
         { type: 'text', text: '💳 ส่งสลิปโอนเงินในแชทนี้', size: 'sm', color: accentColor, weight: 'bold', margin: 'xs' },
       ],
     },
@@ -198,7 +211,7 @@ function buildMinimal({ dormName, room, tenant, monthTh, yearThai, totalStr, ite
 // ─────────────────────────────────────────────────────────────────
 // BOLD / MODERN  (header เข้ม ตัวเลขโดด)
 // ─────────────────────────────────────────────────────────────────
-function buildBold({ dormName, room, tenant, monthTh, yearThai, totalStr, items, headerColor, accentColor, dueDateRow }) {
+function buildBold({ dormName, room, tenant, monthTh, yearThai, totalStr, items, headerColor, accentColor, dueDateRow, bankAccountRows }) {
   const chips = items.map(item => ({
     type: 'box', layout: 'vertical', flex: 1,
     backgroundColor: '#f3f4f6', cornerRadius: '8px', paddingAll: '8px',
@@ -241,7 +254,8 @@ function buildBold({ dormName, room, tenant, monthTh, yearThai, totalStr, items,
         ...chipRows,
         // CTA
         { type: 'box', layout: 'vertical', height: '1px', backgroundColor: '#e5e7eb', margin: 'md', contents: [] },
-        { type: 'text', text: '📎 ส่งสลิปการโอนเงินในแชทนี้ได้เลย', size: 'sm', color: accentColor, weight: 'bold', align: 'center', wrap: true },
+        ...bankAccountRows(),
+        { type: 'text', text: '📎 ส่งสลิปการโอนเงินในแชทนี้ได้เลย', size: 'sm', color: accentColor, weight: 'bold', align: 'center', wrap: true, margin: bankAccountRows().length ? 'md' : 'none' },
         { type: 'text', text: 'ระบบตอบกลับโดยอัตโนมัติ', size: 'xs', color: '#6b7280', align: 'center', margin: 'xs' },
       ],
     },

@@ -106,6 +106,11 @@
             <span class="text-sm text-gray-500">ของทุกเดือน (ค่าเริ่มต้น: วันที่ 5)</span>
           </div>
         </div>
+        <div><label class="lbl">บัญชีธนาคารสำหรับโอนเงิน</label>
+          <select id="m-bank-account" class="inp">
+            <option value="">-- ไม่ระบุ --</option>
+          </select>
+        </div>
       </div>
       <input type="hidden" id="m-id" />
       <div class="flex gap-2 pt-2">
@@ -340,6 +345,16 @@
     }
 
     // ── Tenant modal ──────────────────────────────────
+    let _bankAccounts = [];
+    async function loadBankAccountOptions() {
+      const r = await fetch('/api/bank-accounts', { headers });
+      _bankAccounts = r.ok ? await r.json() : [];
+      const sel = document.getElementById('m-bank-account');
+      sel.innerHTML = '<option value="">-- ไม่ระบุ --</option>' +
+        _bankAccounts.map(a => `<option value="${a.id}">${a.bankName} · ${a.accountNumber} · ${a.accountName}</option>`).join('');
+    }
+    loadBankAccountOptions();
+
     function openTenantModal(t) {
       document.getElementById('tenant-modal-title').textContent = t ? 'แก้ไขข้อมูลผู้เช่า' : 'เพิ่มผู้เช่าใหม่';
       document.getElementById('m-id').value       = t?.id         ?? '';
@@ -350,6 +365,7 @@
       document.getElementById('m-nid').value      = t?.nationalId  ?? '';
       document.getElementById('m-note').value     = t?.note        ?? '';
       document.getElementById('m-dueday').value   = t?.billDueDay  ?? 5;
+      document.getElementById('m-bank-account').value = t?.bankAccountId ?? '';
       document.getElementById('tenant-modal').classList.remove('hidden');
     }
 
@@ -364,7 +380,8 @@
         lineUserId: document.getElementById('m-line').value.trim()     || null,
         nationalId: document.getElementById('m-nid').value.trim()      || null,
         note:       document.getElementById('m-note').value.trim()     || null,
-        billDueDay: Number(document.getElementById('m-dueday').value)  || 5,
+        billDueDay:    Number(document.getElementById('m-dueday').value)  || 5,
+        bankAccountId: document.getElementById('m-bank-account').value  || null,
       };
       const r = await fetch(id ? `/api/tenants/${id}` : '/api/tenants', {
         method: id ? 'PUT' : 'POST', headers, body: JSON.stringify(body),

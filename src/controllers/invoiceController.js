@@ -142,7 +142,7 @@ exports.pushLine = async (req, res, next) => {
       where: { id: req.params.id },
       include: {
         items:    { orderBy: { sortOrder: 'asc' } },
-        contract: { include: { tenant: true, room: true } },
+        contract: { include: { tenant: { include: { bankAccount: true } }, room: true } },
       },
     });
 
@@ -244,5 +244,41 @@ exports.getRates = async (req, res, next) => {
     const contract = await prisma.contract.findFirstOrThrow({ where: { id: contractId, room: { propertyId: req.propertyId } } });
     const rates = await getEffectiveRates(contract.roomId);
     res.json(rates);
+  } catch (e) { next(e); }
+};
+
+// อัปโหลดรูปบิลค่าไฟ
+exports.uploadElectricBill = async (req, res, next) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'ไม่พบไฟล์บิลค่าไฟ' });
+    const electricBillPath = `uploads/electric-bills/${req.file.filename}`;
+    const invoice = await prisma.invoice.update({
+      where: { id: req.params.id },
+      data: { electricBillPath },
+    });
+    res.json(invoice);
+  } catch (e) { next(e); }
+};
+
+// ส่งรูปบิลค่าไฟผ่าน LINE
+exports.pushElectricBill = async (req, res, next) => {
+  try {
+    const invoice = await prisma.invoice.findUniqueOrThrow({
+      where: { id: req.params.id },
+      include: { contract: { include: { tenant: true } } },
+    });
+    if (!invoice.electricBillPath) return res.status(400).json({ error: 'ไม่มีรูปบิลค่าไฟ' });
+    const lineUserId = invoice.contract.tenant.lineUserId;
+    if (!lineUserId) return res.status(400).json({ error: 'ผู้เช่าไม่มี LINE User ID' });
+
+    const { getLineClient } = require('../services/lineService');
+    const client = await getLineClient(req.propertyId);
+    const imageUrl = `${process.env.BASE_URL}/${invoice.electricBillPath}`;
+    await client.pushMessage(lineUserId, {
+      type: 'image',
+      originalContentUrl: imageUrl,
+      previewImageUrl:    imageUrl,
+    });
+    res.json({ ok: true });
   } catch (e) { next(e); }
 };

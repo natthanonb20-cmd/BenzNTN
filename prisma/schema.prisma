@@ -30,6 +30,7 @@ model Property {
   waterSales    WaterSale[]
   settings      PropertySetting[]
   vehicles      Vehicle[]
+  bankAccounts  BankAccount[]
 }
 
 // -------------------------------------------------------
@@ -135,6 +136,9 @@ model Tenant {
   billDueDay Int      @default(5)             // วันครบกำหนดชำระบิล (1-31)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
+  bankAccountId String?
+  bankAccount   BankAccount? @relation(fields: [bankAccountId], references: [id])
 
   property   Property    @relation(fields: [propertyId], references: [id])
   contracts  Contract[]
@@ -252,8 +256,9 @@ model Invoice {
   totalAmount Decimal       @db.Decimal(10, 2)
   status      InvoiceStatus @default(PENDING)
   dueDate     DateTime?
-  slipPath    String?
-  paidAt      DateTime?
+  slipPath         String?
+  electricBillPath String?
+  paidAt           DateTime?
   note        String?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
@@ -324,4 +329,22 @@ enum QueueStatus {
 enum VehicleType {
   CAR
   MOTORCYCLE
+}
+
+// -------------------------------------------------------
+// BankAccount — บัญชีธนาคาร master list
+// -------------------------------------------------------
+model BankAccount {
+  id            String   @id @default(cuid())
+  propertyId    String
+  bankName      String
+  accountNumber String
+  accountName   String
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  property Property  @relation(fields: [propertyId], references: [id])
+  tenants  Tenant[]
+
+  @@index([propertyId])
 }
