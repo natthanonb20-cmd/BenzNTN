@@ -24,12 +24,12 @@ async function liffAuth(req, res, next) {
   // ตรวจสอบ token กับ LINE API + ดึง userId
   let lineUserId;
   try {
-    const r = await fetch('https://api.line.me/v2/profile', {
+    const r = await fetch('https://api.line.me/oauth2/v2.1/userinfo', {
       headers: { Authorization: `Bearer ${lineToken}` },
     });
     if (!r.ok) return res.status(401).json({ error: 'LINE token ไม่ถูกต้องหรือหมดอายุ' });
     const data = await r.json();
-    lineUserId = data.userId;
+    lineUserId = data.sub;
   } catch {
     return res.status(502).json({ error: 'ไม่สามารถตรวจสอบ LINE token ได้' });
   }

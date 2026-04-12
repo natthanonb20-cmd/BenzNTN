@@ -129,13 +129,12 @@ async function acceptInvite(req, res) {
   // ตรวจสอบ LINE token + ดึง userId
   let lineUserId;
   try {
-    const r = await fetch('https://api.line.me/v2/profile', {
+    const r = await fetch('https://api.line.me/oauth2/v2.1/userinfo', {
       headers: { Authorization: `Bearer ${lineAccessToken}` },
     });
     const data = await r.json().catch(() => ({}));
-    console.log('[acceptInvite] LINE profile status:', r.status, 'data:', JSON.stringify(data));
-    if (!r.ok) return res.status(401).json({ error: `LINE token ไม่ถูกต้อง (${r.status}: ${data.message || ''})` });
-    lineUserId = data.userId;
+    if (!r.ok) return res.status(401).json({ error: 'LINE token ไม่ถูกต้องหรือหมดอายุ' });
+    lineUserId = data.sub;
     if (!lineUserId) return res.status(401).json({ error: 'ดึง LINE User ID ไม่ได้' });
   } catch {
     return res.status(502).json({ error: 'ตรวจสอบ LINE token ไม่ได้' });
