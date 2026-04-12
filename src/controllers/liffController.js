@@ -50,6 +50,7 @@ async function getMe(req, res) {
     }
   }
 
+  console.log('[getMe]', { id: tenant.id, name: tenant.name, nickname: tenant.nickname, room: contract?.room?.roomNumber });
   res.json({
     id:          tenant.id,
     name:        tenant.name,
