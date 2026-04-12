@@ -33,6 +33,22 @@ export const api = {
   listInvoices:   ()       => request('GET',  '/api/liff/invoices'),
   getInvoice:     (id)     => request('GET',  `/api/liff/invoices/${id}`),
   acceptInvite:   (body)   => request('POST', '/api/liff/invite/accept', body),
+  listRepairs:    ()       => request('GET',  '/api/liff/repairs'),
+
+  createRepair(formData) {
+    return fetch('/api/liff/repairs', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${getAccessToken()}`,
+        'x-property-id': getPropertyId(),
+      },
+      body: formData,
+    }).then(async r => {
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || 'แจ้งซ่อมไม่สำเร็จ');
+      return d;
+    });
+  },
 
   uploadSlip(invoiceId, file) {
     const fd = new FormData();

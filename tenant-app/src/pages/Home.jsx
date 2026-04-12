@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { C, Tag, Card, Pill, Btn } from '../components';
 import { api } from '../lib/api';
 
+const ST_LABEL = { OPEN:'รอดำเนินการ', IN_PROGRESS:'กำลังซ่อม', DONE:'เสร็จแล้ว', REJECTED:'ปฏิเสธ' };
+const ST_COLOR = { OPEN: C.warn, IN_PROGRESS: C.info, DONE: C.accent, REJECTED: C.danger };
+
 const MONTHS = ['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 function fmt(n) { return Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2 }); }
 
@@ -70,17 +73,43 @@ export default function Home() {
   const [tab, setTab]           = useState('overview');
   const [me, setMe]             = useState(null);
   const [invoices, setInvoices] = useState([]);
+  const [repairs, setRepairs]   = useState([]);
   const [loading, setLoading]   = useState(true);
-  const [slipModal, setSlipModal] = useState(null); // invoiceId
+  const [slipModal, setSlipModal]   = useState(null);
+  const [repairForm, setRepairForm] = useState(false);
+  const [repairData, setRepairData] = useState({ title: '', description: '', priority: 'NORMAL' });
+  const [repairFile, setRepairFile] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const repairFileRef = useRef();
 
   async function load() {
     setLoading(true);
     try {
-      const [meData, invData] = await Promise.all([api.getMe(), api.listInvoices()]);
+      const [meData, invData, repData] = await Promise.all([api.getMe(), api.listInvoices(), api.listRepairs()]);
       setMe(meData);
       setInvoices(invData);
+      setRepairs(repData);
     } catch {}
     setLoading(false);
+  }
+
+  async function submitRepair() {
+    if (!repairData.title.trim()) return;
+    setSubmitting(true);
+    try {
+      const fd = new FormData();
+      fd.append('title', repairData.title.trim());
+      fd.append('description', repairData.description);
+      fd.append('priority', repairData.priority);
+      if (repairFile) fd.append('image', repairFile);
+      await api.createRepair(fd);
+      setRepairForm(false);
+      setRepairData({ title: '', description: '', priority: 'NORMAL' });
+      setRepairFile(null);
+      const repData = await api.listRepairs();
+      setRepairs(repData);
+    } catch (e) { alert('❌ ' + e.message); }
+    setSubmitting(false);
   }
 
   useEffect(() => { load(); }, []);
@@ -242,16 +271,82 @@ export default function Home() {
           </div>
         )}
 
-        {/* ── Repair (Phase 2) ── */}
+        {/* ── Repair ── */}
         {tab === 'repair' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <Card glow={C.info}>
-              <div style={{ textAlign: 'center', padding: '12px 0' }}>
-                <div style={{ fontSize: 32 }}>🔧</div>
-                <div style={{ fontWeight: 700, marginTop: 8 }}>ระบบแจ้งซ่อม</div>
-                <div style={{ fontSize: 13, color: C.muted, marginTop: 4 }}>อยู่ระหว่างพัฒนา เร็วๆ นี้</div>
-              </div>
-            </Card>
+            {/* New repair form */}
+            {repairForm ? (
+              <Card>
+                <div style={{ fontWeight: 700, marginBottom: 12 }}>แจ้งซ่อมใหม่</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <input
+                    placeholder="หัวข้อ เช่น แอร์ไม่เย็น *"
+                    value={repairData.title}
+                    onChange={e => setRepairData(p => ({ ...p, title: e.target.value }))}
+                    style={{ background: '#0F0F13', border: `1px solid ${C.cardBorder}`, borderRadius: 10, padding: '10px 12px', color: C.text, fontFamily: 'inherit', fontSize: 14 }}
+                  />
+                  <textarea
+                    placeholder="รายละเอียดเพิ่มเติม (ไม่บังคับ)"
+                    rows={3}
+                    value={repairData.description}
+                    onChange={e => setRepairData(p => ({ ...p, description: e.target.value }))}
+                    style={{ background: '#0F0F13', border: `1px solid ${C.cardBorder}`, borderRadius: 10, padding: '10px 12px', color: C.text, fontFamily: 'inherit', fontSize: 14, resize: 'none' }}
+                  />
+                  <select
+                    value={repairData.priority}
+                    onChange={e => setRepairData(p => ({ ...p, priority: e.target.value }))}
+                    style={{ background: '#0F0F13', border: `1px solid ${C.cardBorder}`, borderRadius: 10, padding: '10px 12px', color: C.text, fontFamily: 'inherit', fontSize: 14 }}
+                  >
+                    <option value="HIGH">🔴 ด่วนมาก</option>
+                    <option value="NORMAL">🟡 ปกติ</option>
+                    <option value="LOW">⚪ ไม่ด่วน</option>
+                  </select>
+                  <div
+                    onClick={() => repairFileRef.current.click()}
+                    style={{ border: `2px dashed ${repairFile ? C.accent : C.cardBorder}`, borderRadius: 10, padding: 16, textAlign: 'center', cursor: 'pointer', color: C.muted, fontSize: 13 }}
+                  >
+                    {repairFile ? `📎 ${repairFile.name}` : '📷 แนบรูป (ไม่บังคับ)'}
+                  </div>
+                  <input ref={repairFileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => setRepairFile(e.target.files[0] || null)} />
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    <Btn color={C.accent} onClick={submitRepair} disabled={!repairData.title.trim() || submitting}>
+                      {submitting ? '⏳...' : '✓ ส่งแจ้งซ่อม'}
+                    </Btn>
+                    <Btn color={C.muted} outline onClick={() => setRepairForm(false)}>ยกเลิก</Btn>
+                  </div>
+                </div>
+              </Card>
+            ) : (
+              <button
+                onClick={() => setRepairForm(true)}
+                style={{ width: '100%', background: C.accentDim, color: C.accent, border: `1px dashed ${C.accent}`, borderRadius: 12, padding: 12, fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}
+              >+ แจ้งซ่อมใหม่</button>
+            )}
+
+            {/* List */}
+            {repairs.length === 0 && !repairForm && (
+              <Card><div style={{ textAlign: 'center', color: C.muted, padding: 20 }}>ยังไม่มีรายการแจ้งซ่อม</div></Card>
+            )}
+            {repairs.map(r => (
+              <Card key={r.id}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700, fontSize: 14 }}>{r.title}</div>
+                    {r.description && <div style={{ fontSize: 12, color: C.muted, marginTop: 4 }}>{r.description}</div>}
+                    <div style={{ fontSize: 11, color: C.muted, marginTop: 4 }}>
+                      {new Date(r.createdAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}
+                    </div>
+                  </div>
+                  <Tag color={ST_COLOR[r.status]}>{ST_LABEL[r.status]}</Tag>
+                </div>
+                {r.adminNote && (
+                  <div style={{ background: '#0F0F13', borderRadius: 8, padding: '8px 10px', marginTop: 8, fontSize: 12, color: C.muted }}>
+                    💬 {r.adminNote}
+                  </div>
+                )}
+                {r.imagePath && <img src={r.imagePath} style={{ width: '100%', borderRadius: 8, marginTop: 8, maxHeight: 180, objectFit: 'cover' }} />}
+              </Card>
+            ))}
           </div>
         )}
 

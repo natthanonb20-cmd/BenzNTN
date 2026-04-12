@@ -41,6 +41,7 @@
         <a href="water.html"    class="hover:text-blue-200">น้ำดื่ม</a>
         <a href="billing.html"  class="hover:text-blue-200">ออกบิล</a>
         <a href="invoices.html" class="hover:text-blue-200">ใบแจ้งหนี้</a>
+        <a href="repairs.html" class="hover:text-blue-200">🔧 แจ้งซ่อม</a>
         <a href="settings.html" class="hover:text-blue-200">ตั้งค่า</a>
         <button onclick="logout()" class="hover:text-red-300 text-xs opacity-70 hover:opacity-100 transition ml-2">ออกจากระบบ</button>
       </div>
@@ -332,6 +333,8 @@
                   class="px-2.5 py-1 bg-blue-100 text-blue-700 rounded text-xs hover:bg-blue-200">📋 สัญญา</button>
                 <button onclick='openVehicleModal("${t.id}","${t.name.replace(/"/g,"")}")'
                   class="px-2.5 py-1 bg-green-100 text-green-700 rounded text-xs hover:bg-green-200">🚗 รถ</button>
+                <button onclick='copyInviteLink("${t.id}")'
+                  class="px-2.5 py-1 bg-purple-100 text-purple-700 rounded text-xs hover:bg-purple-200">🔗 invite</button>
                 <button onclick='deleteTenant("${t.id}","${t.name.replace(/"/g,"")}")'
                   class="px-2.5 py-1 bg-red-100 text-red-600 rounded text-xs hover:bg-red-200">ลบ</button>
               </div>
@@ -388,6 +391,14 @@
       });
       if (r.ok) { closeAllModals(); load(); }
       else { const d = await r.json(); alert('❌ ' + (d.error || 'บันทึกไม่สำเร็จ')); }
+    }
+
+    async function copyInviteLink(tenantId) {
+      const r = await fetch(`/api/liff/invite/generate/${tenantId}`, { headers });
+      if (!r.ok) { alert('❌ สร้าง invite link ไม่สำเร็จ'); return; }
+      const { inviteUrl } = await r.json();
+      await navigator.clipboard.writeText(inviteUrl).catch(() => {});
+      alert(`✅ คัดลอก Invite Link แล้ว!\n\nส่งลิงก์นี้ให้ผู้เช่าเปิดใน LINE:\n${inviteUrl}`);
     }
 
     async function deleteTenant(id, name) {

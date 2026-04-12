@@ -18,6 +18,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "db:studio"],
       "port": 5555
+    },
+    {
+      "name": "tenant-app-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "tenant-app:dev"],
+      "port": 5174
     }
   ]
 }

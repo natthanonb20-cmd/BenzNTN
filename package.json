@@ -10,7 +10,9 @@
     "db:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
     "db:seed": "node prisma/seed.js",
-    "db:seed-master": "node prisma/seed-master.js"
+    "db:seed-master": "node prisma/seed-master.js",
+    "tenant-app:dev": "cd tenant-app && npm run dev -- --port 5174",
+    "tenant-app:build": "cd tenant-app && npm run build"
   },
   "dependencies": {
     "@line/bot-sdk": "^9.4.0",

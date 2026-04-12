@@ -36,6 +36,7 @@ app.use('/api/queue',    queueRoutes);
 app.use('/api/water',         waterRoutes);
 app.use('/api/bank-accounts', require('./routes/bankAccounts'));
 app.use('/api/liff',          require('./routes/liff'));
+app.use('/api/repairs',       require('./routes/repairs'));
 app.use('/webhook',           webhookRoutes);
 
 // Health check

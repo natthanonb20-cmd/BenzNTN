@@ -30,7 +30,8 @@ model Property {
   waterSales    WaterSale[]
   settings      PropertySetting[]
   vehicles      Vehicle[]
-  bankAccounts  BankAccount[]
+  bankAccounts   BankAccount[]
+  repairRequests RepairRequest[]
 }
 
 // -------------------------------------------------------
@@ -140,10 +141,11 @@ model Tenant {
   bankAccountId String?
   bankAccount   BankAccount? @relation(fields: [bankAccountId], references: [id])
 
-  property   Property    @relation(fields: [propertyId], references: [id])
-  contracts  Contract[]
-  waterSales WaterSale[]
-  vehicles   Vehicle[]
+  property       Property       @relation(fields: [propertyId], references: [id])
+  contracts      Contract[]
+  waterSales     WaterSale[]
+  vehicles       Vehicle[]
+  repairRequests RepairRequest[]
 
   @@index([propertyId])
   @@unique([propertyId, lineUserId])          // LINE ID unique per property
@@ -329,6 +331,45 @@ enum QueueStatus {
 enum VehicleType {
   CAR
   MOTORCYCLE
+}
+
+// -------------------------------------------------------
+// RepairRequest — ระบบแจ้งซ่อม
+// -------------------------------------------------------
+model RepairRequest {
+  id          String        @id @default(cuid())
+  propertyId  String
+  tenantId    String
+  roomId      String?
+  title       String
+  description String?
+  imagePath   String?
+  priority    RepairPriority @default(NORMAL)
+  status      RepairStatus   @default(OPEN)
+  adminNote   String?
+  closedAt    DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  property Property @relation(fields: [propertyId], references: [id])
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@index([propertyId])
+  @@index([tenantId])
+  @@index([status])
+}
+
+enum RepairPriority {
+  LOW
+  NORMAL
+  HIGH
+}
+
+enum RepairStatus {
+  OPEN
+  IN_PROGRESS
+  DONE
+  REJECTED
 }
 
 // -------------------------------------------------------
