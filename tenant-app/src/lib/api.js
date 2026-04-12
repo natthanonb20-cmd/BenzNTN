@@ -16,6 +16,7 @@ function headers() {
     Authorization: `Bearer ${getAccessToken()}`,
     'x-property-id': getPropertyId(),
     'Content-Type': 'application/json',
+    'ngrok-skip-browser-warning': '1',
   };
 }
 
@@ -41,6 +42,7 @@ export const api = {
       headers: {
         Authorization: `Bearer ${getAccessToken()}`,
         'x-property-id': getPropertyId(),
+        'ngrok-skip-browser-warning': '1',
       },
       body: formData,
     }).then(async r => {
@@ -58,6 +60,7 @@ export const api = {
       headers: {
         Authorization: `Bearer ${getAccessToken()}`,
         'x-property-id': getPropertyId(),
+        'ngrok-skip-browser-warning': '1',
       },
       body: fd,
     }).then(async r => {
