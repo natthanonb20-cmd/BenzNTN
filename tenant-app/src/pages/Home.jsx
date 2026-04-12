@@ -185,7 +185,7 @@ export default function Home() {
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 8, padding: '14px 20px', overflowX: 'auto' }}>
         {[['overview','ภาพรวม'],['bills','บิล'],['repair','แจ้งซ่อม'],['docs','เอกสาร']].map(([k, l]) => (
-          <Pill key={k} label={l} active={tab === k} onClick={() => setTab(k)} />
+          <Pill key={k} label={l} active={tab === k} onClick={() => { setTab(k); if (k === 'repair') api.listRepairs().then(d => setRepairs(Array.isArray(d) ? d : [])).catch(() => {}); }}
         ))}
       </div>
 
@@ -345,7 +345,7 @@ export default function Home() {
                     💬 {r.adminNote}
                   </div>
                 )}
-                {r.imagePath && <img src={r.imagePath} style={{ width: '100%', borderRadius: 8, marginTop: 8, maxHeight: 180, objectFit: 'cover' }} />}
+                {r.imagePath && <img src={window.location.origin + r.imagePath} style={{ width: '100%', borderRadius: 8, marginTop: 8, maxHeight: 180, objectFit: 'cover' }} />}
               </Card>
             ))}
           </div>
