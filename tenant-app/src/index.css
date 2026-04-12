@@ -1,0 +1,172 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Sarabun', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f9fafb;
+  color: #111827;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
+
+.center-msg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: 32px;
+  text-align: center;
+  gap: 8px;
+}
+.center-msg .icon  { font-size: 48px; line-height: 1; }
+.center-msg .title { font-size: 18px; font-weight: 700; color: #111827; }
+.center-msg .sub   { font-size: 13px; color: #6b7280; }
+
+.page { max-width: 480px; margin: 0 auto; padding-bottom: 32px; }
+
+.page-header {
+  background: #1d4ed8;
+  color: #fff;
+  padding: 20px 16px 16px;
+}
+.page-header h1 { font-size: 18px; font-weight: 700; }
+.page-header p  { font-size: 13px; opacity: .8; margin-top: 2px; }
+
+.card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08);
+  padding: 16px;
+  margin: 12px 12px 0;
+}
+.card-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 10px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 0;
+}
+.row + .row { border-top: 1px solid #f3f4f6; }
+.row .label { font-size: 14px; color: #374151; }
+.row .value { font-size: 14px; font-weight: 600; color: #111827; }
+.row .value.accent { color: #1d4ed8; }
+.row .value.green  { color: #16a34a; }
+.row .value.red    { color: #dc2626; }
+
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.badge.pending { background: #fef3c7; color: #92400e; }
+.badge.review  { background: #dbeafe; color: #1e40af; }
+.badge.paid    { background: #dcfce7; color: #166534; }
+
+.btn {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: center;
+  transition: opacity .15s;
+}
+.btn:active   { opacity: .8; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn-primary   { background: #1d4ed8; color: #fff; }
+.btn-secondary { background: #f3f4f6; color: #374151; }
+.btn-green     { background: #16a34a; color: #fff; }
+
+.invoice-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  background: #fff;
+  border-bottom: 1px solid #f3f4f6;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+}
+.invoice-item:active { background: #f9fafb; }
+.invoice-item .month  { font-size: 15px; font-weight: 600; }
+.invoice-item .amount { font-size: 15px; font-weight: 700; color: #1d4ed8; }
+
+.amount-big {
+  font-size: 38px;
+  font-weight: 800;
+  color: #1d4ed8;
+  text-align: center;
+  margin: 4px 0 2px;
+}
+.amount-label {
+  text-align: center;
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.divider { border: none; border-top: 1px solid #f3f4f6; margin: 12px 0; }
+
+.upload-area {
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  padding: 24px 16px;
+  text-align: center;
+  cursor: pointer;
+  color: #6b7280;
+  font-size: 14px;
+  transition: border-color .2s;
+}
+.upload-area:hover { border-color: #1d4ed8; color: #1d4ed8; }
+.upload-area img { max-width: 100%; max-height: 220px; border-radius: 8px; object-fit: contain; }
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111827;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  z-index: 999;
+  white-space: nowrap;
+  animation: fadeIn .2s ease;
+}
+.toast.green { background: #16a34a; }
+.toast.red   { background: #dc2626; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateX(-50%) translateY(8px); } }
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #fff;
+  opacity: .85;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  margin-bottom: 8px;
+  padding: 0;
+}
+.back-btn:hover { opacity: 1; }
