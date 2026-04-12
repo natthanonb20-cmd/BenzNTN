@@ -5,3 +5,26 @@ body {
   color: #F0F0F8;
   -webkit-font-smoothing: antialiased;
 }
+.center-msg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  gap: 8px;
+  padding: 32px;
+  text-align: center;
+}
+.center-msg .icon { font-size: 48px; }
+.center-msg .title { font-size: 18px; font-weight: 700; }
+.center-msg .sub { font-size: 14px; color: #888; }
+.btn-primary {
+  display: inline-block;
+  background: #00C896;
+  color: #fff;
+  border-radius: 14px;
+  padding: 12px 32px;
+  font-weight: 700;
+  font-size: 15px;
+  text-decoration: none;
+}

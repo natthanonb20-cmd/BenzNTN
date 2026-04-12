@@ -35,9 +35,12 @@ function App() {
 
   const pid = getPropertyId();
   const params = new URLSearchParams(window.location.search);
-  const isInvite = params.get('invite');
+  const inviteToken = params.get('invite');
 
-  if (!pid && !isInvite) return (
+  // ถ้ามี invite token → ไปหน้า accept invite โดยตรง
+  if (inviteToken) return <Invite />;
+
+  if (!pid) return (
     <div className="center-msg">
       <p className="icon">🔗</p>
       <p className="title">ไม่พบข้อมูลหอพัก</p>
@@ -51,7 +54,6 @@ function App() {
         <Route index              element={<Home />} />
         <Route path="/invoices"   element={<InvoiceList />} />
         <Route path="/invoices/:id" element={<InvoiceDetail />} />
-        <Route path="/invite"     element={<Invite />} />
         <Route path="*"           element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
