@@ -125,8 +125,6 @@ export default function Home() {
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh', color: C.muted }}>กำลังโหลด...</div>
   );
 
-  if (me) window.__me = me; // debug
-
   if (!me) return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh', gap: 8, padding: 32, textAlign: 'center', background: C.bg, color: C.text }}>
       <div style={{ fontSize: 40 }}>😕</div>
@@ -150,11 +148,6 @@ export default function Home() {
       {slipModal && (
         <SlipModal invoiceId={slipModal} onClose={() => setSlipModal(null)} onDone={() => { setSlipModal(null); load(); }} />
       )}
-
-      {/* Debug */}
-      <div style={{ background: '#111', color: '#0f0', fontSize: 10, padding: 8, wordBreak: 'break-all' }}>
-        name:{me.name} nick:{me.nickname} room:{me.room?.roomNumber}
-      </div>
 
       {/* Header */}
       <div style={{ background: 'linear-gradient(135deg, #0D2E22 0%, #0F0F13 60%)', padding: '24px 20px 16px', borderBottom: `1px solid ${C.cardBorder}` }}>
@@ -226,13 +219,21 @@ export default function Home() {
               <Card>
                 <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, marginBottom: 10 }}>🏦 บัญชีรับโอน</div>
                 {[
-                  ['ธนาคาร',  me.bankAccount.bankName],
-                  ['เลขบัญชี', me.bankAccount.accountNumber],
-                  ['ชื่อบัญชี', me.bankAccount.accountName],
-                ].map(([l, v]) => (
-                  <div key={l} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `1px solid ${C.cardBorder}` }}>
+                  ['ธนาคาร',  me.bankAccount.bankName, false],
+                  ['เลขบัญชี', me.bankAccount.accountNumber, true],
+                  ['ชื่อบัญชี', me.bankAccount.accountName, false],
+                ].map(([l, v, canCopy]) => (
+                  <div key={l} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: `1px solid ${C.cardBorder}` }}>
                     <span style={{ fontSize: 13, color: C.muted }}>{l}</span>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: l === 'เลขบัญชี' ? C.accent : C.text }}>{v}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: canCopy ? C.accent : C.text }}>{v}</span>
+                      {canCopy && (
+                        <button
+                          onClick={() => navigator.clipboard.writeText(v).then(() => alert('✅ คัดลอกแล้ว'))}
+                          style={{ background: C.accentDim, border: 'none', borderRadius: 6, padding: '2px 8px', fontSize: 11, color: C.accent, cursor: 'pointer', fontWeight: 700 }}
+                        >copy</button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </Card>
