@@ -27,5 +27,6 @@ const waterOrderCtrl = require('../controllers/waterOrderController');
 router.get('/water/prices', liffAuth, waterOrderCtrl.getPrices);
 router.post('/water/order', liffAuth, waterOrderCtrl.create);
 router.get('/water/orders', liffAuth, waterOrderCtrl.listMine);
+router.post('/water/orders/:id/slip', liffAuth, waterOrderCtrl.slipUpload.single('slip'), waterOrderCtrl.uploadSlip);
 
 module.exports = router;

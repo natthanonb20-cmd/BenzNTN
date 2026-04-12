@@ -1,6 +1,9 @@
 import { getAccessToken } from './liff';
 
 // propertyId เก็บใน localStorage หลังจาก load ครั้งแรก
+export function getPid() { return getPropertyId(); }
+export function getToken() { return getAccessToken(); }
+
 export function getPropertyId() {
   // URL param มีความสำคัญสูงสุด (invite link หรือ rich menu)
   const urlPid = new URLSearchParams(window.location.search).get('pid');

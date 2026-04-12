@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { C, Tag, Card, Pill, Btn } from '../components';
-import { api } from '../lib/api';
+import { api, getToken, getPid } from '../lib/api';
 
 function SafeImage({ src, style }) {
   const [url, setUrl] = useState('');
@@ -25,7 +25,7 @@ function statusMeta(s) {
 }
 
 // ── Upload Slip modal ────────────────────────────────────────────
-function SlipModal({ invoiceId, onClose, onDone }) {
+function SlipModal({ invoiceId, onClose, onDone, uploadFn }) {
   const fileRef   = useRef();
   const [file, setFile]       = useState(null);
   const [preview, setPreview] = useState('');
@@ -43,7 +43,7 @@ function SlipModal({ invoiceId, onClose, onDone }) {
     if (!file) return;
     setLoading(true); setErr('');
     try {
-      await api.uploadSlip(invoiceId, file);
+      await (uploadFn ? uploadFn(invoiceId, file) : api.uploadSlip(invoiceId, file));
       onDone();
     } catch (e) { setErr(e.message); }
     finally { setLoading(false); }
@@ -79,7 +79,7 @@ function SlipModal({ invoiceId, onClose, onDone }) {
 }
 
 // ── Water Tab ────────────────────────────────────────────────────
-function WaterTab({ prices, qty, note, orders, submitting, onMount, onChange, onSubmit }) {
+function WaterTab({ prices, qty, note, payLater, orders, submitting, onMount, onChange, onPayLater, onSubmit, onSlip }) {
   useEffect(() => { onMount(); }, []);
   const total = prices ? (qty.small * prices.smallPrice) + (qty.large * prices.largePrice) : 0;
   return (
@@ -113,6 +113,12 @@ function WaterTab({ prices, qty, note, orders, submitting, onMount, onChange, on
               value={note} onChange={e => onChange('note', e.target.value)}
               style={{ marginTop: 10, background: '#0F0F13', border: `1px solid ${C.cardBorder}`, borderRadius: 10, padding: '10px 12px', color: C.text, fontFamily: 'inherit', fontSize: 13, width: '100%' }}
             />
+            {/* checkbox ติดไว้สิ้นเดือน */}
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, cursor: 'pointer', fontSize: 13, color: C.muted }}>
+              <input type="checkbox" checked={payLater} onChange={e => onPayLater(e.target.checked)}
+                style={{ width: 16, height: 16, accentColor: C.accent }} />
+              ติดไว้ก่อนจ่ายสิ้นเดือน 😂
+            </label>
             {total > 0 && (
               <div style={{ textAlign: 'center', marginTop: 8, fontSize: 13, color: C.muted }}>
                 รวม <span style={{ fontWeight: 800, fontSize: 18, color: C.accent }}>฿{total}</span>
@@ -121,6 +127,19 @@ function WaterTab({ prices, qty, note, orders, submitting, onMount, onChange, on
             <Btn color={C.accent} onClick={onSubmit} disabled={submitting || (!qty.small && !qty.large)} style={{ marginTop: 10 }}>
               {submitting ? '⏳ กำลังส่ง...' : '💧 สั่งน้ำดื่ม'}
             </Btn>
+            {/* bank account */}
+            {!payLater && prices.bankAccount && (
+              <div style={{ marginTop: 12, background: '#0F0F13', borderRadius: 10, padding: '10px 12px', border: `1px solid ${C.cardBorder}`, fontSize: 13 }}>
+                <div style={{ color: C.muted, marginBottom: 4 }}>🏦 โอนเงินมาที่</div>
+                <div style={{ fontWeight: 700 }}>{prices.bankAccount.bankName}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
+                  <span style={{ fontFamily: 'monospace', color: C.accent }}>{prices.bankAccount.accountNumber}</span>
+                  <button onClick={() => navigator.clipboard.writeText(prices.bankAccount.accountNumber).then(() => alert('✅ คัดลอกแล้ว'))}
+                    style={{ fontSize: 11, background: C.accent, color: '#0F0F13', border: 'none', borderRadius: 6, padding: '2px 8px', cursor: 'pointer', fontWeight: 700 }}>copy</button>
+                </div>
+                <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{prices.bankAccount.accountName}</div>
+              </div>
+            )}
           </>
         )}
       </Card>
@@ -128,15 +147,23 @@ function WaterTab({ prices, qty, note, orders, submitting, onMount, onChange, on
         <Card>
           <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, marginBottom: 8 }}>ประวัติการสั่ง</div>
           {orders.map(o => (
-            <div key={o.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `1px solid ${C.cardBorder}`, fontSize: 13 }}>
-              <div>
-                {o.smallPacks > 0 && <span style={{ marginRight: 8 }}>เล็ก x{o.smallPacks}</span>}
-                {o.largePacks > 0 && <span>ใหญ่ x{o.largePacks}</span>}
-                <div style={{ fontSize: 11, color: C.muted }}>{new Date(o.saleDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}</div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontWeight: 700, color: C.accent }}>฿{Number(o.totalAmount).toFixed(0)}</div>
-                <div style={{ fontSize: 11, color: o.isPaid ? C.accent : C.warn }}>{o.isPaid ? 'ชำระแล้ว' : 'รอชำระ'}</div>
+            <div key={o.id} style={{ padding: '8px 0', borderBottom: `1px solid ${C.cardBorder}`, fontSize: 13 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  {o.smallPacks > 0 && <span style={{ marginRight: 8 }}>เล็ก x{o.smallPacks}</span>}
+                  {o.largePacks > 0 && <span>ใหญ่ x{o.largePacks}</span>}
+                  <div style={{ fontSize: 11, color: C.muted }}>{new Date(o.saleDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}</div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontWeight: 700, color: C.accent }}>฿{Number(o.totalAmount).toFixed(0)}</div>
+                  <div style={{ fontSize: 11, color: o.isPaid ? C.accent : C.warn }}>{o.isPaid ? 'ชำระแล้ว' : 'รอชำระ'}</div>
+                  {!o.isPaid && (
+                    <button onClick={() => onSlip(o.id)}
+                      style={{ marginTop: 4, fontSize: 11, background: C.accent, color: '#0F0F13', border: 'none', borderRadius: 6, padding: '3px 8px', cursor: 'pointer', fontWeight: 700 }}>
+                      📎 แนบสลิป
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           ))}
@@ -164,8 +191,10 @@ export default function Home() {
   const [waterPrices, setWaterPrices]   = useState(null);
   const [waterQty, setWaterQty]         = useState({ small: 0, large: 0 });
   const [waterNote, setWaterNote]       = useState('');
+  const [waterPayLater, setWaterPayLater] = useState(false);
   const [waterOrders, setWaterOrders]   = useState([]);
   const [waterSubmit, setWaterSubmit]   = useState(false);
+  const [waterSlipModal, setWaterSlipModal] = useState(null);
   const [toast, setToast]               = useState('');
 
   function showToast(msg) {
@@ -447,19 +476,21 @@ export default function Home() {
         {/* ── Water ── */}
         {tab === 'water' && (
           <WaterTab
-            prices={waterPrices} qty={waterQty} note={waterNote} orders={waterOrders}
+            prices={waterPrices} qty={waterQty} note={waterNote} payLater={waterPayLater} orders={waterOrders}
             submitting={waterSubmit}
             onMount={() => {
               api.waterPrices().then(setWaterPrices).catch(() => {});
               api.waterOrders().then(d => setWaterOrders(Array.isArray(d) ? d : [])).catch(() => {});
             }}
             onChange={(field, val) => field === 'note' ? setWaterNote(val) : setWaterQty(p => ({ ...p, [field]: val }))}
+            onPayLater={setWaterPayLater}
+            onSlip={setWaterSlipModal}
             onSubmit={async () => {
               if (!waterQty.small && !waterQty.large) return showToast('⚠️ กรุณาเลือกจำนวนน้ำ');
               setWaterSubmit(true);
               try {
-                await api.orderWater({ smallPacks: waterQty.small, largePacks: waterQty.large, note: waterNote });
-                setWaterQty({ small: 0, large: 0 }); setWaterNote('');
+                await api.orderWater({ smallPacks: waterQty.small, largePacks: waterQty.large, note: waterNote, payLater: waterPayLater });
+                setWaterQty({ small: 0, large: 0 }); setWaterNote(''); setWaterPayLater(false);
                 const orders = await api.waterOrders().catch(() => []);
                 setWaterOrders(Array.isArray(orders) ? orders : []);
                 showToast('✅ สั่งน้ำเรียบร้อย!');
@@ -467,6 +498,27 @@ export default function Home() {
               setWaterSubmit(false);
             }}
           />
+          {waterSlipModal && (
+            <SlipModal
+              invoiceId={waterSlipModal}
+              onClose={() => setWaterSlipModal(null)}
+              onDone={async () => {
+                setWaterSlipModal(null);
+                const orders = await api.waterOrders().catch(() => []);
+                setWaterOrders(Array.isArray(orders) ? orders : []);
+                showToast('✅ ส่งสลิปสำเร็จ!');
+              }}
+              uploadFn={(id, file) => {
+                const fd = new FormData();
+                fd.append('slip', file);
+                return fetch(`/api/liff/water/orders/${id}/slip`, {
+                  method: 'POST',
+                  headers: { Authorization: `Bearer ${getToken()}`, 'x-property-id': getPid(), 'ngrok-skip-browser-warning': '1' },
+                  body: fd,
+                }).then(async r => { const d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.error || 'อัปโหลดไม่สำเร็จ'); return d; });
+              }}
+            />
+          )}
         )}
 
         {/* ── Docs (Phase 3) ── */}

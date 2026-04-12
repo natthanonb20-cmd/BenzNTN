@@ -1,7 +1,22 @@
 const { PrismaClient } = require('@prisma/client');
+const multer = require('multer');
+const path   = require('path');
+const fs     = require('fs');
 const prisma = new PrismaClient();
 const { getWaterPrices } = require('./waterController');
 const { getLineClient } = require('../services/lineService');
+
+const slipStorage = multer.diskStorage({
+  destination(req, file, cb) {
+    const dir = 'uploads/water-slips';
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename(req, file, cb) {
+    cb(null, `wslip-${Date.now()}${path.extname(file.originalname)}`);
+  },
+});
+exports.slipUpload = multer({ storage: slipStorage, limits: { fileSize: 10 * 1024 * 1024 } });
 
 /** GET /api/liff/water/prices */
 exports.getPrices = async (req, res, next) => {
@@ -14,7 +29,7 @@ exports.getPrices = async (req, res, next) => {
 /** POST /api/liff/water/order */
 exports.create = async (req, res, next) => {
   try {
-    const { smallPacks, largePacks, note } = req.body;
+    const { smallPacks, largePacks, note, payLater } = req.body;
     const tenant = req.tenant;
     const contract = tenant.contracts?.[0];
 
@@ -35,7 +50,7 @@ exports.create = async (req, res, next) => {
         largePacks:  Number(largePacks ?? 0),
         totalAmount: total,
         isPaid:      false,
-        note:        `📱 สั่งผ่าน LIFF${note ? ` | ${note}` : ''}`,
+        note:        `📱 สั่งผ่าน LIFF${payLater ? ' | ค้างชำระสิ้นเดือน' : ''}${note ? ` | ${note}` : ''}`,
       },
     });
 
@@ -83,5 +98,23 @@ exports.listMine = async (req, res, next) => {
       take: 20,
     });
     res.json(orders);
+  } catch (e) { next(e); }
+};
+
+/** POST /api/liff/water/orders/:id/slip */
+exports.uploadSlip = async (req, res, next) => {
+  try {
+    const order = await prisma.waterSale.findFirst({
+      where: { id: req.params.id, tenantId: req.tenant.id },
+    });
+    if (!order) return res.status(404).json({ error: 'ไม่พบรายการ' });
+    if (!req.file) return res.status(400).json({ error: 'กรุณาแนบรูปสลิป' });
+
+    const slipPath = `/uploads/water-slips/${req.file.filename}`;
+    await prisma.waterSale.update({
+      where: { id: order.id },
+      data: { slipPath, isPaid: true, paidAt: new Date() },
+    });
+    res.json({ ok: true, slipPath });
   } catch (e) { next(e); }
 };

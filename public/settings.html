@@ -377,6 +377,12 @@
           <input id="waterLargePrice" type="number" step="0.5" min="0" class="input-field" placeholder="25" />
         </div>
       </div>
+      <div class="mt-4">
+        <label class="block text-sm font-medium text-gray-600 mb-1">บัญชีรับเงินค่าน้ำดื่ม <span class="text-gray-400 font-normal">(แสดงในแอปผู้เช่า)</span></label>
+        <select id="waterBankAccountId" class="input-field">
+          <option value="">-- ไม่ระบุ --</option>
+        </select>
+      </div>
       <div class="mt-4 flex justify-end">
         <button onclick="saveGroup('water')" class="btn-primary">บันทึก</button>
       </div>
@@ -535,6 +541,13 @@
       if (data.waterAdmins)     document.getElementById('water-admins').value      = data.waterAdmins;
       if (data.adminLineUserId) document.getElementById('adminLineUserId').value   = data.adminLineUserId.replace(/,/g, '\n');
 
+      // โหลด bank accounts สำหรับ dropdown น้ำดื่ม
+      const banks = await fetch('/api/bank-accounts', { headers }).then(r => r.json()).catch(() => []);
+      const wSel = document.getElementById('waterBankAccountId');
+      wSel.innerHTML = '<option value="">-- ไม่ระบุ --</option>' +
+        banks.map(a => `<option value="${a.id}">${a.bankName} · ${a.accountNumber} · ${a.accountName}</option>`).join('');
+      if (data.waterBankAccountId) wSel.value = data.waterBankAccountId;
+
       // Card Design
       const cardStyle = data.cardStyle || 'classic';
       const radio = document.querySelector(`input[name="cardStyle"][value="${cardStyle}"]`);
@@ -654,6 +667,7 @@
           await saveSetting('waterSmallPrice', document.getElementById('waterSmallPrice').value);
           await saveSetting('waterLargeLabel', document.getElementById('waterLargeLabel').value.trim() || 'แพ็คใหญ่');
           await saveSetting('waterLargePrice', document.getElementById('waterLargePrice').value);
+          await saveSetting('waterBankAccountId', document.getElementById('waterBankAccountId').value);
         } else if (group === 'card') {
           const style = document.querySelector('input[name="cardStyle"]:checked').value;
           const headerColor = document.getElementById('cardHeaderColor').value;

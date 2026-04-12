@@ -4,14 +4,24 @@ const prisma = new PrismaClient();
 /** ดึงราคาน้ำดื่มจาก PropertySetting (fallback defaults) */
 async function getWaterPrices(propertyId) {
   const rows = await prisma.propertySetting.findMany({
-    where: { propertyId, key: { in: ['waterSmallPrice', 'waterLargePrice', 'waterSmallLabel', 'waterLargeLabel'] } },
+    where: { propertyId, key: { in: ['waterSmallPrice', 'waterLargePrice', 'waterSmallLabel', 'waterLargeLabel', 'waterBankAccountId'] } },
   });
   const m = Object.fromEntries(rows.map(r => [r.key, r.value]));
+
+  let bankAccount = null;
+  if (m.waterBankAccountId) {
+    bankAccount = await prisma.bankAccount.findUnique({
+      where: { id: m.waterBankAccountId },
+      select: { bankName: true, accountNumber: true, accountName: true },
+    }).catch(() => null);
+  }
+
   return {
     smallPrice: parseFloat(m.waterSmallPrice  ?? '15'),
     largePrice: parseFloat(m.waterLargePrice  ?? '25'),
     smallLabel: m.waterSmallLabel ?? 'แพ็คเล็ก',
     largeLabel: m.waterLargeLabel ?? 'แพ็คใหญ่',
+    bankAccount,
   };
 }
 exports.getWaterPrices = getWaterPrices;

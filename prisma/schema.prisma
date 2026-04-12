@@ -202,6 +202,7 @@ model WaterSale {
   totalAmount Decimal   @db.Decimal(10, 2)
   isPaid      Boolean   @default(false)
   paidAt      DateTime?
+  slipPath    String?
   invoiceId   String?
   note        String?
   createdAt   DateTime  @default(now())
