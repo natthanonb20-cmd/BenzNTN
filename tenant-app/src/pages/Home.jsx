@@ -474,7 +474,7 @@ export default function Home() {
         )}
 
         {/* ── Water ── */}
-        {tab === 'water' && (
+        {tab === 'water' && (<>
           <WaterTab
             prices={waterPrices} qty={waterQty} note={waterNote} payLater={waterPayLater} orders={waterOrders}
             submitting={waterSubmit}
@@ -519,7 +519,7 @@ export default function Home() {
               }}
             />
           )}
-        )}
+        </>)}
 
         {/* ── Docs (Phase 3) ── */}
         {tab === 'docs' && (
