@@ -73,6 +73,7 @@ exports.create = async (req, res, next) => {
                       lines.join('\n') + `\n` +
                       `รวม: ฿${total.toFixed(0)}\n` +
                       (note ? `หมายเหตุ: ${note}\n` : '') +
+                      (payLater ? `💳 ติดไว้ก่อนจ่ายสิ้นเดือน 😂\n` : '') +
                       `\nกรุณานำส่งที่ห้อง ${roomNo}`;
           await Promise.all(adminIds.map(uid =>
             client.pushMessage(uid, { type: 'text', text: msg }).catch(e =>
