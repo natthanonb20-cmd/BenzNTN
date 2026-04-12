@@ -75,6 +75,7 @@ export default function Home() {
   const [invoices, setInvoices] = useState([]);
   const [repairs, setRepairs]   = useState([]);
   const [loading, setLoading]   = useState(true);
+  const [loadErr, setLoadErr]   = useState('');
   const [slipModal, setSlipModal]   = useState(null);
   const [repairForm, setRepairForm] = useState(false);
   const [repairData, setRepairData] = useState({ title: '', description: '', priority: 'NORMAL' });
@@ -94,7 +95,7 @@ export default function Home() {
       setInvoices(invData);
       setRepairs(repData);
     } catch (e) {
-      console.error('load error', e);
+      setLoadErr(e.message || String(e));
     }
     setLoading(false);
   }
@@ -125,10 +126,11 @@ export default function Home() {
   );
 
   if (!me) return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh', gap: 8, padding: 32, textAlign: 'center' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh', gap: 8, padding: 32, textAlign: 'center', background: C.bg, color: C.text }}>
       <div style={{ fontSize: 40 }}>😕</div>
       <div style={{ fontWeight: 700 }}>ไม่พบข้อมูลผู้เช่า</div>
       <div style={{ fontSize: 13, color: C.muted }}>กรุณาติดต่อเจ้าของหอพัก</div>
+      {loadErr && <div style={{ fontSize: 11, color: C.danger, marginTop: 8, wordBreak: 'break-all' }}>{loadErr}</div>}
     </div>
   );
 
