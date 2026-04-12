@@ -85,11 +85,17 @@ export default function Home() {
   async function load() {
     setLoading(true);
     try {
-      const [meData, invData, repData] = await Promise.all([api.getMe(), api.listInvoices(), api.listRepairs()]);
+      const [meData, invData, repData] = await Promise.all([
+        api.getMe(),
+        api.listInvoices().catch(() => []),
+        api.listRepairs().catch(() => []),
+      ]);
       setMe(meData);
       setInvoices(invData);
       setRepairs(repData);
-    } catch {}
+    } catch (e) {
+      console.error('load error', e);
+    }
     setLoading(false);
   }
 
