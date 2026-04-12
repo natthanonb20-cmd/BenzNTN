@@ -130,11 +130,13 @@ async function acceptInvite(req, res) {
   let lineUserId;
   try {
     const r = await fetch(
-      `https://api.line.me/oauth2/v2.1/verify?access_token=${lineAccessToken}`
+      `https://api.line.me/oauth2/v2.1/verify?access_token=${lineAccessToken}`,
+      { headers: { 'ngrok-skip-browser-warning': '1' } }
     );
     if (!r.ok) return res.status(401).json({ error: 'LINE token ไม่ถูกต้อง' });
-    const data = await r.json();
+    const data = await r.json().catch(() => ({}));
     lineUserId = data.sub;
+    if (!lineUserId) return res.status(401).json({ error: 'ดึง LINE User ID ไม่ได้' });
   } catch {
     return res.status(502).json({ error: 'ตรวจสอบ LINE token ไม่ได้' });
   }
