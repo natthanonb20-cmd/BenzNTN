@@ -214,21 +214,6 @@ export default function Home() {
               </Card>
             )}
 
-            {/* Quick actions */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              {[
-                { icon: '💳', label: 'ชำระค่าเช่า',   color: C.accent, action: () => setTab('bills')  },
-                { icon: '🔧', label: 'แจ้งซ่อม',      color: C.info,   action: () => setTab('repair') },
-                { icon: '📄', label: 'ดูสัญญา',        color: C.warn,   action: () => setTab('docs')   },
-                { icon: '📊', label: 'ประวัติบิล',     color: C.muted,  action: () => setTab('bills')  },
-              ].map(({ icon, label, color, action }) => (
-                <Card key={label} style={{ padding: 14, textAlign: 'center', cursor: 'pointer' }} onClick={action}>
-                  <div style={{ fontSize: 26 }}>{icon}</div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color, marginTop: 6 }}>{label}</div>
-                </Card>
-              ))}
-            </div>
-
             {/* Bank account */}
             {me.bankAccount && (
               <Card>

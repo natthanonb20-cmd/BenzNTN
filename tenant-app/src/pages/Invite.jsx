@@ -28,7 +28,10 @@ export default function Invite() {
     }
 
     api.acceptInvite({ inviteToken, lineAccessToken: lineToken, propertyId: pid })
-      .then(() => setStatus('success'))
+      .then(() => {
+        setStatus('success');
+        setTimeout(() => { window.location.replace('/tenant-app/'); }, 1500);
+      })
       .catch(e => { setStatus('error'); setMsg(e.message); });
   }, []);
 
