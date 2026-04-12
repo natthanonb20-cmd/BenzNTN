@@ -397,8 +397,41 @@
       const r = await fetch(`/api/liff/invite/generate/${tenantId}`, { headers });
       if (!r.ok) { alert('❌ สร้าง invite link ไม่สำเร็จ'); return; }
       const { inviteUrl } = await r.json();
-      await navigator.clipboard.writeText(inviteUrl).catch(() => {});
-      alert(`✅ คัดลอก Invite Link แล้ว!\n\nส่งลิงก์นี้ให้ผู้เช่าเปิดใน LINE:\n${inviteUrl}`);
+      try {
+        await navigator.clipboard.writeText(inviteUrl);
+        showToast('✅ คัดลอก Invite Link แล้ว');
+      } catch {
+        // fallback: show in input for manual copy
+        showInviteModal(inviteUrl);
+      }
+    }
+
+    function showToast(msg) {
+      const t = document.createElement('div');
+      t.textContent = msg;
+      t.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-sm px-5 py-3 rounded-xl shadow-lg z-50 transition-opacity';
+      document.body.appendChild(t);
+      setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 2500);
+    }
+
+    function showInviteModal(url) {
+      const overlay = document.createElement('div');
+      overlay.className = 'fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4';
+      overlay.innerHTML = `
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
+          <h3 class="font-bold text-gray-800">🔗 Invite Link</h3>
+          <p class="text-sm text-gray-500">คัดลอกลิงก์นี้ส่งให้ผู้เช่าเปิดใน LINE</p>
+          <input id="invite-url-input" value="${url}" readonly
+            class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm text-gray-700 focus:outline-none" />
+          <div class="flex gap-2">
+            <button onclick="document.getElementById('invite-url-input').select();document.execCommand('copy');showToast('✅ คัดลอกแล้ว');this.closest('.fixed').remove()"
+              class="flex-1 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700">คัดลอก</button>
+            <button onclick="this.closest('.fixed').remove()"
+              class="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-sm hover:bg-gray-200">ปิด</button>
+          </div>
+        </div>`;
+      document.body.appendChild(overlay);
+      setTimeout(() => document.getElementById('invite-url-input')?.select(), 100);
     }
 
     async function deleteTenant(id, name) {
