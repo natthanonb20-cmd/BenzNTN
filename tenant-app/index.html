@@ -7,7 +7,14 @@
     <title>tenant-app</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div style="color:#fff;padding:20px;font-size:14px">กำลังโหลด LIFF...</div></div>
+    <script>
+      window.onerror = function(msg, src, line) {
+        document.getElementById('root').innerHTML =
+          '<div style="color:#ff5b5b;padding:20px;font-size:13px;word-break:break-all">' +
+          '❌ JS Error: ' + msg + '<br>' + src + ':' + line + '</div>';
+      };
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
