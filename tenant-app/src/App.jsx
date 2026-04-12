@@ -37,8 +37,8 @@ function App() {
   const params = new URLSearchParams(window.location.search);
   const inviteToken = params.get('invite');
 
-  // ถ้ามี invite token → ไปหน้า accept invite โดยตรง
-  if (inviteToken) return <Invite />;
+  // ถ้ามี invite token และยังไม่เคยลงทะเบียน → ไปหน้า accept invite
+  if (inviteToken && !pid) return <Invite />;
 
   if (!pid) return (
     <div className="center-msg">
