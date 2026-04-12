@@ -22,4 +22,10 @@ router.post('/invoices/:id/slip',    liffAuth, ctrl.slipUpload.single('slip'), c
 router.get('/repairs',     liffAuth, repairCtrl.listMine);
 router.post('/repairs',    liffAuth, repairCtrl.upload.single('image'), repairCtrl.create);
 
+// Water order (tenant)
+const waterOrderCtrl = require('../controllers/waterOrderController');
+router.get('/water/prices', liffAuth, waterOrderCtrl.getPrices);
+router.post('/water/order', liffAuth, waterOrderCtrl.create);
+router.get('/water/orders', liffAuth, waterOrderCtrl.listMine);
+
 module.exports = router;
