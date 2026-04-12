@@ -559,13 +559,43 @@ export default function Home() {
       )}
 
       {/* Bottom Nav */}
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, maxWidth: 480, margin: '0 auto', background: C.card, borderTop: `1px solid ${C.cardBorder}`, display: 'flex', justifyContent: 'space-around', padding: '10px 0 16px' }}>
-        {[['🏠','หน้าหลัก','overview'],['💳','ชำระเงิน','bills'],['🔧','แจ้งซ่อม','repair'],['💧','น้ำดื่ม','water'],['📄','เอกสาร','docs']].map(([ic, lb, t]) => (
-          <div key={lb} style={{ textAlign: 'center', cursor: 'pointer' }} onClick={() => setTab(t)}>
-            <div style={{ fontSize: 20 }}>{ic}</div>
-            <div style={{ fontSize: 10, color: tab === t ? C.accent : C.muted, fontWeight: tab === t ? 700 : 400 }}>{lb}</div>
-          </div>
-        ))}
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, maxWidth: 480, margin: '0 auto', background: C.card, borderTop: `1px solid ${C.cardBorder}`, display: 'flex', justifyContent: 'space-around', padding: '8px 0 18px' }}>
+        {[
+          { key: 'overview', label: 'หน้าหลัก', icon: (active) => (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? C.accent : C.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          )},
+          { key: 'bills', label: 'ชำระเงิน', icon: (active) => (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? C.accent : C.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
+            </svg>
+          )},
+          { key: 'repair', label: 'แจ้งซ่อม', icon: (active) => (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? C.accent : C.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+            </svg>
+          )},
+          { key: 'water', label: 'น้ำดื่ม', icon: (active) => (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? C.accent : C.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+            </svg>
+          )},
+          { key: 'docs', label: 'เอกสาร', icon: (active) => (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? C.accent : C.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+            </svg>
+          )},
+        ].map(({ key, label, icon }) => {
+          const active = tab === key;
+          return (
+            <div key={key} onClick={() => setTab(key)}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, cursor: 'pointer', padding: '4px 12px', borderRadius: 12, transition: 'background .15s', background: active ? `${C.accent}18` : 'transparent' }}>
+              {icon(active)}
+              <span style={{ fontSize: 10, color: active ? C.accent : C.muted, fontWeight: active ? 700 : 400 }}>{label}</span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
