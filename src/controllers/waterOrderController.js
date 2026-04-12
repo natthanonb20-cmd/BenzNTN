@@ -113,8 +113,30 @@ exports.uploadSlip = async (req, res, next) => {
     const slipPath = `/uploads/water-slips/${req.file.filename}`;
     await prisma.waterSale.update({
       where: { id: order.id },
-      data: { slipPath, isPaid: true, paidAt: new Date() },
+      data: { slipPath, slipStatus: 'REVIEW' },
     });
     res.json({ ok: true, slipPath });
+  } catch (e) { next(e); }
+};
+
+/** POST /api/water/:id/approve-slip */
+exports.approveSlip = async (req, res, next) => {
+  try {
+    await prisma.waterSale.update({
+      where: { id: req.params.id },
+      data: { isPaid: true, paidAt: new Date(), slipStatus: null },
+    });
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+};
+
+/** POST /api/water/:id/reject-slip */
+exports.rejectSlip = async (req, res, next) => {
+  try {
+    await prisma.waterSale.update({
+      where: { id: req.params.id },
+      data: { slipPath: null, slipStatus: null },
+    });
+    res.json({ ok: true });
   } catch (e) { next(e); }
 };

@@ -203,6 +203,7 @@ model WaterSale {
   isPaid      Boolean   @default(false)
   paidAt      DateTime?
   slipPath    String?
+  slipStatus  String?   // null | 'REVIEW' | 'REJECTED'
   invoiceId   String?
   note        String?
   createdAt   DateTime  @default(now())

@@ -252,10 +252,17 @@
         const total   = Number(s.totalAmount).toLocaleString('th-TH', { minimumFractionDigits: 2 });
         const statusBadge = s.isPaid
           ? '<span class="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs">ชำระแล้ว</span>'
-          : (s.invoiceId
-              ? '<span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-600 text-xs">รวมบิลแล้ว</span>'
-              : '<span class="px-2 py-0.5 rounded-full bg-orange-100 text-orange-600 text-xs">ค้างชำระ</span>');
-        const payBtn = !s.isPaid && !s.invoiceId
+          : s.slipStatus === 'REVIEW'
+            ? '<span class="px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 text-xs">รอตรวจสอบสลิป</span>'
+            : (s.invoiceId
+                ? '<span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-600 text-xs">รวมบิลแล้ว</span>'
+                : '<span class="px-2 py-0.5 rounded-full bg-orange-100 text-orange-600 text-xs">ค้างชำระ</span>');
+        const slipBtn = s.slipStatus === 'REVIEW' && s.slipPath
+          ? `<a href="${s.slipPath}" target="_blank" class="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded hover:bg-yellow-200">🖼 ดูสลิป</a>
+             <button onclick="approveSlip('${s.id}')" class="px-2 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600">✅ ยืนยัน</button>
+             <button onclick="rejectSlip('${s.id}')" class="px-2 py-1 bg-red-100 text-red-600 text-xs rounded hover:bg-red-200">❌ ปฏิเสธ</button>`
+          : '';
+        const payBtn = !s.isPaid && !s.invoiceId && !s.slipStatus
           ? `<button onclick="quickPay('${s.id}')" class="px-2 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600">รับเงิน</button>`
           : '';
         return `
@@ -268,7 +275,8 @@
             <td class="px-4 py-3 text-center">${statusBadge}</td>
             <td class="px-4 py-3 text-xs text-gray-400">${s.note ?? '—'}</td>
             <td class="px-4 py-3">
-              <div class="flex gap-1 justify-center">
+              <div class="flex gap-1 justify-center flex-wrap">
+                ${slipBtn}
                 ${payBtn}
                 <button onclick='editSale(${JSON.stringify(s)})' class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded hover:bg-gray-200">แก้ไข</button>
                 <button onclick="delSale('${s.id}')" class="px-2 py-1 bg-red-100 text-red-600 text-xs rounded hover:bg-red-200">ลบ</button>
@@ -321,6 +329,19 @@
       });
       if (r.ok) { closeModal(); loadTable(); loadStats(); }
       else { const d = await r.json(); alert('❌ ' + (d.error || 'บันทึกไม่สำเร็จ')); }
+    }
+
+    async function approveSlip(id) {
+      const r = await fetch(`/api/water/${id}/approve-slip`, { method: 'POST', headers });
+      if (r.ok) { loadTable(); loadStats(); }
+      else { const d = await r.json().catch(() => ({})); alert('❌ ' + (d.error || 'ไม่สำเร็จ')); }
+    }
+
+    async function rejectSlip(id) {
+      if (!confirm('ปฏิเสธสลิปนี้?\nผู้เช่าจะต้องส่งสลิปใหม่อีกครั้ง')) return;
+      const r = await fetch(`/api/water/${id}/reject-slip`, { method: 'POST', headers });
+      if (r.ok) { loadTable(); }
+      else { const d = await r.json().catch(() => ({})); alert('❌ ' + (d.error || 'ไม่สำเร็จ')); }
     }
 
     async function quickPay(id) {
