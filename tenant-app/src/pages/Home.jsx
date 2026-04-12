@@ -125,6 +125,8 @@ export default function Home() {
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh', color: C.muted }}>กำลังโหลด...</div>
   );
 
+  if (me) window.__me = me; // debug
+
   if (!me) return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh', gap: 8, padding: 32, textAlign: 'center', background: C.bg, color: C.text }}>
       <div style={{ fontSize: 40 }}>😕</div>
@@ -148,6 +150,11 @@ export default function Home() {
       {slipModal && (
         <SlipModal invoiceId={slipModal} onClose={() => setSlipModal(null)} onDone={() => { setSlipModal(null); load(); }} />
       )}
+
+      {/* Debug */}
+      <div style={{ background: '#111', color: '#0f0', fontSize: 10, padding: 8, wordBreak: 'break-all' }}>
+        name:{me.name} nick:{me.nickname} room:{me.room?.roomNumber}
+      </div>
 
       {/* Header */}
       <div style={{ background: 'linear-gradient(135deg, #0D2E22 0%, #0F0F13 60%)', padding: '24px 20px 16px', borderBottom: `1px solid ${C.cardBorder}` }}>
