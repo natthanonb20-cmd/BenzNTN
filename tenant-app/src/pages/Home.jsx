@@ -166,6 +166,12 @@ export default function Home() {
   const [waterNote, setWaterNote]       = useState('');
   const [waterOrders, setWaterOrders]   = useState([]);
   const [waterSubmit, setWaterSubmit]   = useState(false);
+  const [toast, setToast]               = useState('');
+
+  function showToast(msg) {
+    setToast(msg);
+    setTimeout(() => setToast(''), 3000);
+  }
 
   async function load() {
     setLoading(true);
@@ -199,7 +205,7 @@ export default function Home() {
       setRepairFile(null);
       const repData = await api.listRepairs();
       setRepairs(repData);
-    } catch (e) { alert('❌ ' + e.message); }
+    } catch (e) { showToast('❌ ' + e.message); }
     setSubmitting(false);
   }
 
@@ -316,7 +322,7 @@ export default function Home() {
                       <span style={{ fontSize: 13, fontWeight: 700, color: canCopy ? C.accent : C.text }}>{v}</span>
                       {canCopy && (
                         <button
-                          onClick={() => navigator.clipboard.writeText(v).then(() => alert('✅ คัดลอกแล้ว'))}
+                          onClick={() => navigator.clipboard.writeText(v).then(() => showToast('✅ คัดลอกแล้ว'))}
                           style={{ background: C.accentDim, border: 'none', borderRadius: 6, padding: '2px 8px', fontSize: 11, color: C.accent, cursor: 'pointer', fontWeight: 700 }}
                         >copy</button>
                       )}
@@ -449,15 +455,15 @@ export default function Home() {
             }}
             onChange={(field, val) => field === 'note' ? setWaterNote(val) : setWaterQty(p => ({ ...p, [field]: val }))}
             onSubmit={async () => {
-              if (!waterQty.small && !waterQty.large) return alert('กรุณาเลือกจำนวนน้ำ');
+              if (!waterQty.small && !waterQty.large) return showToast('⚠️ กรุณาเลือกจำนวนน้ำ');
               setWaterSubmit(true);
               try {
                 await api.orderWater({ smallPacks: waterQty.small, largePacks: waterQty.large, note: waterNote });
                 setWaterQty({ small: 0, large: 0 }); setWaterNote('');
                 const orders = await api.waterOrders().catch(() => []);
                 setWaterOrders(Array.isArray(orders) ? orders : []);
-                alert('✅ สั่งน้ำเรียบร้อย!');
-              } catch (e) { alert('❌ ' + e.message); }
+                showToast('✅ สั่งน้ำเรียบร้อย!');
+              } catch (e) { showToast('❌ ' + e.message); }
               setWaterSubmit(false);
             }}
           />
@@ -493,9 +499,16 @@ export default function Home() {
         )}
       </div>
 
+      {/* Toast */}
+      {toast && (
+        <div style={{ position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', background: '#1e293b', color: '#fff', padding: '10px 20px', borderRadius: 12, fontSize: 14, zIndex: 999, whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
+          {toast}
+        </div>
+      )}
+
       {/* Bottom Nav */}
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, maxWidth: 480, margin: '0 auto', background: C.card, borderTop: `1px solid ${C.cardBorder}`, display: 'flex', justifyContent: 'space-around', padding: '10px 0 16px' }}>
-        {[['🏠','หน้าหลัก','overview'],['💳','ชำระเงิน','bills'],['🔧','แจ้งซ่อม','repair'],['📄','เอกสาร','docs']].map(([ic, lb, t]) => (
+        {[['🏠','หน้าหลัก','overview'],['💳','ชำระเงิน','bills'],['🔧','แจ้งซ่อม','repair'],['💧','น้ำดื่ม','water'],['📄','เอกสาร','docs']].map(([ic, lb, t]) => (
           <div key={lb} style={{ textAlign: 'center', cursor: 'pointer' }} onClick={() => setTab(t)}>
             <div style={{ fontSize: 20 }}>{ic}</div>
             <div style={{ fontSize: 10, color: tab === t ? C.accent : C.muted, fontWeight: tab === t ? 700 : 400 }}>{lb}</div>
