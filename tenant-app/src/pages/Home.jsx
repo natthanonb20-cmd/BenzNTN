@@ -185,7 +185,10 @@ export default function Home() {
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 8, padding: '14px 20px', overflowX: 'auto' }}>
         {[['overview','ภาพรวม'],['bills','บิล'],['repair','แจ้งซ่อม'],['docs','เอกสาร']].map(([k, l]) => (
-          <Pill key={k} label={l} active={tab === k} onClick={() => { setTab(k); if (k === 'repair') api.listRepairs().then(d => setRepairs(Array.isArray(d) ? d : [])).catch(() => {}); }}
+          <Pill key={k} label={l} active={tab === k} onClick={() => {
+            setTab(k);
+            if (k === 'repair') api.listRepairs().then(d => setRepairs(Array.isArray(d) ? d : [])).catch(() => {});
+          }} />
         ))}
       </div>
 
