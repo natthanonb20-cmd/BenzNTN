@@ -273,7 +273,7 @@ export default function Home() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <div style={{ fontSize: 12, color: C.accent, fontWeight: 700, letterSpacing: '0.1em', marginBottom: 4 }}>🏠 RENTMATE</div>
-            <div style={{ fontSize: 20, fontWeight: 800 }}>สวัสดี, {me.nickname || me.name} 👋</div>
+            <div style={{ fontSize: 20, fontWeight: 800 }}>{['สวัสดี','หวัดดี','ว่าไง','เป็นไงบ้าง','ยินดีต้อนรับ'][Math.floor(Date.now() / 60000) % 5]}, {me.nickname || me.name} 👋</div>
             <div style={{ fontSize: 13, color: C.muted, marginTop: 2 }}>ห้อง {me.room?.roomNumber ?? '—'}</div>
           </div>
           <div style={{ background: C.line, borderRadius: 12, padding: '6px 12px', fontSize: 12, fontWeight: 700, color: '#fff' }}>LINE</div>
