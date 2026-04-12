@@ -92,8 +92,8 @@ export default function Home() {
         api.listRepairs().catch(() => []),
       ]);
       setMe(meData);
-      setInvoices(invData);
-      setRepairs(repData);
+      setInvoices(Array.isArray(invData) ? invData : []);
+      setRepairs(Array.isArray(repData) ? repData : []);
     } catch (e) {
       setLoadErr(e.message || String(e));
     }
