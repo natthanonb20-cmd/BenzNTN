@@ -2,6 +2,16 @@ import { useEffect, useRef, useState } from 'react';
 import { C, Tag, Card, Pill, Btn } from '../components';
 import { api } from '../lib/api';
 
+function SafeImage({ src, style }) {
+  const [url, setUrl] = useState('');
+  useEffect(() => {
+    if (!src) return;
+    fetch(src, { headers: { 'ngrok-skip-browser-warning': '1' } })
+      .then(r => r.blob()).then(b => setUrl(URL.createObjectURL(b))).catch(() => {});
+  }, [src]);
+  return url ? <img src={url} style={style} /> : null;
+}
+
 const ST_LABEL = { OPEN:'รอดำเนินการ', IN_PROGRESS:'กำลังซ่อม', DONE:'เสร็จแล้ว', REJECTED:'ปฏิเสธ' };
 const ST_COLOR = { OPEN: C.warn, IN_PROGRESS: C.info, DONE: C.accent, REJECTED: C.danger };
 
@@ -68,6 +78,74 @@ function SlipModal({ invoiceId, onClose, onDone }) {
   );
 }
 
+// ── Water Tab ────────────────────────────────────────────────────
+function WaterTab({ prices, qty, note, orders, submitting, onMount, onChange, onSubmit }) {
+  useEffect(() => { onMount(); }, []);
+  const total = prices ? (qty.small * prices.smallPrice) + (qty.large * prices.largePrice) : 0;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <Card>
+        <div style={{ fontSize: 13, fontWeight: 700, color: C.muted, marginBottom: 12 }}>💧 สั่งน้ำดื่ม</div>
+        {!prices ? (
+          <div style={{ color: C.muted, textAlign: 'center', padding: 16 }}>กำลังโหลด...</div>
+        ) : (
+          <>
+            {[
+              { key: 'small', label: prices.smallLabel, price: prices.smallPrice },
+              { key: 'large', label: prices.largeLabel, price: prices.largePrice },
+            ].map(({ key, label, price }) => (
+              <div key={key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: `1px solid ${C.cardBorder}` }}>
+                <div>
+                  <div style={{ fontWeight: 700 }}>{label}</div>
+                  <div style={{ fontSize: 12, color: C.accent }}>฿{price} / แพ็ค</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <button onClick={() => onChange(key, Math.max(0, (qty[key] || 0) - 1))}
+                    style={{ width: 32, height: 32, borderRadius: 8, background: C.cardBorder, border: 'none', color: C.text, fontSize: 18, cursor: 'pointer' }}>−</button>
+                  <span style={{ fontWeight: 700, fontSize: 18, minWidth: 24, textAlign: 'center' }}>{qty[key] || 0}</span>
+                  <button onClick={() => onChange(key, (qty[key] || 0) + 1)}
+                    style={{ width: 32, height: 32, borderRadius: 8, background: C.accent, border: 'none', color: '#0F0F13', fontSize: 18, cursor: 'pointer' }}>+</button>
+                </div>
+              </div>
+            ))}
+            <input
+              placeholder="หมายเหตุ เช่น ฝากไว้หน้าห้อง (ไม่บังคับ)"
+              value={note} onChange={e => onChange('note', e.target.value)}
+              style={{ marginTop: 10, background: '#0F0F13', border: `1px solid ${C.cardBorder}`, borderRadius: 10, padding: '10px 12px', color: C.text, fontFamily: 'inherit', fontSize: 13, width: '100%' }}
+            />
+            {total > 0 && (
+              <div style={{ textAlign: 'center', marginTop: 8, fontSize: 13, color: C.muted }}>
+                รวม <span style={{ fontWeight: 800, fontSize: 18, color: C.accent }}>฿{total}</span>
+              </div>
+            )}
+            <Btn color={C.accent} onClick={onSubmit} disabled={submitting || (!qty.small && !qty.large)} style={{ marginTop: 10 }}>
+              {submitting ? '⏳ กำลังส่ง...' : '💧 สั่งน้ำดื่ม'}
+            </Btn>
+          </>
+        )}
+      </Card>
+      {orders.length > 0 && (
+        <Card>
+          <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, marginBottom: 8 }}>ประวัติการสั่ง</div>
+          {orders.map(o => (
+            <div key={o.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `1px solid ${C.cardBorder}`, fontSize: 13 }}>
+              <div>
+                {o.smallPacks > 0 && <span style={{ marginRight: 8 }}>เล็ก x{o.smallPacks}</span>}
+                {o.largePacks > 0 && <span>ใหญ่ x{o.largePacks}</span>}
+                <div style={{ fontSize: 11, color: C.muted }}>{new Date(o.saleDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}</div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontWeight: 700, color: C.accent }}>฿{Number(o.totalAmount).toFixed(0)}</div>
+                <div style={{ fontSize: 11, color: o.isPaid ? C.accent : C.warn }}>{o.isPaid ? 'ชำระแล้ว' : 'รอชำระ'}</div>
+              </div>
+            </div>
+          ))}
+        </Card>
+      )}
+    </div>
+  );
+}
+
 // ── Main ─────────────────────────────────────────────────────────
 export default function Home() {
   const [tab, setTab]           = useState('overview');
@@ -82,6 +160,12 @@ export default function Home() {
   const [repairFile, setRepairFile] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const repairFileRef = useRef();
+
+  const [waterPrices, setWaterPrices]   = useState(null);
+  const [waterQty, setWaterQty]         = useState({ small: 0, large: 0 });
+  const [waterNote, setWaterNote]       = useState('');
+  const [waterOrders, setWaterOrders]   = useState([]);
+  const [waterSubmit, setWaterSubmit]   = useState(false);
 
   async function load() {
     setLoading(true);
@@ -184,7 +268,7 @@ export default function Home() {
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 8, padding: '14px 20px', overflowX: 'auto' }}>
-        {[['overview','ภาพรวม'],['bills','บิล'],['repair','แจ้งซ่อม'],['docs','เอกสาร']].map(([k, l]) => (
+        {[['overview','ภาพรวม'],['bills','บิล'],['repair','แจ้งซ่อม'],['water','น้ำดื่ม'],['docs','เอกสาร']].map(([k, l]) => (
           <Pill key={k} label={l} active={tab === k} onClick={() => {
             setTab(k);
             if (k === 'repair') api.listRepairs().then(d => setRepairs(Array.isArray(d) ? d : [])).catch(() => {});
@@ -348,10 +432,35 @@ export default function Home() {
                     💬 {r.adminNote}
                   </div>
                 )}
-                {r.imagePath && <img src={window.location.origin + r.imagePath} style={{ width: '100%', borderRadius: 8, marginTop: 8, maxHeight: 180, objectFit: 'cover' }} />}
+                {r.imagePath && <SafeImage src={window.location.origin + r.imagePath} style={{ width: '100%', borderRadius: 8, marginTop: 8, maxHeight: 180, objectFit: 'cover' }} />}
               </Card>
             ))}
           </div>
+        )}
+
+        {/* ── Water ── */}
+        {tab === 'water' && (
+          <WaterTab
+            prices={waterPrices} qty={waterQty} note={waterNote} orders={waterOrders}
+            submitting={waterSubmit}
+            onMount={() => {
+              api.waterPrices().then(setWaterPrices).catch(() => {});
+              api.waterOrders().then(d => setWaterOrders(Array.isArray(d) ? d : [])).catch(() => {});
+            }}
+            onChange={(field, val) => field === 'note' ? setWaterNote(val) : setWaterQty(p => ({ ...p, [field]: val }))}
+            onSubmit={async () => {
+              if (!waterQty.small && !waterQty.large) return alert('กรุณาเลือกจำนวนน้ำ');
+              setWaterSubmit(true);
+              try {
+                await api.orderWater({ smallPacks: waterQty.small, largePacks: waterQty.large, note: waterNote });
+                setWaterQty({ small: 0, large: 0 }); setWaterNote('');
+                const orders = await api.waterOrders().catch(() => []);
+                setWaterOrders(Array.isArray(orders) ? orders : []);
+                alert('✅ สั่งน้ำเรียบร้อย!');
+              } catch (e) { alert('❌ ' + e.message); }
+              setWaterSubmit(false);
+            }}
+          />
         )}
 
         {/* ── Docs (Phase 3) ── */}

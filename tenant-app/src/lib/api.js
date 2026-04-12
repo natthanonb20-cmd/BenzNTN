@@ -35,6 +35,9 @@ export const api = {
   getInvoice:     (id)     => request('GET',  `/api/liff/invoices/${id}`),
   acceptInvite:   (body)   => request('POST', '/api/liff/invite/accept', body),
   listRepairs:    ()       => request('GET',  '/api/liff/repairs'),
+  waterPrices:    ()       => request('GET',  '/api/liff/water/prices'),
+  waterOrders:    ()       => request('GET',  '/api/liff/water/orders'),
+  orderWater:     (body)   => request('POST', '/api/liff/water/order', body),
 
   createRepair(formData) {
     return fetch('/api/liff/repairs', {
