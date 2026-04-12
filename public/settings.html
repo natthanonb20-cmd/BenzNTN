@@ -121,6 +121,19 @@
         </div>
         <p id="line-send-test-result" class="text-sm hidden"></p>
       </div>
+
+      <!-- Admin LINE User IDs -->
+      <hr class="my-4" />
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-600">LINE User ID ของแอดมิน <span class="text-gray-400 font-normal">(รับแจ้งเตือนสั่งน้ำ, แจ้งซ่อม ฯลฯ)</span></label>
+        <p class="text-xs text-gray-400">ใส่ได้หลายคน คนละบรรทัด — หา User ID ได้จากหน้าทดสอบส่งข้อความด้านบน</p>
+        <textarea id="adminLineUserId" rows="3" placeholder="U3aaedd371b2ea4aa269fd66b7ece4ced&#10;Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+          class="input-field font-mono text-xs w-full resize-none"></textarea>
+        <div class="flex justify-end">
+          <button onclick="saveAdminLineUserId()" class="btn-primary">บันทึก</button>
+        </div>
+        <p id="admin-line-save-result" class="text-sm hidden"></p>
+      </div>
     </section>
 
     <!-- LINE Broadcast -->
@@ -519,7 +532,8 @@
       if (data.waterSmallPrice) document.getElementById('waterSmallPrice').value = data.waterSmallPrice;
       if (data.waterLargeLabel) document.getElementById('waterLargeLabel').value = data.waterLargeLabel;
       if (data.waterLargePrice) document.getElementById('waterLargePrice').value = data.waterLargePrice;
-      if (data.waterAdmins)    document.getElementById('water-admins').value     = data.waterAdmins;
+      if (data.waterAdmins)     document.getElementById('water-admins').value      = data.waterAdmins;
+      if (data.adminLineUserId) document.getElementById('adminLineUserId').value   = data.adminLineUserId.replace(/,/g, '\n');
 
       // Card Design
       const cardStyle = data.cardStyle || 'classic';
@@ -605,6 +619,22 @@
         btn.disabled = false;
         btn.textContent = 'บันทึก';
       }
+    }
+
+    async function saveAdminLineUserId() {
+      const ids = document.getElementById('adminLineUserId').value
+        .split('\n').map(s => s.trim()).filter(Boolean).join(',');
+      const el  = document.getElementById('admin-line-save-result');
+      try {
+        await saveSetting('adminLineUserId', ids);
+        el.className = 'text-sm text-green-600';
+        el.textContent = '✅ บันทึกสำเร็จ';
+      } catch {
+        el.className = 'text-sm text-red-500';
+        el.textContent = '❌ บันทึกไม่สำเร็จ';
+      }
+      el.classList.remove('hidden');
+      setTimeout(() => el.classList.add('hidden'), 3000);
     }
 
     async function saveGroup(group) {

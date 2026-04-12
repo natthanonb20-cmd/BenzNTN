@@ -51,8 +51,18 @@
   <main class="max-w-6xl mx-auto px-4 py-6">
     <div class="flex items-center justify-between mb-4">
       <h1 class="text-2xl font-bold text-gray-800">ผู้เช่า</h1>
-      <button onclick="exportTenants()" class="border border-green-600 text-green-700 px-4 py-2 rounded-lg text-sm hover:bg-green-50 transition">⬇️ Excel</button>
-      <button onclick="openTenantModal()" class="bg-blue-700 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-800 transition">+ เพิ่มผู้เช่า</button>
+      <div class="flex gap-2">
+        <button onclick="exportTenants()"
+          class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-green-500 text-white hover:bg-green-600 transition">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Excel
+        </button>
+        <button onclick="openTenantModal()"
+          class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-blue-700 text-white hover:bg-blue-800 transition">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          เพิ่มผู้เช่า
+        </button>
+      </div>
     </div>
 
     <!-- Search + Tabs -->
@@ -66,6 +76,8 @@
         <button id="tab-none"    onclick="setTab('none')"    class="tab-btn px-3 py-1.5 rounded-md font-medium transition">ไม่มีห้อง</button>
       </div>
     </div>
+
+    <div id="line-summary" class="mb-3 text-sm text-gray-500"></div>
 
     <div class="bg-white rounded-xl shadow overflow-x-auto">
       <table class="w-full text-sm">
@@ -297,6 +309,15 @@
         return true;
       });
 
+      // LINE summary (คำนวณจาก allTenants ทั้งหมด ไม่ใช่ filtered)
+      const currentTenants = allTenants.filter(t => t.contracts?.[0]?.room?.roomNumber);
+      const total = currentTenants.length;
+      const linked = currentTenants.filter(t => (t.lineUsers?.length ?? (t.lineUserId ? 1 : 0)) > 0).length;
+      const pct = total > 0 ? Math.round(linked / total * 100) : 0;
+      const color = pct === 100 ? 'text-green-600' : pct >= 50 ? 'text-yellow-600' : 'text-gray-400';
+      document.getElementById('line-summary').innerHTML =
+        `💬 เชื่อม LINE แล้ว <span class="font-semibold ${color}">${linked}/${total} คน</span> (${pct}%)`;
+
       if (!filtered.length) {
         const msg = query ? 'ไม่พบผู้เช่าที่ค้นหา' : activeTab === 'current' ? 'ไม่มีผู้เช่าปัจจุบัน' : 'ไม่มีข้อมูลผู้เช่า';
         tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-gray-400">${msg}</td></tr>`;
@@ -309,8 +330,9 @@
         const start = c?.startDate ? fmtDate(c.startDate) : '—';
         const end   = c?.endDate   ? fmtDate(c.endDate)   : '<span class="text-gray-300">ไม่กำหนด</span>';
         const imgs  = c?.contractFiles?.length ?? 0;
-        const lineTag = t.lineUserId
-          ? '<span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">เชื่อม</span>'
+        const lineCount = t.lineUsers?.length ?? (t.lineUserId ? 1 : 0);
+        const lineTag = lineCount > 0
+          ? `<span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">เชื่อม ${lineCount} คน</span>`
           : '<span class="text-gray-300 text-xs">—</span>';
         const filesTag = imgs
           ? `<span class="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">${imgs} รูป</span>`
@@ -335,6 +357,8 @@
                   class="px-2.5 py-1 bg-green-100 text-green-700 rounded text-xs hover:bg-green-200">🚗 รถ</button>
                 <button onclick='copyInviteLink("${t.id}")'
                   class="px-2.5 py-1 bg-purple-100 text-purple-700 rounded text-xs hover:bg-purple-200">🔗 invite</button>
+                ${lineCount > 0 ? `<button onclick='revokeLineAccess("${t.id}","${t.name.replace(/"/g,'')}")'
+                  class="px-2.5 py-1 bg-orange-100 text-orange-600 rounded text-xs hover:bg-orange-200">🚫 ยกเลิก LINE</button>` : ''}
                 <button onclick='deleteTenant("${t.id}","${t.name.replace(/"/g,"")}")'
                   class="px-2.5 py-1 bg-red-100 text-red-600 rounded text-xs hover:bg-red-200">ลบ</button>
               </div>
@@ -432,6 +456,13 @@
         </div>`;
       document.body.appendChild(overlay);
       setTimeout(() => document.getElementById('invite-url-input')?.select(), 100);
+    }
+
+    async function revokeLineAccess(id, name) {
+      if (!confirm(`ยกเลิกสิทธิ์ LINE ของ "${name}"?\n\nผู้เช่าจะเข้า LIFF ไม่ได้จนกว่าจะลงทะเบียนใหม่`)) return;
+      const r = await fetch(`/api/tenants/${id}/line-access`, { method: 'DELETE', headers });
+      if (r.ok) { showToast('✅ ยกเลิกสิทธิ์ LINE สำเร็จ'); load(); }
+      else { const d = await r.json().catch(() => ({})); showToast('❌ ' + (d.error || 'ไม่สำเร็จ'), false); }
     }
 
     async function deleteTenant(id, name) {

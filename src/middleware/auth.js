@@ -40,7 +40,7 @@ function propertyAuth(req, res, next) {
           const prop = await prisma.property.findFirst({ orderBy: { createdAt: 'desc' }, select: { id: true } });
           if (prop) req.propertyId = prop.id;
         }
-      } catch {}
+      } catch (_e) { /* ignore */ }
       return next();
     }
 
@@ -56,7 +56,7 @@ function propertyAuth(req, res, next) {
         req.propertyId = user.propertyId;
         return next();
       }
-    } catch {}
+    } catch (_e) { /* ignore */ }
 
     return res.status(403).json({ error: 'ต้องเข้าสู่ระบบในฐานะเจ้าของหอพัก' });
   });

@@ -6,7 +6,7 @@ exports.list = async (req, res, next) => {
   try {
     const tenants = await prisma.tenant.findMany({
       where:   { propertyId: req.propertyId },
-      include: { contracts: { where: { isActive: true }, include: { room: true } }, bankAccount: true },
+      include: { contracts: { where: { isActive: true }, include: { room: true } }, bankAccount: true, lineUsers: true },
       orderBy: { name: 'asc' },
     });
     res.json(tenants);
@@ -173,6 +173,22 @@ exports.createContract = async (req, res, next) => {
       include: { room: true, tenant: true },
     });
     res.status(201).json(contract);
+  } catch (e) { next(e); }
+};
+
+exports.revokeLineAccess = async (req, res, next) => {
+  try {
+    const tenant = await prisma.tenant.findFirst({
+      where: { id: req.params.id, propertyId: req.propertyId },
+    });
+    if (!tenant) return res.status(404).json({ error: 'ไม่พบผู้เช่า' });
+
+    // ลบทุก LINE user ที่ผูกกับผู้เช่านี้
+    await prisma.tenantLineUser.deleteMany({ where: { tenantId: tenant.id } });
+    // เคลียร์ legacy field
+    await prisma.tenant.update({ where: { id: tenant.id }, data: { lineUserId: null } });
+
+    res.json({ ok: true });
   } catch (e) { next(e); }
 };
 

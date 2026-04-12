@@ -34,18 +34,38 @@ async function liffAuth(req, res, next) {
     return res.status(502).json({ error: 'ไม่สามารถตรวจสอบ LINE token ได้' });
   }
 
-  // หา tenant จาก lineUserId + propertyId
-  const tenant = await prisma.tenant.findFirst({
-    where: { lineUserId, propertyId },
+  // หา tenant จาก TenantLineUser (รองรับหลาย LINE user ต่อห้อง)
+  const lineUserRecord = await prisma.tenantLineUser.findFirst({
+    where: { lineUserId, tenant: { propertyId } },
     include: {
-      bankAccount: true,
-      contracts: {
-        where: { isActive: true },
-        include: { room: true },
-        take: 1,
+      tenant: {
+        include: {
+          bankAccount: true,
+          contracts: {
+            where: { isActive: true },
+            include: { room: true },
+            take: 1,
+          },
+        },
       },
     },
   });
+
+  // fallback: รองรับ lineUserId เก่าที่เก็บใน Tenant.lineUserId ตรงๆ
+  let tenant = lineUserRecord?.tenant;
+  if (!tenant) {
+    tenant = await prisma.tenant.findFirst({
+      where: { lineUserId, propertyId },
+      include: {
+        bankAccount: true,
+        contracts: {
+          where: { isActive: true },
+          include: { room: true },
+          take: 1,
+        },
+      },
+    });
+  }
 
   if (!tenant) {
     return res.status(404).json({

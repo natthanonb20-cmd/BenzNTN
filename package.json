@@ -12,7 +12,8 @@
     "db:seed": "node prisma/seed.js",
     "db:seed-master": "node prisma/seed-master.js",
     "tenant-app:dev": "cd tenant-app && npm run dev -- --port 5174",
-    "tenant-app:build": "cd tenant-app && npm run build"
+    "tenant-app:build": "cd tenant-app && npm run build",
+    "lint": "eslint src/"
   },
   "dependencies": {
     "@line/bot-sdk": "^9.4.0",
@@ -26,6 +27,8 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.2.0",
     "nodemon": "^3.1.4",
     "prisma": "^5.14.0"
   }

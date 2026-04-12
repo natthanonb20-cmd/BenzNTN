@@ -15,6 +15,9 @@ router.delete('/:id',    ctrl.remove);
 router.post('/:id/contracts',                   ctrl.createContract);
 router.put ('/:id/contracts/:contractId',        ctrl.updateContract);
 
+// Revoke LINE access
+router.delete('/:id/line-access', ctrl.revokeLineAccess);
+
 // Vehicle sub-resource
 router.get   ('/:id/vehicles',             ctrl.listVehicles);
 router.post  ('/:id/vehicles',             ctrl.addVehicle);

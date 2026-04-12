@@ -45,19 +45,26 @@ exports.create = async (req, res, next) => {
         where: { propertyId_key: { propertyId: req.propertyId, key: 'adminLineUserId' } },
       });
       if (adminSetting?.value) {
-        const client = await getLineClient(req.propertyId);
-        const roomNo = contract?.room?.roomNumber ?? '—';
-        const name   = tenant.nickname || tenant.name;
-        const lines  = [];
-        if (Number(smallPacks ?? 0) > 0) lines.push(`• ${prices.smallLabel} x${smallPacks} = ฿${(Number(smallPacks) * prices.smallPrice).toFixed(0)}`);
-        if (Number(largePacks ?? 0) > 0) lines.push(`• ${prices.largeLabel} x${largePacks} = ฿${(Number(largePacks) * prices.largePrice).toFixed(0)}`);
-        const msg = `💧 สั่งน้ำดื่มใหม่!\n\n` +
-                    `ผู้เช่า: ${name} (ห้อง ${roomNo})\n` +
-                    lines.join('\n') + `\n` +
-                    `รวม: ฿${total.toFixed(0)}\n` +
-                    (note ? `หมายเหตุ: ${note}\n` : '') +
-                    `\nกรุณานำส่งที่ห้อง ${roomNo}`;
-        await client.pushMessage(adminSetting.value, { type: 'text', text: msg });
+        const adminIds = adminSetting.value.split(',').map(s => s.trim()).filter(Boolean);
+        if (adminIds.length > 0) {
+          const client = await getLineClient(req.propertyId);
+          const roomNo = contract?.room?.roomNumber ?? '—';
+          const name   = tenant.nickname || tenant.name;
+          const lines  = [];
+          if (Number(smallPacks ?? 0) > 0) lines.push(`• ${prices.smallLabel} x${smallPacks} = ฿${(Number(smallPacks) * prices.smallPrice).toFixed(0)}`);
+          if (Number(largePacks ?? 0) > 0) lines.push(`• ${prices.largeLabel} x${largePacks} = ฿${(Number(largePacks) * prices.largePrice).toFixed(0)}`);
+          const msg = `💧 สั่งน้ำดื่มใหม่!\n\n` +
+                      `ผู้เช่า: ${name} (ห้อง ${roomNo})\n` +
+                      lines.join('\n') + `\n` +
+                      `รวม: ฿${total.toFixed(0)}\n` +
+                      (note ? `หมายเหตุ: ${note}\n` : '') +
+                      `\nกรุณานำส่งที่ห้อง ${roomNo}`;
+          await Promise.all(adminIds.map(uid =>
+            client.pushMessage(uid, { type: 'text', text: msg }).catch(e =>
+              console.warn(`[waterOrder] LINE push to ${uid} failed:`, e.message)
+            )
+          ));
+        }
       }
     } catch (lineErr) {
       console.warn('[waterOrder] LINE push failed:', lineErr.message);

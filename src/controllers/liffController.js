@@ -154,18 +154,36 @@ async function acceptInvite(req, res) {
   }
 
   // ตรวจว่า lineUserId นี้ยังไม่ถูกใช้ในหอนี้
-  const existing = await prisma.tenant.findFirst({
-    where: { lineUserId, propertyId, NOT: { id: tenantId } },
+  const existingOther = await prisma.tenantLineUser.findFirst({
+    where: { lineUserId, tenant: { propertyId }, NOT: { tenantId } },
   });
-  if (existing) {
+  if (existingOther) {
     return res.status(409).json({ error: 'LINE นี้ถูกลงทะเบียนกับผู้เช่าท่านอื่นแล้ว' });
   }
 
-  // Link lineUserId → tenant
+  // ตรวจว่า LINE นี้ link กับห้องนี้อยู่แล้วหรือเปล่า
+  const alreadyLinked = await prisma.tenantLineUser.findFirst({
+    where: { tenantId, lineUserId },
+  });
+  if (alreadyLinked) {
+    return res.json({ ok: true, message: 'ลงทะเบียนสำเร็จแล้ว' });
+  }
+
+  // จำกัดไม่เกิน 2 คนต่อห้อง
+  const count = await prisma.tenantLineUser.count({ where: { tenantId } });
+  if (count >= 2) {
+    return res.status(400).json({ error: 'ห้องนี้มีผู้ใช้งาน LINE ครบ 2 คนแล้ว กรุณาติดต่อเจ้าของหอพัก' });
+  }
+
+  // Link lineUserId → tenant (ผ่าน TenantLineUser)
+  await prisma.tenantLineUser.create({
+    data: { tenantId, lineUserId },
+  });
+  // อัปเดต legacy field ด้วย (สำหรับ backward compat)
   await prisma.tenant.update({
     where: { id: tenantId },
     data: { lineUserId },
-  });
+  }).catch(() => {});
 
   res.json({ ok: true, message: 'ลงทะเบียนสำเร็จ' });
 }

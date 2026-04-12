@@ -146,9 +146,25 @@ model Tenant {
   waterSales     WaterSale[]
   vehicles       Vehicle[]
   repairRequests RepairRequest[]
+  lineUsers      TenantLineUser[]
 
   @@index([propertyId])
-  @@unique([propertyId, lineUserId])          // LINE ID unique per property
+  @@unique([propertyId, lineUserId])          // LINE ID unique per property (legacy)
+}
+
+// -------------------------------------------------------
+// TenantLineUser — LINE User ที่ผูกกับผู้เช่า (max 2 ต่อห้อง)
+// -------------------------------------------------------
+model TenantLineUser {
+  id         String   @id @default(cuid())
+  tenantId   String
+  lineUserId String
+  createdAt  DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, lineUserId])
+  @@index([lineUserId])
 }
 
 // -------------------------------------------------------
