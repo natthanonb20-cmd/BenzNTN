@@ -2,6 +2,17 @@ import { useEffect, useRef, useState } from 'react';
 import { C, Tag, Card, Pill, Btn } from '../components';
 import { api, getToken, getPid } from '../lib/api';
 
+// ── SVG Icons ─────────────────────────────────────────────────────
+const Icon = {
+  Home: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+  Pin:  () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>,
+  Bank: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>,
+  Drop: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>,
+  Clip: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>,
+  Msg:  () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
+  Cam:  () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>,
+};
+
 function SafeImage({ src, style }) {
   const [url, setUrl] = useState('');
   useEffect(() => {
@@ -62,7 +73,7 @@ function SlipModal({ invoiceId, onClose, onDone, uploadFn }) {
         >
           {preview
             ? <img src={preview} style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 10, objectFit: 'contain' }} />
-            : <><div style={{ fontSize: 36 }}>📎</div><div style={{ color: C.muted, marginTop: 8, fontSize: 13 }}>แตะเพื่อเลือกรูปสลิป</div></>
+            : <><div style={{ fontSize: 36, color: C.muted }}><Icon.Clip /></div><div style={{ color: C.muted, marginTop: 8, fontSize: 13 }}>แตะเพื่อเลือกรูปสลิป</div></>
           }
         </div>
         <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={onPick} />
@@ -85,7 +96,7 @@ function WaterTab({ prices, qty, note, payLater, orders, submitting, onMount, on
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <Card>
-        <div style={{ fontSize: 13, fontWeight: 700, color: C.muted, marginBottom: 12 }}>💧 สั่งน้ำดื่ม</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: C.muted, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 5 }}><Icon.Drop /> สั่งน้ำดื่ม</div>
         {!prices ? (
           <div style={{ color: C.muted, textAlign: 'center', padding: 16 }}>กำลังโหลด...</div>
         ) : (
@@ -125,12 +136,12 @@ function WaterTab({ prices, qty, note, payLater, orders, submitting, onMount, on
               </div>
             )}
             <Btn color={C.accent} onClick={onSubmit} disabled={submitting || (!qty.small && !qty.large)} style={{ marginTop: 10 }}>
-              {submitting ? '⏳ กำลังส่ง...' : '💧 สั่งน้ำดื่ม'}
+              {submitting ? 'กำลังส่ง...' : <span style={{display:'flex',alignItems:'center',gap:6,justifyContent:'center'}}><Icon.Drop /> สั่งน้ำดื่ม</span>}
             </Btn>
             {/* bank account */}
             {!payLater && prices.bankAccount && (
               <div style={{ marginTop: 12, background: '#0F0F13', borderRadius: 10, padding: '10px 12px', border: `1px solid ${C.cardBorder}`, fontSize: 13 }}>
-                <div style={{ color: C.muted, marginBottom: 4 }}>🏦 โอนเงินมาที่</div>
+                <div style={{ color: C.muted, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 5 }}><Icon.Bank /> โอนเงินมาที่</div>
                 <div style={{ fontWeight: 700 }}>{prices.bankAccount.bankName}</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
                   <span style={{ fontFamily: 'monospace', color: C.accent }}>{prices.bankAccount.accountNumber}</span>
@@ -272,9 +283,9 @@ export default function Home() {
       <div style={{ background: 'linear-gradient(135deg, #0D2E22 0%, #0F0F13 60%)', padding: '24px 20px 16px', borderBottom: `1px solid ${C.cardBorder}` }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <div style={{ fontSize: 12, color: C.accent, fontWeight: 700, letterSpacing: '0.1em', marginBottom: 4 }}>🏠 RENTMATE</div>
+            <div style={{ fontSize: 12, color: C.accent, fontWeight: 700, letterSpacing: '0.1em', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 5 }}><Icon.Home /> RENTMATE</div>
             <div style={{ fontSize: 20, fontWeight: 800 }}>{['สวัสดี','หวัดดี','ว่าไง','เป็นไงบ้าง','ยินดีต้อนรับ'][Math.floor(Date.now() / 60000) % 5]}, {me.nickname || me.name} 👋</div>
-            <div style={{ fontSize: 13, color: C.muted, marginTop: 2 }}>📍 {me.room?.roomNumber ?? 'ยังไม่มีห้อง'}</div>
+            <div style={{ fontSize: 13, color: C.muted, marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}><Icon.Pin /> {me.room?.roomNumber ?? 'ยังไม่มีห้อง'}</div>
           </div>
           <div style={{ background: C.line, borderRadius: 12, padding: '6px 12px', fontSize: 12, fontWeight: 700, color: '#fff' }}>LINE</div>
         </div>
@@ -330,7 +341,7 @@ export default function Home() {
                 </div>
                 {currentInv.status === 'PENDING' && (
                   <Btn color={C.accent} onClick={() => setSlipModal(currentInv.id)} style={{ marginTop: 12 }}>
-                    📎 อัปโหลดสลิปชำระเงิน
+                    <span style={{display:'flex',alignItems:'center',gap:5}}><Icon.Clip /> อัปโหลดสลิปชำระเงิน</span>
                   </Btn>
                 )}
               </Card>
@@ -339,7 +350,7 @@ export default function Home() {
             {/* Bank account */}
             {me.bankAccount && (
               <Card>
-                <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, marginBottom: 10 }}>🏦 บัญชีรับโอน</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 5 }}><Icon.Bank /> บัญชีรับโอน</div>
                 {[
                   ['ธนาคาร',  me.bankAccount.bankName, false],
                   ['เลขบัญชี', me.bankAccount.accountNumber, true],
@@ -428,7 +439,7 @@ export default function Home() {
                     onClick={() => repairFileRef.current.click()}
                     style={{ border: `2px dashed ${repairFile ? C.accent : C.cardBorder}`, borderRadius: 10, padding: 16, textAlign: 'center', cursor: 'pointer', color: C.muted, fontSize: 13 }}
                   >
-                    {repairFile ? `📎 ${repairFile.name}` : '📷 แนบรูป (ไม่บังคับ)'}
+                    {repairFile ? <span style={{display:'flex',alignItems:'center',gap:5}}><Icon.Clip />{repairFile.name}</span> : <span style={{display:'flex',alignItems:'center',gap:5}}><Icon.Cam /> แนบรูป (ไม่บังคับ)</span>}
                   </div>
                   <input ref={repairFileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => setRepairFile(e.target.files[0] || null)} />
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
@@ -464,7 +475,7 @@ export default function Home() {
                 </div>
                 {r.adminNote && (
                   <div style={{ background: '#0F0F13', borderRadius: 8, padding: '8px 10px', marginTop: 8, fontSize: 12, color: C.muted }}>
-                    💬 {r.adminNote}
+                    <span style={{display:'flex',alignItems:'center',gap:5}}><Icon.Msg />{r.adminNote}</span>
                   </div>
                 )}
                 {r.imagePath && <SafeImage src={window.location.origin + r.imagePath} style={{ width: '100%', borderRadius: 8, marginTop: 8, maxHeight: 180, objectFit: 'cover' }} />}
@@ -542,7 +553,7 @@ export default function Home() {
             )}
             <Card glow={C.info}>
               <div style={{ textAlign: 'center', padding: '12px 0' }}>
-                <div style={{ fontSize: 32 }}>📄</div>
+                <div style={{ fontSize: 32, color: C.muted, display:'flex', justifyContent:'center' }}><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
                 <div style={{ fontWeight: 700, marginTop: 8 }}>เอกสาร PDF</div>
                 <div style={{ fontSize: 13, color: C.muted, marginTop: 4 }}>อยู่ระหว่างพัฒนา เร็วๆ นี้</div>
               </div>
