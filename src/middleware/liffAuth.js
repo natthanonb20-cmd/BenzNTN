@@ -21,16 +21,15 @@ async function liffAuth(req, res, next) {
   if (!lineToken)  return res.status(401).json({ error: 'ต้องส่ง LINE access token' });
   if (!propertyId) return res.status(400).json({ error: 'ต้องระบุ property id' });
 
-  // ตรวจสอบ token กับ LINE API
+  // ตรวจสอบ token กับ LINE API + ดึง userId
   let lineUserId;
   try {
-    const r = await fetch(
-      `https://api.line.me/oauth2/v2.1/verify?access_token=${lineToken}`,
-      { headers: { 'ngrok-skip-browser-warning': '1' } }
-    );
+    const r = await fetch('https://api.line.me/v2/profile', {
+      headers: { Authorization: `Bearer ${lineToken}` },
+    });
     if (!r.ok) return res.status(401).json({ error: 'LINE token ไม่ถูกต้องหรือหมดอายุ' });
     const data = await r.json();
-    lineUserId = data.sub; // LINE userId
+    lineUserId = data.userId;
   } catch {
     return res.status(502).json({ error: 'ไม่สามารถตรวจสอบ LINE token ได้' });
   }

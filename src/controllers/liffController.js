@@ -126,16 +126,15 @@ async function acceptInvite(req, res) {
     return res.status(400).json({ error: 'ข้อมูลไม่ครบ' });
   }
 
-  // ตรวจสอบ LINE token
+  // ตรวจสอบ LINE token + ดึง userId
   let lineUserId;
   try {
-    const r = await fetch(
-      `https://api.line.me/oauth2/v2.1/verify?access_token=${lineAccessToken}`,
-      { headers: { 'ngrok-skip-browser-warning': '1' } }
-    );
-    if (!r.ok) return res.status(401).json({ error: 'LINE token ไม่ถูกต้อง' });
+    const r = await fetch('https://api.line.me/v2/profile', {
+      headers: { Authorization: `Bearer ${lineAccessToken}` },
+    });
+    if (!r.ok) return res.status(401).json({ error: 'LINE token ไม่ถูกต้องหรือหมดอายุ' });
     const data = await r.json().catch(() => ({}));
-    lineUserId = data.sub;
+    lineUserId = data.userId;
     if (!lineUserId) return res.status(401).json({ error: 'ดึง LINE User ID ไม่ได้' });
   } catch {
     return res.status(502).json({ error: 'ตรวจสอบ LINE token ไม่ได้' });
