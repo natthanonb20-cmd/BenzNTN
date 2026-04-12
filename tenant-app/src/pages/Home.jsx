@@ -274,7 +274,7 @@ export default function Home() {
           <div>
             <div style={{ fontSize: 12, color: C.accent, fontWeight: 700, letterSpacing: '0.1em', marginBottom: 4 }}>🏠 RENTMATE</div>
             <div style={{ fontSize: 20, fontWeight: 800 }}>{['สวัสดี','หวัดดี','ว่าไง','เป็นไงบ้าง','ยินดีต้อนรับ'][Math.floor(Date.now() / 60000) % 5]}, {me.nickname || me.name} 👋</div>
-            <div style={{ fontSize: 13, color: C.muted, marginTop: 2 }}>ห้อง {me.room?.roomNumber ?? '—'}</div>
+            <div style={{ fontSize: 13, color: C.muted, marginTop: 2 }}>📍 {me.room?.roomNumber ?? 'ยังไม่มีห้อง'}</div>
           </div>
           <div style={{ background: C.line, borderRadius: 12, padding: '6px 12px', fontSize: 12, fontWeight: 700, color: '#fff' }}>LINE</div>
         </div>
@@ -290,12 +290,12 @@ export default function Home() {
             </div>
           </Card>
           <Card style={{ padding: '12px 14px' }}>
-            <div style={{ fontSize: 11, color: C.muted, marginBottom: 4 }}>สัญญาเช่า</div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: C.accent }}>
-              {daysLeft != null ? `${daysLeft} วัน` : '—'}
+            <div style={{ fontSize: 11, color: C.muted, marginBottom: 4 }}>ห้อง {me.room?.roomNumber ?? '—'}</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: daysLeft != null && daysLeft <= 30 ? C.warn : C.accent }}>
+              {endDate ? endDate.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' }) : 'ไม่กำหนด'}
             </div>
             <div style={{ fontSize: 11, color: C.muted }}>
-              {endDate ? `หมด ${endDate.toLocaleDateString('th-TH', { month: 'short', year: '2-digit' })}` : 'ไม่ระบุ'}
+              {daysLeft != null ? `เหลืออีก ${daysLeft} วัน` : 'ไม่มีวันสิ้นสุด'}
             </div>
           </Card>
         </div>
