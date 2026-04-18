@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getAccessToken } from '../lib/liff';
 import { api, getPropertyId } from '../lib/api';
+import { Spinner } from '../components';
 
 export default function Invite() {
   const [status, setStatus] = useState('loading'); // loading | success | error
@@ -30,26 +31,22 @@ export default function Invite() {
     api.acceptInvite({ inviteToken, lineAccessToken: lineToken, propertyId: pid })
       .then(() => {
         setStatus('success');
-        setTimeout(() => { window.location.replace('/tenant-app/'); }, 1500);
+        setTimeout(() => { window.location.replace('/tenant-app/'); }, 800);
       })
       .catch(e => { setStatus('error'); setMsg(e.message); });
   }, []);
 
   if (status === 'loading') return (
     <div className="center-msg">
-      <p className="icon">⏳</p>
-      <p className="sub">กำลังลงทะเบียน...</p>
+      <Spinner size={48} />
+      <p className="sub" style={{ marginTop: 16 }}>กำลังเชื่อมต่อ LINE...</p>
     </div>
   );
 
   if (status === 'success') return (
     <div className="center-msg">
-      <p className="icon">🎉</p>
-      <p className="title">ลงทะเบียนสำเร็จ!</p>
-      <p className="sub" style={{ marginTop: 4 }}>คุณสามารถใช้งานระบบได้แล้ว</p>
-      <a href="/tenant-app/" className="btn btn-primary" style={{ marginTop: 24, width: 'auto', padding: '12px 32px', textDecoration: 'none' }}>
-        ไปหน้าหลัก
-      </a>
+      <Spinner size={48} />
+      <p className="sub" style={{ marginTop: 16 }}>กำลังเข้าสู่ระบบ...</p>
     </div>
   );
 

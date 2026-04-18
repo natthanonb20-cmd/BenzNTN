@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { initLiff } from './lib/liff';
 import { getPropertyId } from './lib/api';
+import { Spinner } from './components';
 import Home          from './pages/Home';
 import InvoiceList   from './pages/InvoiceList';
 import InvoiceDetail from './pages/InvoiceDetail';
@@ -28,8 +29,8 @@ function App() {
 
   if (!ready) return (
     <div className="center-msg">
-      <p className="icon spin">⏳</p>
-      <p className="sub">กำลังโหลด...</p>
+      <Spinner size={48} />
+      <p className="sub" style={{ marginTop: 16 }}>กำลังโหลด...</p>
     </div>
   );
 

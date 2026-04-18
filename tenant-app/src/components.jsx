@@ -1,3 +1,15 @@
+export function Spinner({ size = 40, color = '#00C896' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{ display: 'block' }}>
+      <circle cx="12" cy="12" r="10" stroke={color + '30'} strokeWidth="2.5" />
+      <path d="M12 2a10 10 0 0 1 10 10" stroke={color} strokeWidth="2.5" strokeLinecap="round">
+        <animateTransform attributeName="transform" type="rotate"
+          from="0 12 12" to="360 12 12" dur="0.75s" repeatCount="indefinite" />
+      </path>
+    </svg>
+  );
+}
+
 export const C = {
   bg: "#0F0F13", card: "#16161D", cardBorder: "#2A2A38",
   accent: "#00C896", accentDim: "#00C89620", accentGlow: "#00C89640",
