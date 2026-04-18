@@ -5,10 +5,17 @@
     <link rel="icon" type="image/svg+xml" href="/tenant-app/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>tenant-app</title>
-    <script type="module" crossorigin src="/tenant-app/assets/index-Dq8gGnDq.js"></script>
-    <link rel="stylesheet" crossorigin href="/tenant-app/assets/index-BChuNO7k.css">
+    <script type="module" crossorigin src="/tenant-app/assets/index-BCI2NXLm.js"></script>
+    <link rel="stylesheet" crossorigin href="/tenant-app/assets/index-BKtu21bb.css">
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div style="color:#fff;padding:20px;font-size:14px">กำลังโหลด LIFF...</div></div>
+    <script>
+      window.onerror = function(msg, src, line) {
+        document.getElementById('root').innerHTML =
+          '<div style="color:#ff5b5b;padding:20px;font-size:13px;word-break:break-all">' +
+          '❌ JS Error: ' + msg + '<br>' + src + ':' + line + '</div>';
+      };
+    </script>
   </body>
 </html>

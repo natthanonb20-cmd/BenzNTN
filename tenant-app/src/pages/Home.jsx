@@ -2,6 +2,21 @@ import { useEffect, useRef, useState } from 'react';
 import { C, Tag, Card, Pill, Btn } from '../components';
 import { api, getToken, getPid } from '../lib/api';
 
+// ── Spinner ───────────────────────────────────────────────────────
+function Spinner({ size = 28, color }) {
+  const track = color ? color + '33' : '#ffffff22';
+  const arc   = color || '#C8FF57';
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{ display: 'block' }}>
+      <circle cx="12" cy="12" r="10" stroke={track} strokeWidth="2.5" />
+      <path d="M12 2a10 10 0 0 1 10 10" stroke={arc} strokeWidth="2.5" strokeLinecap="round">
+        <animateTransform attributeName="transform" type="rotate"
+          from="0 12 12" to="360 12 12" dur="0.75s" repeatCount="indefinite" />
+      </path>
+    </svg>
+  );
+}
+
 // ── SVG Icons ─────────────────────────────────────────────────────
 const Icon = {
   Home: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
@@ -80,7 +95,10 @@ function SlipModal({ invoiceId, onClose, onDone, uploadFn }) {
         {err && <div style={{ color: C.danger, fontSize: 13, marginBottom: 10 }}>{err}</div>}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           <Btn color={C.accent} onClick={submit} disabled={!file || loading}>
-            {loading ? '⏳ กำลังส่ง...' : '✓ ยืนยันส่งสลิป'}
+            {loading
+            ? <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}><Spinner size={16} color="#0F0F13" /> กำลังส่ง...</span>
+            : '✓ ยืนยันส่งสลิป'
+          }
           </Btn>
           <Btn color={C.muted} outline onClick={onClose}>ยกเลิก</Btn>
         </div>
@@ -98,7 +116,9 @@ function WaterTab({ prices, qty, note, payLater, orders, submitting, onMount, on
       <Card>
         <div style={{ fontSize: 13, fontWeight: 700, color: C.muted, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 5 }}><Icon.Drop /> สั่งน้ำดื่ม</div>
         {!prices ? (
-          <div style={{ color: C.muted, textAlign: 'center', padding: 16 }}>กำลังโหลด...</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 20, color: C.muted }}>
+            <Spinner size={20} /> <span style={{ fontSize: 13 }}>กำลังโหลดราคา...</span>
+          </div>
         ) : (
           <>
             {[
@@ -170,8 +190,8 @@ function WaterTab({ prices, qty, note, payLater, orders, submitting, onMount, on
                   <div style={{ fontSize: 11, color: o.isPaid ? C.accent : C.warn }}>{o.isPaid ? 'ชำระแล้ว' : 'รอชำระ'}</div>
                   {!o.isPaid && (
                     <button onClick={() => onSlip(o.id)}
-                      style={{ marginTop: 4, fontSize: 11, background: C.accent, color: '#0F0F13', border: 'none', borderRadius: 6, padding: '3px 8px', cursor: 'pointer', fontWeight: 700 }}>
-                      📎 แนบสลิป
+                      style={{ marginTop: 4, fontSize: 11, background: C.accent, color: '#0F0F13', border: 'none', borderRadius: 6, padding: '3px 8px', cursor: 'pointer', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <Icon.Clip /> แนบสลิป
                     </button>
                   )}
                 </div>
@@ -252,7 +272,18 @@ export default function Home() {
   useEffect(() => { load(); }, []);
 
   if (loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh', color: C.muted }}>กำลังโหลด...</div>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh', background: '#0F0F13', gap: 20 }}>
+      <div style={{ position: 'relative', width: 72, height: 72 }}>
+        <Spinner size={72} />
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#C8FF57" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+        </div>
+      </div>
+      <div style={{ fontSize: 13, color: '#4a5568', letterSpacing: '0.08em' }}>กำลังโหลด...</div>
+    </div>
   );
 
   if (!me) return (
